@@ -5,6 +5,12 @@ import $ from "../platform/$";
 import $$ from "../platform/$$";
 import Callbacks from "./Callbacks";
 
+/**
+ * Original coffeescript version added a child class that somehow skips the original constructor in the compilation
+ * output? In es classes we have to do tha manually.
+ */
+const skipConstructor = Symbol('skip post constructor');
+
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -26,6 +32,8 @@ export default class Post {
     // <% if (readJSON('/.tests_enabled')) { %>
     // @normalizedOriginal = Test.normalize root
     // <% } %>
+
+    if (root === skipConstructor) return;
 
     this.root = root;
     this.thread = thread;
@@ -347,7 +355,7 @@ export default class Post {
   addClone(context, contractThumb) {
     // Callbacks may not have been run yet due to anti-browser-lock delay in Main.callbackNodesDB.
     Callbacks.Post.execute(this);
-    return new PostClone(this.root, this.thread, this.board, this.flags).construct(this, context, contractThumb);
+    return new PostClone(skipConstructor).construct(this, context, contractThumb);
   }
 
   rmClone(index) {
