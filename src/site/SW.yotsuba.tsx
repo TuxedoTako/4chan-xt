@@ -562,7 +562,7 @@ $\
 
       const wholePost = <>
         {(o.isReply ? <div class="sideArrows" id={`sa${ID}`}>&gt;&gt;</div> : '')}
-        <div id={`p${ID}`} class={`"post ${postClass}${o.capcodeHighlight ? ' highlightPost' : ''}`}>
+        <div id={`p${ID}`} class={`post ${postClass}${o.capcodeHighlight ? ' highlightPost' : ''}`}>
           {(o.isReply ? <>{postInfo}{fileBlock}</> : <>{fileBlock}{postInfo}</>)}
           <blockquote class="postMessage" id={`m${ID}`}>{commentHTML}</blockquote>
         </div>
