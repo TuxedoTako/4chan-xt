@@ -2,7 +2,7 @@ var fs = require('fs');
 var JSZip = require('jszip');
 
 var pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-var v = JSON.parse(fs.readFileSync('version.json', 'utf8'));
+var v = JSON.parse(fs.readFileSync('misc/version.json', 'utf8'));
 var channel = process.argv[2] || '';
 
 var zip = new JSZip();

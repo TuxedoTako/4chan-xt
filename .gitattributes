@@ -2,4 +2,4 @@
 * text=auto
 
 builds/* -text
-index.html -text
+misc/index.html -text

@@ -41,7 +41,7 @@ declare module '*/package.json' {
   }
   export default meta;
 }
-declare module '*/version.json' {
+declare module '*/misc/version.json' {
   const versionInfo: {
     version: string,
     /** ISO */
