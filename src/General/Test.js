@@ -19,8 +19,7 @@ import Header from "./Header";
 import { g, Conf } from "../globals/globals";
 import Menu from "../Menu/Menu";
 
-// <% if (readJSON('/.tests_enabled')) { %>
-var Test = {
+const Test = {
   init() {
     if ((g.SITE.software !== 'yotsuba') || !['index', 'thread'].includes(g.VIEW)) { return; }
 
@@ -255,4 +254,4 @@ var Test = {
     }
   }
 };
-// <% } %>
+export default Test;

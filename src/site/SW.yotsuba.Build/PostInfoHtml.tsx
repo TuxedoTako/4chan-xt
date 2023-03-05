@@ -6,7 +6,7 @@ export default function generatePostInfoHtml(
   capcodeDescription, uniqueID, flag, flagCode, flagCodeTroll, dateUTC, dateText, postLink, quoteLink, boardID,
   threadID,
 ): EscapedHtml {
-  const nameHtml: (EscapedHtml | string)[] = [<span class={`name ${capcode || ''}`}>{name}</span>];
+  const nameHtml: (EscapedHtml | string)[] = [<span class={`name${capcode ? ' ' + capcode : ''}`}>{name}</span>];
   if (tripcode) nameHtml.push(' ', <span class="postertrip">{tripcode}</span>);
   if (pass) nameHtml.push(' ', <span title={`Pass user since ${pass}`} class="n-pu"></span>)
   if (capcode) {
@@ -17,7 +17,7 @@ export default function generatePostInfoHtml(
   }
 
   const nameBlockContent: (EscapedHtml | string)[] =
-    email ? [<a href={`mailto:${email}`} class="useremail">{...nameHtml}</a>] : nameHtml;
+    email ? [' ', <a href={`mailto:${email}`} class="useremail">{...nameHtml}</a>] : nameHtml;
   if (!(boardID === "f" && !o.isReply || capcodeDescription)) nameBlockContent.push(' ');
   if (capcodeDescription) {
     nameBlockContent.push(
@@ -40,8 +40,8 @@ export default function generatePostInfoHtml(
   if (flagCodeTroll) nameBlockContent.push(' ', <span title={flag} class={`bfl bfl-${flagCodeTroll.toLowerCase()}`} />);
 
   const postNumContent: (EscapedHtml | string)[] = [
-    ' ', <a href={postLink} title="Link to this post">No.</a>,
-    ' ', <a href={quoteLink} title="Reply to this post">{ID}</a>,
+    <a href={postLink} title="Link to this post">No.</a>,
+    <a href={quoteLink} title="Reply to this post">{ID}</a>,
   ];
 
   if (o.isSticky) {
@@ -76,11 +76,14 @@ export default function generatePostInfoHtml(
 
   return <div class="postInfo desktop" id={`pi${ID}`}>
     <input type="checkbox" name={ID} value="delete" />
-    {((!o.isReply || boardID === "f" || subject) ? <span class="subject">{subject}</span> : '')}
+    {' '}
+    {...((!o.isReply || boardID === "f" || subject) ? [<span class="subject">{subject}</span>, ' '] : [])}
     <span class={`nameBlock${capcode || ''}`}>
       {...nameBlockContent}
     </span>
+    {' '}
     <span class="dateTime" data-utc={dateUTC}>{dateText}</span>
+    {' '}
     <span class={`postNum${!(boardID === " f" && !o.isReply) ? ' desktop' : ''}`} >
       {...postNumContent}
     </span>

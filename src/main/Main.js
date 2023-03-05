@@ -89,6 +89,7 @@ import BoardConfig from "../General/BoardConfig";
 import CaptchaReplace from "../Posting/Captcha.replace";
 import Get from "../General/Get";
 import { dict, platform } from "../platform/helpers";
+// import Test from "../General/Test";
 
 /*
  * decaffeinate suggestions:
@@ -206,6 +207,7 @@ const Main = {
     if (
       /\.4chan(?:nel)?\.org$/.test(location.hostname) &&
       !SW.yotsuba.regexp.pass.test(location.href) &&
+      !SW.yotsuba.regexp.captcha.test(location.href) &&
       !$$('script:not([src])').filter(s => /this\[/.test(s.textContent)).length
     ) {
       ($.getSync || $.get)({ 'jsWhitelist': Conf['jsWhitelist'] }, ({ jsWhitelist }) => $.addCSP(`script-src ${jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim()}`));
@@ -964,5 +966,5 @@ export default Main;
 $.ready(() => Main.init());
 
 // <% if (readJSON('/.tests_enabled')) { %>
-// Main.features.push ['Build Test', Test]
+// Main.features.push(['Build Test', Test]);
 // <% } %>

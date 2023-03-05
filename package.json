@@ -106,7 +106,7 @@
     "@types/chrome": "^0.0.217",
     "@types/node": "^18.14.5",
     "@violentmonkey/types": "^0.1.5",
-    "chrome-webstore-upload": "^0.4.4",
+    "chrome-webstore-upload": "^1.0.0",
     "esprima": "^4.0.1",
     "font-awesome": "=4.7.0",
     "jshint": "^2.13.4",

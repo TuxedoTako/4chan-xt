@@ -139,7 +139,9 @@ $\
     quotelinkHTML:
       /<a [^>]*\bhref="(?:(?:\/\/boards\.4chan(?:nel)?\.org)?\/([^\/]+)\/thread\/)?(\d+)?(?:#p(\d+))?"/g,
     pass:
-      /^https?:\/\/www\.4chan(?:nel)?\.org\/+pass(?:$|[?#])/
+      /^https?:\/\/www\.4chan(?:nel)?\.org\/+pass(?:$|[?#])/,
+    captcha:
+      /^https?:\/\/sys\.4chan(?:nel)?\.org\/+captcha(?:$|[?#])/,
   },
 
   bgColoredEl() {

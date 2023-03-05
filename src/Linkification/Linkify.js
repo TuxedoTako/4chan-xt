@@ -1,4 +1,5 @@
 import Callbacks from "../classes/Callbacks";
+// import Test from "../General/Test";
 import { g, Conf } from "../globals/globals";
 import ImageHost from "../Images/ImageHost";
 import ExpandComment from "../Miscellaneous/ExpandComment";
@@ -102,11 +103,13 @@ const Linkify = {
 
         if (Linkify.regString.test(word)) {
           links.push(Linkify.makeRange(node, endNode, index, length));
+
+          // <% if (readJSON('/.tests_enabled')) { %>
+          // if (links.length) {
+          // Test.assert(() => word === links[links.length - 1]?.toString());
+          // }
+          // <% } %>
         }
-        // <% if (readJSON('/.tests_enabled')) { %>
-        // Test.assert ->
-        //   word is links[links.length-1].toString()
-        // <% } %>
 
         if (!test.lastIndex || (node !== endNode)) { break; }
       }

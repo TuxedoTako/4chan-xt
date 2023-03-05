@@ -384,44 +384,46 @@ var QR = {
     postRange.selectNode(root);
     let text = post.board.ID === g.BOARD.ID ? `>>${post}\n` : `>>>/${post.board}/${post}\n`;
     for (let i = 0, end = sel.rangeCount, asc = 0 <= end; asc ? i < end : i > end; asc ? i++ : i--) {
-      var insideCode, node;
-      range = sel.getRangeAt(i);
-      // Trim range to be fully inside post
-      if (range.compareBoundaryPoints(Range.START_TO_START, postRange) < 0) {
-        range.setStartBefore(root);
-      }
-      if (range.compareBoundaryPoints(Range.END_TO_END, postRange) > 0) {
-        range.setEndAfter(root);
-      }
+      try {
+        var insideCode, node;
+        range = sel.getRangeAt(i);
+        // Trim range to be fully inside post
+        if (range.compareBoundaryPoints(Range.START_TO_START, postRange) < 0) {
+          range.setStartBefore(root);
+        }
+        if (range.compareBoundaryPoints(Range.END_TO_END, postRange) > 0) {
+          range.setEndAfter(root);
+        }
 
-      if (!range.toString().trim()) { continue; }
+        if (!range.toString().trim()) { continue; }
 
-      var frag = range.cloneContents();
-      var ancestor = range.commonAncestorContainer;
-      // Quoting the insides of a spoiler/code tag.
-      if ($.x('ancestor-or-self::*[self::s or contains(@class,"removed-spoiler")]', ancestor)) {
-        $.prepend(frag, $.tn('[spoiler]'));
-        $.add(frag, $.tn('[/spoiler]'));
-      }
-      if (insideCode = $.x('ancestor-or-self::pre[contains(@class,"prettyprint")]', ancestor)) {
-        $.prepend(frag, $.tn('[code]'));
-        $.add(frag, $.tn('[/code]'));
-      }
-      for (node of $$((insideCode ? 'br' : '.prettyprint br'), frag)) {
-        $.replace(node, $.tn('\n'));
-      }
-      for (node of $$('br', frag)) {
-        if (node !== frag.lastChild) { $.replace(node, $.tn('\n>')); }
-      }
-      g.SITE.insertTags?.(frag);
-      for (node of $$('.linkify[data-original]', frag)) {
-        $.replace(node, $.tn(node.dataset.original));
-      }
-      for (node of $$('.embedder', frag)) {
-        if (node.previousSibling?.nodeValue === ' ') { $.rm(node.previousSibling); }
-        $.rm(node);
-      }
-      text += `>${frag.textContent.trim()}\n`;
+        var frag = range.cloneContents();
+        var ancestor = range.commonAncestorContainer;
+        // Quoting the insides of a spoiler/code tag.
+        if ($.x('ancestor-or-self::*[self::s or contains(@class,"removed-spoiler")]', ancestor)) {
+          $.prepend(frag, $.tn('[spoiler]'));
+          $.add(frag, $.tn('[/spoiler]'));
+        }
+        if (insideCode = $.x('ancestor-or-self::pre[contains(@class,"prettyprint")]', ancestor)) {
+          $.prepend(frag, $.tn('[code]'));
+          $.add(frag, $.tn('[/code]'));
+        }
+        for (node of $$((insideCode ? 'br' : '.prettyprint br'), frag)) {
+          $.replace(node, $.tn('\n'));
+        }
+        for (node of $$('br', frag)) {
+          if (node !== frag.lastChild) { $.replace(node, $.tn('\n>')); }
+        }
+        g.SITE.insertTags?.(frag);
+        for (node of $$('.linkify[data-original]', frag)) {
+          $.replace(node, $.tn(node.dataset.original));
+        }
+        for (node of $$('.embedder', frag)) {
+          if (node.previousSibling?.nodeValue === ' ') { $.rm(node.previousSibling); }
+          $.rm(node);
+        }
+        text += `>${frag.textContent.trim()}\n`;
+      } catch (error) { }
     }
 
     QR.openPost();
@@ -874,6 +876,9 @@ var QR = {
     post.lock();
 
     const formData = {
+      MAX_FILE_SIZE: QR.max_size,
+      mode: 'regist',
+      pwd: QR.persona.getPassword(),
       resto: threadID,
       name: (!QR.forcedAnon ? post.name : undefined),
       email: post.email,
@@ -883,8 +888,6 @@ var QR = {
       filetag,
       spoiler: post.spoiler,
       flag: post.flag,
-      mode: 'regist',
-      pwd: QR.persona.getPassword()
     };
 
     const options = {
@@ -1910,7 +1913,7 @@ var QR = {
       this.file = file;
       if (Conf['Randomize Filename'] && (g.BOARD.ID !== 'f')) {
         let ext;
-        this.filename = `${Date.now() - Math.floor(Math.random() * 365 * DAY)}`;
+        this.filename = `${Date.now() * 1000 - Math.floor(Math.random() * 365 * DAY * 1000)}`;
         if (ext = this.file.name.match(QR.validExtension)) { this.filename += ext[0]; }
       } else {
         this.filename = this.file.name;

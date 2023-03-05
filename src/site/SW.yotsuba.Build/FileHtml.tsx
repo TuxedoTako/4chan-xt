@@ -8,7 +8,7 @@ export default function generateFileHtml(
     if (boardID === "f") {
       fileContent.push(
         <div class="fileInfo" data-md5={file.MD5}><span class="fileText" id={`fT${ID}`}>
-          File:
+          {'File: '}
           <a data-width={file.width} data-height={file.height} href={fileURL} target="_blank">{file.name}</a>
           -({file.size}, {file.dimensions}{file.tag ? ', ' + file.tag : ''})
         </span></div>
@@ -16,11 +16,11 @@ export default function generateFileHtml(
     } else {
       fileContent.push(
         <div class="fileText" id={`fT${ID}`} title={file.isSpoiler ? file.name : null}>
-          File:
+          {'File: '}
           <a title={file.name === shortFilename || file.isSpoiler ? null : file.name} href={fileURL} target="_blank">
             {file.isSpoiler ? 'Spoiler Image' : shortFilename}
-          </a>,
-          ({file.size}, {file.dimensions || "PDF"})
+          </a>
+          {` (${file.size}, ${file.dimensions || "PDF"})`}
         </div>,
         <a
           class={`fileThumb${file.isSpoiler ? ' imgspoiler' : ''}`}
