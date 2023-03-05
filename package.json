@@ -139,8 +139,10 @@
   },
   "type": "module",
   "scripts": {
-    "build": "node ./tools/rollup",
+    "build": "node ./tools/rollup -script -crx",
     "build:beta": "node ./tools/rollup -beta",
-    "build:noupdate": "node ./tools/rollup -noupdate"
+    "build:noupdate": "node ./tools/rollup -noupdate",
+    "build:crx": "node ./tools/rollup -crx",
+    "build:script": "node ./tools/rollup -script"
   }
 }
