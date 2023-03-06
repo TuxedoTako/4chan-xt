@@ -7,10 +7,9 @@ import { Conf, g } from "../globals/globals";
  */
 const NormalizeURL = {
   init() {
-    let pathname
     if (!Conf['Normalize URL']) { return; }
 
-    pathname = location.pathname.split(/\/+/);
+    let pathname = location.pathname.split(/\/+/);
     if (g.SITE.software === 'yotsuba') {
       switch (g.VIEW) {
         case 'thread':
@@ -22,8 +21,8 @@ const NormalizeURL = {
           break;
       }
     }
-    pathname = pathname.join('/');
-    if (location.pathname !== pathname) {
+
+    if (location.pathname !== pathname.join('/')) {
       return history.replaceState(history.state, '', `${location.protocol}//${location.host}${pathname}${location.hash}`);
     }
   }
