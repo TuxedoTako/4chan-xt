@@ -27,7 +27,7 @@ if (process.argv.includes('-beta')) {
 
   const license = await readFile(resolve(__dirname, '../LICENSE'), 'utf8');
 
-  const version = JSON.parse(await readFile(resolve(__dirname, '../misc/version.json'), 'utf-8'));
+  const version = JSON.parse(await readFile(resolve(__dirname, '../version.json'), 'utf-8'));
 
 
   const inlineFile = await setupFileInliner(packageJson);

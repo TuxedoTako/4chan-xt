@@ -2,7 +2,7 @@ var fs = require('fs');
 var child_process = require('child_process');
 
 var pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-var v   = JSON.parse(fs.readFileSync('misc/version.json', 'utf8'));
+var v   = JSON.parse(fs.readFileSync('version.json', 'utf8'));
 
 var name = pkg.name;
 var oldVersions = pkg.meta.oldVersions;

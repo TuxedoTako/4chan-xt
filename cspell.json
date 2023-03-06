@@ -1,0 +1,52 @@
+// cSpell Settings
+{
+  // Version of the setting file.  Always 0.2
+  "version": "0.2",
+  // language - current active spelling language
+  "language": "en",
+  // words - list of words to be always considered correct
+  "words": [
+    "Backlink",
+    "backlinks",
+    "Bitchute",
+    "burichan",
+    "capcode",
+    "Cimeo",
+    "Clyp",
+    "Dailymotion",
+    "fappe",
+    "ferongr",
+    "futaba",
+    "Gfycat",
+    "greasemonkey",
+    "iframes",
+    "Keybinds",
+    "Linkify",
+    "Liveleak",
+    "Pastebin",
+    "Peertube",
+    "quotelink",
+    "quotelinks",
+    "Soundcloud",
+    "Streamable",
+    "Tinyboard",
+    "tripcode",
+    "Twitchtv",
+    "userscript",
+    "userscripts",
+    "Vidlii",
+    "Vocaroo",
+    "yotsuba"
+  ],
+  "ignoreWords": [
+    "noupdate",
+    "tyme",
+    "werk"
+  ],
+  // flagWords - list of words to be always considered incorrect
+  // This is useful for offensive words and common spelling errors.
+  // For example "hte" should be "the"
+  "flagWords": [
+    "hte"
+  ]
+}

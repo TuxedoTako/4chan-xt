@@ -15,11 +15,11 @@ function bump(version, level) {
 
 function setversion(version) {
   var data = {version: version, date: new Date()};
-  fs.writeFileSync('misc/version.json', JSON.stringify(data, null, 2));
+  fs.writeFileSync('version.json', JSON.stringify(data, null, 2));
 }
 
 var level = +process.argv[2];
-var v = JSON.parse(fs.readFileSync('misc/version.json', 'utf8'));
+var v = JSON.parse(fs.readFileSync('version.json', 'utf8'));
 var oldversion = v.version;
 var version = bump(oldversion, level);
 setversion(version);

@@ -3,7 +3,7 @@ var child_process = require('child_process');
 var request = require('request');
 
 var pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-var v = JSON.parse(child_process.execSync('git show stable:misc/version.json').toString());
+var v = JSON.parse(child_process.execSync('git show stable:version.json').toString());
 var secrets = JSON.parse(fs.readFileSync(`../${pkg.meta.path}.keys/chrome-store.json`, 'utf8'));
 var refresh = JSON.parse(fs.readFileSync(`../${pkg.meta.path}.keys/refresh-token.json`, 'utf8'));
 

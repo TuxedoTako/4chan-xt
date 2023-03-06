@@ -1,4 +1,4 @@
-import version from "../../misc/version.json";
+import version from "../../version.json";
 import meta from "../../package.json";
 import type SimpleDict from "../classes/SimpleDict";
 import type Post from "../classes/Post";

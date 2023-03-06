@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 export default async function generateMetadata(packageJson, channel) {
   const meta = packageJson.meta;
 
-  const versionFile = await readFile(resolve(__dirname, '../../misc/version.json'));
+  const versionFile = await readFile(resolve(__dirname, '../../version.json'));
   const version = JSON.parse(versionFile.toString());
 
   const iconFile = await readFile(resolve(__dirname, './icon48.png'));

@@ -28,7 +28,7 @@ template_deps := package.json tools/template.js
 $(eval $(shell node tools/pkgvars.js))
 
 # must be read in when needed to prevent out-of-date version
-version = $(shell node -p "JSON.parse(require('fs').readFileSync('misc/version.json')).version")
+version = $(shell node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
 
 source_directories := \
  globals config css platform classes site \
@@ -50,7 +50,7 @@ uses_tests_enabled := \
  src/main/Main.coffee
 
 imports_src/globals/globals.js := \
- misc/version.json
+ version.json
 imports_src/css/CSS.js := \
  node_modules/font-awesome/fonts/fontawesome-webfont.woff
 imports_src/Monitoring/Favicon.coffee := \
@@ -159,24 +159,24 @@ testbuilds/crx$1/eventPage.js : tmp/eventPage.js | testbuilds/crx$1
 testbuilds/crx$1/icon%.png : src/meta/icon%.png | testbuilds/crx$1
 	$$(CP)
 
-testbuilds/crx$1/manifest.json : src/meta/manifest.json misc/version.json $(template_deps) | testbuilds/crx$1
+testbuilds/crx$1/manifest.json : src/meta/manifest.json version.json $(template_deps) | testbuilds/crx$1
 	$(template) $$< $$@ type=crx channel=$1
 
-testbuilds/updates$1.xml : src/meta/updates.xml misc/version.json $(template_deps) | testbuilds/crx$1
+testbuilds/updates$1.xml : src/meta/updates.xml version.json $(template_deps) | testbuilds/crx$1
 	$(template) $$< $$@ type=crx channel=$1
 
-testbuilds/updates$1.json : src/meta/updates.json  $(template_deps) | testbuilds/crx$1
+testbuilds/updates$1.json : src/meta/updates.json version.json $(template_deps) | testbuilds/crx$1
 	$(template) $$< $$@ type=crx channel=$1
 
 testbuilds/$(name)$1.crx.zip : \
  $(foreach f,$(crx_contents),testbuilds/crx$1/$(f)) \
- package.json misc/version.json tools/zip-crx.js
+ package.json version.json tools/zip-crx.js
 	node tools/zip-crx.js $1
 
-testbuilds/$(name)$1.crx : $(foreach f,$(crx_contents),testbuilds/crx$1/$(f)) misc/version.json tools/sign.sh | tmp
+testbuilds/$(name)$1.crx : $(foreach f,$(crx_contents),testbuilds/crx$1/$(f)) version.json tools/sign.sh | tmp
 	tools/sign.sh $1
 
-testbuilds/$(name)$1.meta.js : src/meta/metadata.js src/meta/icon48.png misc/version.json src/Archive/archives.json $(template_deps) | testbuilds
+testbuilds/$(name)$1.meta.js : src/meta/metadata.js src/meta/icon48.png version.json src/Archive/archives.json $(template_deps) | testbuilds
 	$(template) $$< $$@ type=userscript channel=$1
 
 testbuilds/$(name)$1.user.js : testbuilds/$(name)$1.meta.js tmp/meta-newline.js $$(call pieces,userscript) | .events/compile
@@ -195,10 +195,10 @@ testbuilds/$(name).zip : testbuilds/$(name)-noupdate.crx.zip
 builds/% : testbuilds/% | builds
 	$(CP)
 
-test.html : README.md misc/template.jst tools/markdown.js
+test.html : README.md template.jst tools/markdown.js
 	node tools/markdown.js
 
-index.html : misc/test.html
+index.html : test.html
 	$(CP)
 
 tmp/.jshintrc : src/meta/jshint.json tmp/declaration.js src/globals/globals.js $(template_deps) | tmp
@@ -220,7 +220,7 @@ install.json :
 	node tools/install.js
 	echo -> $@
 
-.events/CHANGELOG : misc/version.json | .events
+.events/CHANGELOG : version.json | .events
 	node tools/updcl.js
 	echo -> $@
 
@@ -322,7 +322,7 @@ stable : distready
 web : index.html distready
 	-git commit -am "Build web page."
 	cd dist && git merge --no-commit -s ours master
-	cd dist && git checkout master README.md misc/index.html misc/web.css img .gitignore .gitattributes
+	cd dist && git checkout master README.md index.html web.css img .gitignore .gitattributes
 	cd dist && git commit -am "Update web page."
 
 update :
