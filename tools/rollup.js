@@ -10,7 +10,7 @@ import generateManifestJson from '../src/meta/manifestJson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const buildDir = resolve(__dirname, '../builds/test/');
+const buildDir = resolve(__dirname, '../testbuilds');
 
 let channel = '';
 

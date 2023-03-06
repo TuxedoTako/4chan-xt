@@ -20,12 +20,11 @@ ifneq "$(filter $(npgoals),$(MAKECMDGOALS))" ""
 .NOTPARALLEL :
 endif
 
-coffee := $(BIN)coffee -c --no-header
 template := node tools/template.js
 template_deps := package.json tools/template.js
 
 # read name meta_name meta_distBranch
-$(eval $(shell node tools/pkgvars.js))
+#$(eval $(shell node tools/pkgvars.js))
 
 # must be read in when needed to prevent out-of-date version
 version = $(shell node -p "JSON.parse(require('fs').readFileSync('version.json')).version")
@@ -44,16 +43,16 @@ sort_directory = \
 sources := $(foreach d,$(source_directories),$(call sort_directory,$(d)))
 
 uses_tests_enabled := \
- src/classes/Post.coffee \
- src/General/Test.coffee \
- src/Linkification/Linkify.coffee \
- src/main/Main.coffee
+ src/classes/Post.js \
+ src/General/Test.js \
+ src/Linkification/Linkify.js \
+ src/main/Main.js
 
 imports_src/globals/globals.js := \
  version.json
 imports_src/css/CSS.js := \
  node_modules/font-awesome/fonts/fontawesome-webfont.woff
-imports_src/Monitoring/Favicon.coffee := \
+imports_src/Monitoring/Favicon.js := \
  src/meta/icon128.png
 
 imports = \
@@ -252,15 +251,14 @@ distready : dist $(wildcard dist/* dist/*/*)
 
 .PHONY: default all distready script crx release jshint install push $(npgoals)
 
-script : $(script)
-
+script :
+	npm run build
 crx : $(crx)
 
 release : $(release)
 
-jshint : .events/jshint
 
-install : .events/install
+install : script
 
 push : .events2/push-git .events2/push-web .events2/push-store
 
