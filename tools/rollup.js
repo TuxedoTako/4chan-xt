@@ -10,7 +10,7 @@ import generateManifestJson from '../src/meta/manifestJson.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const buildDir = resolve(__dirname, '../testbuilds/');
+const buildDir = resolve(__dirname, '../builds/test/');
 
 let channel = '';
 
@@ -71,25 +71,26 @@ if (process.argv.includes('-beta')) {
   };
 
   // user script
-  if (process.argv.includes('-script')) {
-    await bundle.write({
-      ...sharedBundleOpts,
-      banner: metadata + license,
-      // file: '../builds/test/rollupOutput.js',
-      file: resolve(buildDir, `${packageJson.meta.path}${channel}.user.js`),
-    });}
+  await bundle.write({
+    ...sharedBundleOpts,
+    banner: metadata + license,
+    // file: '../builds/test/rollupOutput.js',
+    file: resolve(buildDir, `${packageJson.meta.path}${channel}.user.js`),
+  });
 
   // chrome extension
-  if (process.argv.includes('-crx')) {
-	  const crxDir = resolve(buildDir, 'crx');
-	  await bundle.write({
-		  ...sharedBundleOpts,
-		  banner: license,
-		  file: resolve(crxDir, 'script.js'),
-	  });
-	  await copyFile(resolve(__dirname, '../src/meta/eventPage.js'), resolve(crxDir, 'eventPage.js'));
-	  writeFile(resolve(crxDir, 'manifest.json'), generateManifestJson(packageJson, version, channel));
-	  for (const file of ['icon16.png', 'icon48.png', 'icon128.png']) {
-		  await copyFile(resolve(__dirname, '../src/meta/', file), resolve(crxDir, file));
-	  };}
-  })();
+  const crxDir = resolve(buildDir, 'crx');
+  await bundle.write({
+    ...sharedBundleOpts,
+    banner: license,
+    file: resolve(crxDir, 'script.js'),
+  });
+
+  await copyFile(resolve(__dirname, '../src/meta/eventPage.js'), resolve(crxDir, 'eventPage.js'));
+
+  writeFile(resolve(crxDir, 'manifest.json'), generateManifestJson(packageJson, version, channel));
+
+  for (const file of ['icon16.png', 'icon48.png', 'icon128.png']) {
+    await copyFile(resolve(__dirname, '../src/meta/', file), resolve(crxDir, file));
+  };
+})();
