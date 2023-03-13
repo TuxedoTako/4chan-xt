@@ -49,3 +49,22 @@ declare module '*/version.json' {
   }
   export default versionInfo;
 }
+declare module '*/archives.json' {
+  const archives: {
+    uid: number,
+    name: string,
+    domain: string,
+    http: boolean,
+    https: boolean,
+    software: string,
+    boards: string[],
+    files: string[],
+    search?: string[],
+    reports?: boolean,
+  }[];
+  export default archives;
+}
+declare module '*/banners.json' {
+  const banners: string[];
+  export default banners;
+}
