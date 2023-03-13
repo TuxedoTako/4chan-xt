@@ -1,5 +1,5 @@
 import userCss from './user.css';
-import banners from './banners.js';
+import banners from './banners.json';
 import meta from '../../package.json';
 
 const Config = {

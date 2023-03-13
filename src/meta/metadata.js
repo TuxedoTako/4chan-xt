@@ -1,6 +1,5 @@
 // this file is needed in the build script, keep it .js
 
-import archives from "../Archive/archives.js";
 import { readFile } from "fs/promises";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from 'url';
@@ -15,6 +14,8 @@ export default async function generateMetadata(packageJson, channel) {
 
   const iconFile = await readFile(resolve(__dirname, './icon48.png'));
   const icon = Buffer.from(iconFile).toString('base64');
+
+  const archives = JSON.parse(await readFile(resolve(__dirname, '../Archive/archives.json'), { encoding: 'utf-8' }));
 
   let output = `// ==UserScript==
 // @name         ${meta.name}${channel === '-beta' ? ' beta' : ''}

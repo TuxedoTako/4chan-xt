@@ -1,5 +1,4 @@
-// This file is needed in the build step, keep it .js
-const archives = [{
+[{
   "uid": 3,
   "name": "4plebs",
   "domain": "archive.4plebs.org",
@@ -110,6 +109,4 @@ const archives = [{
   "boards": ["3", "i", "sci", "xs"],
   "files": ["3", "i", "sci", "xs"],
   "reports": true
-}];
-
-export default archives;
+}]

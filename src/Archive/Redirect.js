@@ -3,7 +3,7 @@ import { Conf } from '../globals/globals.js';
 import $ from '../platform/$.js';
 import CrossOrigin from '../platform/CrossOrigin.js';
 import { DAY, dict } from '../platform/helpers.js';
-import archives from './archives.js';
+import archives from './archives.json';
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns

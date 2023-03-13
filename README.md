@@ -90,3 +90,4 @@ If you encounter a bug, try the steps [here](https://github.com/ccd0/4chan-x/blo
 - [Frequently Asked Questions](https://github.com/ccd0/4chan-x/wiki/Frequently-Asked-Questions)
 - [Report Bugs](https://github.com/ccd0/4chan-x/issues)
 - [Contributing](https://github.com/ccd0/4chan-x/blob/master/CONTRIBUTING.md)
+
