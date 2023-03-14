@@ -5,6 +5,20 @@
  * DS205: Consider reworking code to avoid use of IIFEs
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
  */
+
+import Notice from "../classes/Notice";
+import Post from "../classes/Post";
+import Config from "../config/Config";
+import Filter from "../Filtering/Filter";
+import ImageHost from "../Images/ImageHost";
+import Keybinds from "../Miscellaneous/Keybinds";
+import Unread from "../Monitoring/Unread";
+import $$ from "../platform/$$";
+import $ from "../platform/$";
+import Header from "./Header";
+import { g, Conf, c } from "../globals/globals";
+import Menu from "../Menu/Menu";
+
 // <% if (readJSON('/.tests_enabled')) { %>
 var Test = {
   init() {

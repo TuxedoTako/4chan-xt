@@ -1,3 +1,16 @@
+import Redirect from "../Archive/Redirect";
+import Notice from "../classes/Notice";
+import { Conf, d, doc, g } from "../globals/globals";
+import Main from "../main/Main";
+import CatalogLinks from "../Miscellaneous/CatalogLinks";
+import ReplyPruning from "../Monitoring/ReplyPruning";
+import $ from "../platform/$";
+import $$ from "../platform/$$";
+import BoardConfig from "./BoardConfig";
+import Get from "./Get";
+import Settings from "./Settings";
+import UI from "./UI";
+
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -461,8 +474,7 @@ var Header = {
   },
 
   setBarPosition(bottom) {
-    // TODO check if barPositionToggler exists
-    Header.barPositionToggler.checked = bottom;
+    if (Header.barPositionToggler) Header.barPositionToggler.checked = bottom;
     $.event('CloseMenu');
     const args = bottom ? [
       'bottom-header',
@@ -673,3 +685,4 @@ var Header = {
     return notice = new Notice('info', el);
   }
 };
+export default Header;

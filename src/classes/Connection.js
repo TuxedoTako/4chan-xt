@@ -3,7 +3,7 @@
  * DS102: Remove unnecessary code created because of implicit returns
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
  */
-class Connection {
+export default class Connection {
   constructor(target, origin, cb={}) {
     this.send = this.send.bind(this);
     this.onMessage = this.onMessage.bind(this);

@@ -1,3 +1,7 @@
+import Callbacks from "../classes/Callbacks";
+import { g } from "../globals/globals";
+import $ from "../platform/$";
+
 /*
  * decaffeinate suggestions:
  * DS101: Remove unnecessary use of Array.from
@@ -57,3 +61,4 @@ var Recursive = {
     });
   }
 };
+export default Recursive;
