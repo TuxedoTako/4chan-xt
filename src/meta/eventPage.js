@@ -6,20 +6,23 @@
  */
 let requestID = 0;
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   const id = requestID;
   requestID++;
   sendResponse(id);
-  return handlers[request.type](request, response => chrome.tabs.sendMessage(sender.tab.id, {id, data: response}));});
+  return handlers[request.type](request, (response) =>
+    chrome.tabs.sendMessage(sender.tab.id, { id, data: response })
+  );
+});
 
 var handlers = {
   permission(request, cb) {
     const origins = request.origins || ['*://*/'];
-    return chrome.permissions.contains({origins}, function(result) {
+    return chrome.permissions.contains({ origins }, function (result) {
       if (result) {
         return cb(result);
       } else {
-        return chrome.permissions.request({origins}, function(result) {
+        return chrome.permissions.request({ origins }, function (result) {
           if (chrome.runtime.lastError) {
             return cb(false);
           } else {
@@ -40,21 +43,21 @@ var handlers = {
       var value = object[key];
       xhr.setRequestHeader(key, value);
     }
-    xhr.addEventListener('load', function() {
-      let {status, statusText, response} = this;
-      const responseHeaderString = this.getAllResponseHeaders();
-      if (response && (request.responseType === 'arraybuffer')) {
-        response = [...Array.from(new Uint8Array(response))];
-      }
-      return cb({status, statusText, response, responseHeaderString});
-    }
-    , false);
-    xhr.addEventListener('error', () => cb({error: true})
-    , false);
-    xhr.addEventListener('abort', () => cb({error: true})
-    , false);
-    xhr.addEventListener('timeout', () => cb({error: true})
-    , false);
+    xhr.addEventListener(
+      'load',
+      function () {
+        let { status, statusText, response } = this;
+        const responseHeaderString = this.getAllResponseHeaders();
+        if (response && request.responseType === 'arraybuffer') {
+          response = [...Array.from(new Uint8Array(response))];
+        }
+        return cb({ status, statusText, response, responseHeaderString });
+      },
+      false
+    );
+    xhr.addEventListener('error', () => cb({ error: true }), false);
+    xhr.addEventListener('abort', () => cb({ error: true }), false);
+    xhr.addEventListener('timeout', () => cb({ error: true }), false);
     return xhr.send();
-  }
+  },
 };

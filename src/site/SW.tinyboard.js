@@ -1,8 +1,8 @@
-import { Conf } from "../globals/globals";
-import Main from "../main/Main";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import { dict } from "../platform/helpers";
+import { Conf } from '../globals/globals';
+import Main from '../main/Main';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import { dict } from '../platform/helpers';
 
 /*
  * decaffeinate suggestions:
@@ -35,13 +35,13 @@ const SWTinyboard = {
     'Thread Updater',
     'Banner',
     'Flash Features',
-    'Reply Pruning'
+    'Reply Pruning',
   ],
 
   detect() {
     for (var script of $$('script:not([src])', document.head)) {
       var m;
-      if (m = script.textContent.match(/\bvar configRoot=(".*?")/)) {
+      if ((m = script.textContent.match(/\bvar configRoot=(".*?")/))) {
         var properties = dict();
         try {
           var root = JSON.parse(m[1]);
@@ -50,7 +50,7 @@ const SWTinyboard = {
           } else if (/^https?:/.test(root)) {
             properties.root = root;
           }
-        } catch (error) { }
+        } catch (error) {}
         return properties;
       }
     }
@@ -59,7 +59,7 @@ const SWTinyboard = {
 
   awaitBoard(cb) {
     let reactUI;
-    if (reactUI = $.id('react-ui')) {
+    if ((reactUI = $.id('react-ui'))) {
       const s = (this.selectors = Object.create(this.selectors));
       s.boardFor = { index: '.page-container' };
       s.thread = 'div[id^="thread_"]';
@@ -71,36 +71,68 @@ const SWTinyboard = {
 
   urls: {
     thread({ siteID, boardID, threadID }, isArchived) {
-      return `${Conf['siteProperties'][siteID]?.root || `http://${siteID}/`}${boardID}/${isArchived ? 'archive/' : ''}res/${threadID}.html`;
+      return `${
+        Conf['siteProperties'][siteID]?.root || `http://${siteID}/`
+      }${boardID}/${isArchived ? 'archive/' : ''}res/${threadID}.html`;
     },
-    post({ postID }) { return `#${postID}`; },
-    index({ siteID, boardID }) { return `${Conf['siteProperties'][siteID]?.root || `http://${siteID}/`}${boardID}/`; },
-    catalog({ siteID, boardID }) { return `${Conf['siteProperties'][siteID]?.root || `http://${siteID}/`}${boardID}/catalog.html`; },
+    post({ postID }) {
+      return `#${postID}`;
+    },
+    index({ siteID, boardID }) {
+      return `${
+        Conf['siteProperties'][siteID]?.root || `http://${siteID}/`
+      }${boardID}/`;
+    },
+    catalog({ siteID, boardID }) {
+      return `${
+        Conf['siteProperties'][siteID]?.root || `http://${siteID}/`
+      }${boardID}/catalog.html`;
+    },
     threadJSON({ siteID, boardID, threadID }, isArchived) {
       const root = Conf['siteProperties'][siteID]?.root;
-      if (root) { return `${root}${boardID}/${isArchived ? 'archive/' : ''}res/${threadID}.json`; } else { return ''; }
+      if (root) {
+        return `${root}${boardID}/${
+          isArchived ? 'archive/' : ''
+        }res/${threadID}.json`;
+      } else {
+        return '';
+      }
     },
     archivedThreadJSON(thread) {
       return SWTinyboard.urls.threadJSON(thread, true);
     },
     threadsListJSON({ siteID, boardID }) {
       const root = Conf['siteProperties'][siteID]?.root;
-      if (root) { return `${root}${boardID}/threads.json`; } else { return ''; }
+      if (root) {
+        return `${root}${boardID}/threads.json`;
+      } else {
+        return '';
+      }
     },
     archiveListJSON({ siteID, boardID }) {
       const root = Conf['siteProperties'][siteID]?.root;
-      if (root) { return `${root}${boardID}/archive/archive.json`; } else { return ''; }
+      if (root) {
+        return `${root}${boardID}/archive/archive.json`;
+      } else {
+        return '';
+      }
     },
     catalogJSON({ siteID, boardID }) {
       const root = Conf['siteProperties'][siteID]?.root;
-      if (root) { return `${root}${boardID}/catalog.json`; } else { return ''; }
+      if (root) {
+        return `${root}${boardID}/catalog.json`;
+      } else {
+        return '';
+      }
     },
     file({ siteID, boardID }, filename) {
-      return `${Conf['siteProperties'][siteID]?.root || `http://${siteID}/`}${boardID}/${filename}`;
+      return `${
+        Conf['siteProperties'][siteID]?.root || `http://${siteID}/`
+      }${boardID}/${filename}`;
     },
     thumb(board, filename) {
       return SWTinyboard.urls.file(board, filename);
-    }
+    },
   },
 
   selectors: {
@@ -123,23 +155,23 @@ const SWTinyboard = {
       date: 'time',
       nameBlock: 'label',
       quote: 'a[href*="#q"]',
-      reply: 'a[href*="/res/"]:not([href*="#"])'
+      reply: 'a[href*="/res/"]:not([href*="#"])',
     },
     icons: {
       isSticky: '.fa-thumb-tack',
-      isClosed: '.fa-lock'
+      isClosed: '.fa-lock',
     },
     file: {
       text: '.fileinfo',
       link: '.fileinfo > a',
-      thumb: 'a > .post-image'
+      thumb: 'a > .post-image',
     },
     thumbLink: '.file > a',
     multifile: '.files > .file',
     highlightable: {
       op: ' > .op',
       reply: '.reply',
-      catalog: ' > .thread'
+      catalog: ' > .thread',
     },
     comment: '.body',
     spoiler: '.spoiler',
@@ -147,7 +179,7 @@ const SWTinyboard = {
     catalog: {
       board: '#Grid',
       thread: '.mix',
-      thumb: '.thread-image'
+      thumb: '.thread-image',
     },
     boardList: '.boardlist',
     boardListBottom: '.boardlist.bottom',
@@ -155,23 +187,23 @@ const SWTinyboard = {
     psa: '.blotter',
     nav: {
       prev: '.pages > form > [value=Previous]',
-      next: '.pages > form > [value=Next]'
-    }
+      next: '.pages > form > [value=Next]',
+    },
   },
 
   classes: {
-    highlight: 'highlighted'
+    highlight: 'highlighted',
   },
 
   xpath: {
     thread: 'div[starts-with(@id,"thread_")]',
-    postContainer: 'div[starts-with(@id,"reply_") or starts-with(@id,"thread_")]',
-    replyContainer: 'div[starts-with(@id,"reply_")]'
+    postContainer:
+      'div[starts-with(@id,"reply_") or starts-with(@id,"thread_")]',
+    replyContainer: 'div[starts-with(@id,"reply_")]',
   },
 
   regexp: {
-    quotelink:
-      new RegExp(`\
+    quotelink: new RegExp(`\
 /\
 ([^/]+)\
 /res/\
@@ -181,7 +213,7 @@ const SWTinyboard = {
 $\
 `),
     quotelinkHTML:
-      /<a [^>]*\bhref="[^"]*\/([^\/]+)\/res\/(\d+)(?:\.\w+)?#(\d+)"/g
+      /<a [^>]*\bhref="[^"]*\/([^\/]+)\/res\/(\d+)(?:\.\w+)?#(\d+)"/g,
   },
 
   Build: {
@@ -192,7 +224,7 @@ $\
         $.extend(o, {
           files: [],
           fileDeleted: true,
-          filesDeleted: [0]
+          filesDeleted: [0],
         });
       }
       if (data.extra_files) {
@@ -214,11 +246,9 @@ $\
     },
 
     parseComment(html) {
-      html = html
-        .replace(/<br\b[^<]*>/gi, '\n')
-        .replace(/<[^>]*>/g, '');
+      html = html.replace(/<br\b[^<]*>/gi, '\n').replace(/<[^>]*>/g, '');
       return $.unescape(html);
-    }
+    },
   },
 
   bgColoredEl() {
@@ -232,7 +262,7 @@ $\
   preParsingFixes(board) {
     // fixes effects of unclosed link in announcement
     let broken;
-    if (broken = $('a > input[name="board"]', board)) {
+    if ((broken = $('a > input[name="board"]', board))) {
       return $.before(broken.parentNode, broken);
     }
   },
@@ -240,20 +270,22 @@ $\
   parseNodes(post, nodes) {
     // Add vichan's span.poster_id around the ID if not already present.
     let m;
-    if (nodes.uniqueID) { return; }
+    if (nodes.uniqueID) {
+      return;
+    }
     let text = '';
     let node = nodes.nameBlock.nextSibling;
-    while (node && (node.nodeType === 3)) {
+    while (node && node.nodeType === 3) {
       text += node.textContent;
       node = node.nextSibling;
     }
-    if (m = text.match(/(\s*ID:\s*)(\S+)/)) {
+    if ((m = text.match(/(\s*ID:\s*)(\S+)/))) {
       let uniqueID;
       nodes.info.normalize();
       let { nextSibling } = nodes.nameBlock;
       nextSibling = nextSibling.splitText(m[1].length);
       nextSibling.splitText(m[2].length);
-      nodes.uniqueID = (uniqueID = $.el('span', { className: 'poster_id' }));
+      nodes.uniqueID = uniqueID = $.el('span', { className: 'poster_id' });
       $.replace(nextSibling, uniqueID);
       return $.add(uniqueID, nextSibling);
     }
@@ -261,37 +293,66 @@ $\
 
   parseDate(node) {
     let date = Date.parse(node.getAttribute('datetime')?.trim());
-    if (!isNaN(date)) { return new Date(date); }
+    if (!isNaN(date)) {
+      return new Date(date);
+    }
     date = Date.parse(node.textContent.trim() + ' UTC'); // e.g. onesixtwo.club
-    if (!isNaN(date)) { return new Date(date); }
+    if (!isNaN(date)) {
+      return new Date(date);
+    }
     return undefined;
   },
 
   parseFile(post, file) {
     let info, infoNode;
     const { text, link, thumb } = file;
-    if ($.x(`ancestor::${this.xpath.postContainer}[1]`, text) !== post.nodes.root) { return false; } // file belongs to a reply
-    if (!(infoNode = link.nextSibling?.textContent.includes('(') ? link.nextSibling : link.nextElementSibling)) { return false; }
-    if (!(info = infoNode.textContent.match(/\((.*,\s*)?([\document.]+ ?[KMG]?B).*\)/))) { return false; }
+    if (
+      $.x(`ancestor::${this.xpath.postContainer}[1]`, text) !== post.nodes.root
+    ) {
+      return false;
+    } // file belongs to a reply
+    if (
+      !(infoNode = link.nextSibling?.textContent.includes('(')
+        ? link.nextSibling
+        : link.nextElementSibling)
+    ) {
+      return false;
+    }
+    if (
+      !(info = infoNode.textContent.match(
+        /\((.*,\s*)?([\document.]+ ?[KMG]?B).*\)/
+      ))
+    ) {
+      return false;
+    }
     const nameNode = $('.postfilename', text);
     $.extend(file, {
-      name: nameNode ? (nameNode.title || nameNode.textContent) : link.pathname.match(/[^/]*$/)[0],
+      name: nameNode
+        ? nameNode.title || nameNode.textContent
+        : link.pathname.match(/[^/]*$/)[0],
       size: info[2],
-      dimensions: info[0].match(/\d+x\d+/)?.[0]
+      dimensions: info[0].match(/\d+x\d+/)?.[0],
     });
     if (thumb) {
       $.extend(file, {
-        thumbURL: /\/static\//.test(thumb.src) && $.isImage(link.href) ? link.href : thumb.src,
-        isSpoiler: /^Spoiler/i.test(info[1] || '') || (link.textContent === 'Spoiler Image')
-      }
-      );
+        thumbURL:
+          /\/static\//.test(thumb.src) && $.isImage(link.href)
+            ? link.href
+            : thumb.src,
+        isSpoiler:
+          /^Spoiler/i.test(info[1] || '') ||
+          link.textContent === 'Spoiler Image',
+      });
     }
     return true;
   },
 
   isThumbExpanded(file) {
     // Detect old Tinyboard image expansion that changes src attribute on thumbnail.
-    return $.hasClass(file.thumb.parentNode, 'expanded') || (file.thumb.parentNode.dataset.expanded === 'true');
+    return (
+      $.hasClass(file.thumb.parentNode, 'expanded') ||
+      file.thumb.parentNode.dataset.expanded === 'true'
+    );
   },
 
   isLinkified(link) {
@@ -299,7 +360,7 @@ $\
   },
 
   catalogPin(threadRoot) {
-    return threadRoot.dataset.sticky = 'true';
-  }
+    return (threadRoot.dataset.sticky = 'true');
+  },
 };
 export default SWTinyboard;

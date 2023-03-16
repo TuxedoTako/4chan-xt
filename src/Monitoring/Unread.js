@@ -1,14 +1,14 @@
-import Callbacks from "../classes/Callbacks";
-import DataBoard from "../classes/DataBoard";
-import RandomAccessList from "../classes/RandomAccessList";
-import Get from "../General/Get";
-import Header from "../General/Header";
-import { g, Conf } from "../globals/globals";
-import $ from "../platform/$";
-import { debounce, SECOND } from "../platform/helpers";
-import QuoteYou from "../Quotelinks/QuoteYou";
-import Favicon from "./Favicon";
-import ThreadWatcher from "./ThreadWatcher";
+import Callbacks from '../classes/Callbacks';
+import DataBoard from '../classes/DataBoard';
+import RandomAccessList from '../classes/RandomAccessList';
+import Get from '../General/Get';
+import Header from '../General/Header';
+import { g, Conf } from '../globals/globals';
+import $ from '../platform/$';
+import { debounce, SECOND } from '../platform/helpers';
+import QuoteYou from '../Quotelinks/QuoteYou';
+import Favicon from './Favicon';
+import ThreadWatcher from './ThreadWatcher';
 
 /*
  * decaffeinate suggestions:
@@ -18,25 +18,30 @@ import ThreadWatcher from "./ThreadWatcher";
  */
 const Unread = {
   init() {
-    if ((g.VIEW !== 'thread') || (
-      !Conf['Unread Count'] &&
-      !Conf['Unread Favicon'] &&
-      !Conf['Unread Line'] &&
-      !Conf['Remember Last Read Post'] &&
-      !Conf['Desktop Notifications'] &&
-      !Conf['Quote Threading']
-    )) { return; }
+    if (
+      g.VIEW !== 'thread' ||
+      (!Conf['Unread Count'] &&
+        !Conf['Unread Favicon'] &&
+        !Conf['Unread Line'] &&
+        !Conf['Remember Last Read Post'] &&
+        !Conf['Desktop Notifications'] &&
+        !Conf['Quote Threading'])
+    ) {
+      return;
+    }
 
     if (Conf['Remember Last Read Post']) {
-      $.sync('Remember Last Read Post', enabled => Conf['Remember Last Read Post'] = enabled);
+      $.sync(
+        'Remember Last Read Post',
+        (enabled) => (Conf['Remember Last Read Post'] = enabled)
+      );
       this.db = new DataBoard('lastReadPosts', this.sync);
     }
 
     this.hr = $.el('hr', {
       id: 'unread-line',
-      className: 'unread-line'
-    }
-    );
+      className: 'unread-line',
+    });
     this.posts = new Set();
     this.postsQuotingYou = new Set();
     this.order = new RandomAccessList();
@@ -44,57 +49,75 @@ const Unread = {
 
     Callbacks.Thread.push({
       name: 'Unread',
-      cb: this.node
+      cb: this.node,
     });
 
     return Callbacks.Post.push({
       name: 'Unread',
-      cb: this.addPost
+      cb: this.addPost,
     });
   },
 
   node() {
     Unread.thread = this;
     Unread.title = document.title;
-    Unread.lastReadPost = Unread.db?.get({
-      boardID: this.board.ID,
-      threadID: this.ID
-    }) || 0;
+    Unread.lastReadPost =
+      Unread.db?.get({
+        boardID: this.board.ID,
+        threadID: this.ID,
+      }) || 0;
     Unread.readCount = 0;
-    for (var ID of this.posts.keys) { if (+ID <= Unread.lastReadPost) { Unread.readCount++; } }
+    for (var ID of this.posts.keys) {
+      if (+ID <= Unread.lastReadPost) {
+        Unread.readCount++;
+      }
+    }
     $.one(document, '4chanXInitFinished', Unread.ready);
     $.on(document, 'PostsInserted', Unread.onUpdate);
-    $.on(document, 'ThreadUpdate', function (e) { if (e.detail[404]) { return Unread.update(); } });
+    $.on(document, 'ThreadUpdate', function (e) {
+      if (e.detail[404]) {
+        return Unread.update();
+      }
+    });
     const resetLink = $.el('a', {
       href: 'javascript:;',
       className: 'unread-reset',
-      textContent: 'Mark all unread'
-    }
-    );
+      textContent: 'Mark all unread',
+    });
     $.on(resetLink, 'click', Unread.reset);
     return Header.menu.addEntry({
       el: resetLink,
-      order: 70
+      order: 70,
     });
   },
 
   ready() {
-    if (Conf['Remember Last Read Post'] && Conf['Scroll to Last Read Post']) { Unread.scroll(); }
+    if (Conf['Remember Last Read Post'] && Conf['Scroll to Last Read Post']) {
+      Unread.scroll();
+    }
     Unread.setLine(true);
     Unread.read();
     Unread.update();
     $.on(document, 'scroll visibilitychange', Unread.read);
-    if (Conf['Unread Line']) { return $.on(document, 'visibilitychange', Unread.setLine); }
+    if (Conf['Unread Line']) {
+      return $.on(document, 'visibilitychange', Unread.setLine);
+    }
   },
 
   positionPrev() {
-    if (Unread.position) { return Unread.position.prev; } else { return Unread.order.last; }
+    if (Unread.position) {
+      return Unread.position.prev;
+    } else {
+      return Unread.order.last;
+    }
   },
 
   scroll() {
     // Let the header's onload callback handle it.
     let hash;
-    if ((hash = location.hash.match(/\d+/)) && hash[0] in Unread.thread.posts) { return; }
+    if ((hash = location.hash.match(/\d+/)) && hash[0] in Unread.thread.posts) {
+      return;
+    }
 
     let position = Unread.positionPrev();
     while (position) {
@@ -110,7 +133,9 @@ const Unread = {
   },
 
   reset() {
-    if (Unread.lastReadPost == null) { return; }
+    if (Unread.lastReadPost == null) {
+      return;
+    }
 
     Unread.posts = new Set();
     Unread.postsQuotingYou = new Set();
@@ -118,14 +143,17 @@ const Unread = {
     Unread.position = null;
     Unread.lastReadPost = 0;
     Unread.readCount = 0;
-    Unread.thread.posts.forEach(post => Unread.addPost.call(post));
+    Unread.thread.posts.forEach((post) => Unread.addPost.call(post));
 
     $.forceSync('Remember Last Read Post');
-    if (Conf['Remember Last Read Post'] && (!Unread.thread.isDead || Unread.thread.isArchived)) {
+    if (
+      Conf['Remember Last Read Post'] &&
+      (!Unread.thread.isDead || Unread.thread.isArchived)
+    ) {
       Unread.db.set({
         boardID: Unread.thread.board.ID,
         threadID: Unread.thread.ID,
-        val: 0
+        val: 0,
       });
     }
 
@@ -135,20 +163,26 @@ const Unread = {
   },
 
   sync() {
-    if (Unread.lastReadPost == null) { return; }
+    if (Unread.lastReadPost == null) {
+      return;
+    }
     const lastReadPost = Unread.db.get({
       boardID: Unread.thread.board.ID,
       threadID: Unread.thread.ID,
-      defaultValue: 0
+      defaultValue: 0,
     });
-    if (Unread.lastReadPost >= lastReadPost) { return; }
+    if (Unread.lastReadPost >= lastReadPost) {
+      return;
+    }
     Unread.lastReadPost = lastReadPost;
 
     const postIDs = Unread.thread.posts.keys;
     for (let i = Unread.readCount, end = postIDs.length; i < end; i++) {
       var ID = +postIDs[i];
       if (!Unread.thread.posts.get(ID).isFetchedQuote) {
-        if (ID > Unread.lastReadPost) { break; }
+        if (ID > Unread.lastReadPost) {
+          break;
+        }
         Unread.posts.delete(ID);
         Unread.postsQuotingYou.delete(ID);
       }
@@ -161,12 +195,22 @@ const Unread = {
   },
 
   addPost() {
-    if (this.isFetchedQuote || this.isClone) { return; }
+    if (this.isFetchedQuote || this.isClone) {
+      return;
+    }
     Unread.order.push(this);
-    if ((this.ID <= Unread.lastReadPost) || this.isHidden || QuoteYou.isYou(this)) { return; }
+    if (
+      this.ID <= Unread.lastReadPost ||
+      this.isHidden ||
+      QuoteYou.isYou(this)
+    ) {
+      return;
+    }
     Unread.posts.add((Unread.posts.last = this.ID));
     Unread.addPostQuotingYou(this);
-    return Unread.position != null ? Unread.position : (Unread.position = Unread.order[this.ID]);
+    return Unread.position != null
+      ? Unread.position
+      : (Unread.position = Unread.order[this.ID]);
   },
 
   addPostQuotingYou(post) {
@@ -180,22 +224,23 @@ const Unread = {
   },
 
   openNotification(post, predicate = ' replied to you') {
-    if (!Header.areNotificationsEnabled) { return; }
+    if (!Header.areNotificationsEnabled) {
+      return;
+    }
     const notif = new Notification(`${post.info.nameBlock}${predicate}`, {
       body: post.commentDisplay(),
-      icon: Favicon.logo
-    }
-    );
+      icon: Favicon.logo,
+    });
     notif.onclick = function () {
       Header.scrollToIfNeeded(post.nodes.bottom, true);
       return window.focus();
     };
-    return notif.onshow = () => setTimeout(() => notif.close()
-      , 7 * SECOND);
+    return (notif.onshow = () => setTimeout(() => notif.close(), 7 * SECOND));
   },
 
   onUpdate() {
-    return $.queueTask(function () { // ThreadUpdater may scroll immediately after inserting posts
+    return $.queueTask(function () {
+      // ThreadUpdater may scroll immediately after inserting posts
       Unread.setLine();
       Unread.read();
       return Unread.update();
@@ -204,7 +249,9 @@ const Unread = {
 
   readSinglePost(post) {
     const { ID } = post;
-    if (!Unread.posts.has(ID)) { return; }
+    if (!Unread.posts.has(ID)) {
+      return;
+    }
     Unread.posts.delete(ID);
     Unread.postsQuotingYou.delete(ID);
     Unread.updatePosition();
@@ -214,28 +261,41 @@ const Unread = {
 
   read: debounce(100, function (e) {
     // Update the lastReadPost when hidden posts are added to the thread.
-    if (!Unread.posts.size && (Unread.readCount !== Unread.thread.posts.keys.length)) {
+    if (
+      !Unread.posts.size &&
+      Unread.readCount !== Unread.thread.posts.keys.length
+    ) {
       Unread.saveLastReadPost();
     }
 
-    if (document.hidden || !Unread.posts.size) { return; }
+    if (document.hidden || !Unread.posts.size) {
+      return;
+    }
 
     let count = 0;
     while (Unread.position) {
       var { ID, data } = Unread.position;
       var { bottom } = data.nodes;
-      if (!!bottom.getBoundingClientRect().height && // post has been hidden
-        (Header.getBottomOf(bottom) <= -1)) { break; }                      // post is completely read
+      if (
+        !!bottom.getBoundingClientRect().height && // post has been hidden
+        Header.getBottomOf(bottom) <= -1
+      ) {
+        break;
+      } // post is completely read
       count++;
       Unread.posts.delete(ID);
       Unread.postsQuotingYou.delete(ID);
       Unread.position = Unread.position.next;
     }
 
-    if (!count) { return; }
+    if (!count) {
+      return;
+    }
     Unread.updatePosition();
     Unread.saveLastReadPost();
-    if (e) { return Unread.update(); }
+    if (e) {
+      return Unread.update();
+    }
   }),
 
   updatePosition() {
@@ -247,39 +307,49 @@ const Unread = {
   saveLastReadPost: debounce(2000, function () {
     let ID;
     $.forceSync('Remember Last Read Post');
-    if (!Conf['Remember Last Read Post'] || !Unread.db) { return; }
+    if (!Conf['Remember Last Read Post'] || !Unread.db) {
+      return;
+    }
     const postIDs = Unread.thread.posts.keys;
     for (let i = Unread.readCount, end = postIDs.length; i < end; i++) {
       ID = +postIDs[i];
       if (!Unread.thread.posts.get(ID).isFetchedQuote) {
-        if (Unread.posts.has(ID)) { break; }
+        if (Unread.posts.has(ID)) {
+          break;
+        }
         Unread.lastReadPost = ID;
       }
       Unread.readCount++;
     }
-    if (Unread.thread.isDead && !Unread.thread.isArchived) { return; }
+    if (Unread.thread.isDead && !Unread.thread.isArchived) {
+      return;
+    }
     return Unread.db.set({
       boardID: Unread.thread.board.ID,
       threadID: Unread.thread.ID,
-      val: Unread.lastReadPost
+      val: Unread.lastReadPost,
     });
   }),
 
   setLine(force) {
-    if (!Conf['Unread Line']) { return; }
-    if (Unread.hr.hidden || document.hidden || (force === true)) {
+    if (!Conf['Unread Line']) {
+      return;
+    }
+    if (Unread.hr.hidden || document.hidden || force === true) {
       const oldPosition = Unread.linePosition;
-      if (Unread.linePosition = Unread.positionPrev()) {
+      if ((Unread.linePosition = Unread.positionPrev())) {
         if (Unread.linePosition !== oldPosition) {
           let node = Unread.linePosition.data.nodes.bottom;
-          if (node.nextSibling?.tagName === 'BR') { node = node.nextSibling; }
+          if (node.nextSibling?.tagName === 'BR') {
+            node = node.nextSibling;
+          }
           $.after(node, Unread.hr);
         }
       } else {
         $.rm(Unread.hr);
       }
     }
-    return Unread.hr.hidden = Unread.linePosition === Unread.order.last;
+    return (Unread.hr.hidden = Unread.linePosition === Unread.order.last);
   },
 
   update() {
@@ -287,36 +357,50 @@ const Unread = {
     const countQuotingYou = Unread.postsQuotingYou.size;
 
     if (Conf['Unread Count']) {
-      const titleQuotingYou = Conf['Quoted Title'] && countQuotingYou ? '(!) ' : '';
-      const titleCount = count || !Conf['Hide Unread Count at (0)'] ? `(${count}) ` : '';
-      const titleDead = Unread.thread.isDead ?
-        Unread.title.replace('-', (Unread.thread.isArchived ? '- Archived -' : '- 404 -'))
-        :
-        Unread.title;
+      const titleQuotingYou =
+        Conf['Quoted Title'] && countQuotingYou ? '(!) ' : '';
+      const titleCount =
+        count || !Conf['Hide Unread Count at (0)'] ? `(${count}) ` : '';
+      const titleDead = Unread.thread.isDead
+        ? Unread.title.replace(
+            '-',
+            Unread.thread.isArchived ? '- Archived -' : '- 404 -'
+          )
+        : Unread.title;
       document.title = `${titleQuotingYou}${titleCount}${titleDead}`;
     }
 
     Unread.saveThreadWatcherCount();
 
-    if (Conf['Unread Favicon'] && (g.SITE.software === 'yotsuba')) {
+    if (Conf['Unread Favicon'] && g.SITE.software === 'yotsuba') {
       const { isDead } = Unread.thread;
-      return Favicon.set((
-        countQuotingYou ?
-          (isDead ? 'unreadDeadY' : 'unreadY')
-          : count ?
-            (isDead ? 'unreadDead' : 'unread')
-            :
-            (isDead ? 'dead' : 'default')
-      )
+      return Favicon.set(
+        countQuotingYou
+          ? isDead
+            ? 'unreadDeadY'
+            : 'unreadY'
+          : count
+          ? isDead
+            ? 'unreadDead'
+            : 'unread'
+          : isDead
+          ? 'dead'
+          : 'default'
       );
     }
   },
 
   saveThreadWatcherCount: debounce(2000, function () {
     $.forceSync('Remember Last Read Post');
-    if (Conf['Remember Last Read Post'] && (!Unread.thread.isDead || Unread.thread.isArchived)) {
+    if (
+      Conf['Remember Last Read Post'] &&
+      (!Unread.thread.isDead || Unread.thread.isArchived)
+    ) {
       let posts;
-      const quotingYou = !Conf['Require OP Quote Link'] && QuoteYou.isYou(Unread.thread.OP) ? Unread.posts : Unread.postsQuotingYou;
+      const quotingYou =
+        !Conf['Require OP Quote Link'] && QuoteYou.isYou(Unread.thread.OP)
+          ? Unread.posts
+          : Unread.postsQuotingYou;
       if (!quotingYou.size) {
         quotingYou.last = 0;
       } else if (!quotingYou.has(quotingYou.last)) {
@@ -329,15 +413,19 @@ const Unread = {
           }
         }
       }
-      return ThreadWatcher.update(g.SITE.ID, Unread.thread.board.ID, Unread.thread.ID, {
-        last: Unread.thread.lastPost,
-        isDead: Unread.thread.isDead,
-        isArchived: Unread.thread.isArchived,
-        unread: Unread.posts.size,
-        quotingYou: (quotingYou.last || 0)
-      }
+      return ThreadWatcher.update(
+        g.SITE.ID,
+        Unread.thread.board.ID,
+        Unread.thread.ID,
+        {
+          last: Unread.thread.lastPost,
+          isDead: Unread.thread.isDead,
+          isArchived: Unread.thread.isArchived,
+          unread: Unread.posts.size,
+          quotingYou: quotingYou.last || 0,
+        }
       );
     }
-  })
+  }),
 };
 export default Unread;

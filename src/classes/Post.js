@@ -1,9 +1,9 @@
-import Get from "../General/Get";
-import { g, Conf } from "../globals/globals";
-import ImageExpand from "../Images/ImageExpand";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import Callbacks from "./Callbacks";
+import Get from '../General/Get';
+import { g, Conf } from '../globals/globals';
+import ImageExpand from '../Images/ImageExpand';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import Callbacks from './Callbacks';
 
 /*
  * decaffeinate suggestions:
@@ -20,7 +20,9 @@ export default class Post {
     return el;
   })();
 
-  toString() { return this.ID; }
+  toString() {
+    return this.ID;
+  }
 
   constructor(root, thread, board, flags = {}) {
     // <% if (readJSON('/.tests_enabled')) { %>
@@ -28,7 +30,8 @@ export default class Post {
     // <% } %>
 
     // Skip initialization for PostClone
-    if (root === undefined && thread === undefined && board === undefined) return;
+    if (root === undefined && thread === undefined && board === undefined)
+      return;
 
     this.root = root;
     this.thread = thread;
@@ -42,7 +45,7 @@ export default class Post {
     this.siteID = g.SITE.ID;
     this.fullID = `${this.board}.${this.ID}`;
     this.context = this;
-    this.isReply = (this.ID !== this.threadID);
+    this.isReply = this.ID !== this.threadID;
 
     root.dataset.fullID = this.fullID;
 
@@ -52,7 +55,7 @@ export default class Post {
       this.thread.OP = this;
       for (var key of ['isSticky', 'isClosed', 'isArchived']) {
         var selector;
-        if (selector = g.SITE.selectors.icons[key]) {
+        if ((selector = g.SITE.selectors.icons[key])) {
           this.thread[key] = !!$(selector, this.nodes.info);
         }
       }
@@ -65,24 +68,36 @@ export default class Post {
     this.info = {
       subject: this.nodes.subject?.textContent || undefined,
       name: this.nodes.name?.textContent,
-      email: this.nodes.email ? decodeURIComponent(this.nodes.email.href.replace(/^mailto:/, '')) : undefined,
+      email: this.nodes.email
+        ? decodeURIComponent(this.nodes.email.href.replace(/^mailto:/, ''))
+        : undefined,
       tripcode: this.nodes.tripcode?.textContent,
       uniqueID: this.nodes.uniqueID?.textContent,
       capcode: this.nodes.capcode?.textContent.replace('## ', ''),
       pass: this.nodes.pass?.title.match(/\d*$/)[0],
-      flagCode: this.nodes.flag?.className.match(/flag-(\w+)/)?.[1].toUpperCase(),
-      flagCodeTroll: this.nodes.flag?.className.match(/bfl-(\w+)/)?.[1].toUpperCase(),
+      flagCode: this.nodes.flag?.className
+        .match(/flag-(\w+)/)?.[1]
+        .toUpperCase(),
+      flagCodeTroll: this.nodes.flag?.className
+        .match(/bfl-(\w+)/)?.[1]
+        .toUpperCase(),
       flag: this.nodes.flag?.title,
-      date: this.nodes.date ? g.SITE.parseDate(this.nodes.date) : undefined
+      date: this.nodes.date ? g.SITE.parseDate(this.nodes.date) : undefined,
     };
 
     if (Conf['Anonymize']) {
       this.info.nameBlock = 'Anonymous';
     } else {
-      this.info.nameBlock = `${this.info.name || ''} ${this.info.tripcode || ''}`.trim();
+      this.info.nameBlock = `${this.info.name || ''} ${
+        this.info.tripcode || ''
+      }`.trim();
     }
-    if (this.info.capcode) { this.info.nameBlock += ` ## ${this.info.capcode}`; }
-    if (this.info.uniqueID) { this.info.nameBlock += ` (ID: ${this.info.uniqueID})`; }
+    if (this.info.capcode) {
+      this.info.nameBlock += ` ## ${this.info.capcode}`;
+    }
+    if (this.info.uniqueID) {
+      this.info.nameBlock += ` (ID: ${this.info.uniqueID})`;
+    }
 
     this.parseComment();
     this.parseQuotes();
@@ -98,10 +113,14 @@ export default class Post {
     if (g.posts.get(this.fullID)) {
       this.isRebuilt = true;
       this.clones = g.posts.get(this.fullID).clones;
-      for (var clone of this.clones) { clone.origin = this; }
+      for (var clone of this.clones) {
+        clone.origin = this;
+      }
     }
 
-    if (!this.isFetchedQuote && (this.ID > this.thread.lastPost)) { this.thread.lastPost = this.ID; }
+    if (!this.isFetchedQuote && this.ID > this.thread.lastPost) {
+      this.thread.lastPost = this.ID;
+    }
     this.board.posts.push(this.ID, this);
     this.thread.posts.push(this.ID, this);
     g.posts.push(this.fullID, this);
@@ -116,20 +135,25 @@ export default class Post {
     const info = $(s.infoRoot, post);
     const nodes = {
       root,
-      bottom: this.isReply || !g.SITE.isOPContainerThread ? root : $(s.opBottom, root),
+      bottom:
+        this.isReply || !g.SITE.isOPContainerThread
+          ? root
+          : $(s.opBottom, root),
       post,
       info,
       comment: $(s.comment, post),
       quotelinks: [],
       archivelinks: [],
-      embedlinks: []
+      embedlinks: [],
     };
     for (var key in s.info) {
       var selector = s.info[key];
       nodes[key] = $(selector, info);
     }
     g.SITE.parseNodes?.(this, nodes);
-    if (!nodes.uniqueIDRoot) { nodes.uniqueIDRoot = nodes.uniqueID; }
+    if (!nodes.uniqueIDRoot) {
+      nodes.uniqueIDRoot = nodes.uniqueID;
+    }
 
     // XXX Edge invalidates HTMLCollections when an ancestor node is inserted into another node.
     // https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7560353/
@@ -137,9 +161,10 @@ export default class Post {
       Object.defineProperty(nodes, 'backlinks', {
         configurable: true,
         enumerable: true,
-        get() { return post.getElementsByClassName('backlink'); }
-      }
-      );
+        get() {
+          return post.getElementsByClassName('backlink');
+        },
+      });
     } else {
       nodes.backlinks = post.getElementsByClassName('backlink');
     }
@@ -157,9 +182,9 @@ export default class Post {
     // Remove:
     //   'Comment too long'...
     //   EXIF data. (/p/)
-    this.nodes.commentClean = (bq = this.nodes.comment.cloneNode(true));
+    this.nodes.commentClean = bq = this.nodes.comment.cloneNode(true);
     g.SITE.cleanComment?.(bq);
-    return this.info.comment = this.nodesToText(bq);
+    return (this.info.comment = this.nodesToText(bq));
   }
 
   commentDisplay() {
@@ -171,7 +196,9 @@ export default class Post {
     //   Preceding and following new lines.
     //   Trailing spaces.
     const bq = this.nodes.commentClean.cloneNode(true);
-    if (!Conf['Remove Spoilers'] && !Conf['Reveal Spoilers']) { this.cleanSpoilers(bq); }
+    if (!Conf['Remove Spoilers'] && !Conf['Reveal Spoilers']) {
+      this.cleanSpoilers(bq);
+    }
     g.SITE.cleanCommentDisplay?.(bq);
     return this.nodesToText(bq).trim().replace(/\s+$/gm, '');
   }
@@ -185,7 +212,7 @@ export default class Post {
 
   nodesToText(bq) {
     let node;
-    let text = "";
+    let text = '';
     const nodes = $.X('.//br|.//text()', bq);
     let i = 0;
     while ((node = nodes.snapshotItem(i++))) {
@@ -216,15 +243,21 @@ export default class Post {
     //  - rules links. (>>>/a/rules)
     //  - text-board quotelinks. (>>>/img/1234)
     const match = quotelink.href.match(g.SITE.regexp.quotelink);
-    if (!match && (!this.isClone || !quotelink.dataset.postID)) { return; } // normal or resurrected quote
+    if (!match && (!this.isClone || !quotelink.dataset.postID)) {
+      return;
+    } // normal or resurrected quote
 
     this.nodes.quotelinks.push(quotelink);
 
-    if (this.isClone) { return; }
+    if (this.isClone) {
+      return;
+    }
 
     // ES6 Set when?
     const fullID = `${match[1]}.${match[3]}`;
-    if (!this.quotes.includes(fullID)) { return this.quotes.push(fullID); }
+    if (!this.quotes.includes(fullID)) {
+      return this.quotes.push(fullID);
+    }
   }
 
   parseFiles() {
@@ -234,21 +267,23 @@ export default class Post {
     let index = 0;
     for (let docIndex = 0; docIndex < fileRoots.length; docIndex++) {
       var fileRoot = fileRoots[docIndex];
-      if (file = this.parseFile(fileRoot)) {
-        file.index = (index++);
+      if ((file = this.parseFile(fileRoot))) {
+        file.index = index++;
         file.docIndex = docIndex;
         this.files.push(file);
       }
     }
     if (this.files.length) {
-      return this.file = this.files[0];
+      return (this.file = this.files[0]);
     }
   }
 
   fileRoots() {
     if (g.SITE.selectors.multifile) {
       const roots = $$(g.SITE.selectors.multifile, this.nodes.root);
-      if (roots.length) { return roots; }
+      if (roots.length) {
+        return roots;
+      }
     }
     return [this.nodes.root];
   }
@@ -261,18 +296,23 @@ export default class Post {
     }
     file.thumbLink = file.thumb?.parentNode;
 
-    if (!(file.text && file.link)) { return; }
-    if (!g.SITE.parseFile(this, file)) { return; }
+    if (!(file.text && file.link)) {
+      return;
+    }
+    if (!g.SITE.parseFile(this, file)) {
+      return;
+    }
 
     $.extend(file, {
       url: file.link.href,
       isImage: $.isImage(file.link.href),
-      isVideo: $.isVideo(file.link.href)
-    }
-    );
+      isVideo: $.isVideo(file.link.href),
+    });
     let size = +file.size.match(/[\d.]+/)[0];
     let unit = ['B', 'KB', 'MB', 'GB'].indexOf(file.size.match(/\w+$/)[0]);
-    while (unit-- > 0) { size *= 1024; }
+    while (unit-- > 0) {
+      size *= 1024;
+    }
     file.sizeInBytes = size;
 
     return file;
@@ -281,29 +321,36 @@ export default class Post {
   kill(file, index = 0) {
     let strong;
     if (file) {
-      if (this.isDead || this.files[index].isDead) { return; }
+      if (this.isDead || this.files[index].isDead) {
+        return;
+      }
       this.files[index].isDead = true;
       $.addClass(this.nodes.root, 'deleted-file');
     } else {
-      if (this.isDead) { return; }
+      if (this.isDead) {
+        return;
+      }
       this.isDead = true;
       $.rmClass(this.nodes.root, 'deleted-file');
       $.addClass(this.nodes.root, 'deleted-post');
     }
 
     if (!(strong = $('strong.warning', this.nodes.info))) {
-      strong = $.el('strong',
-        { className: 'warning' });
+      strong = $.el('strong', { className: 'warning' });
       $.after($('input', this.nodes.info), strong);
     }
     strong.textContent = file ? '[File deleted]' : '[Deleted]';
 
-    if (this.isClone) { return; }
+    if (this.isClone) {
+      return;
+    }
     for (var clone of this.clones) {
       clone.kill(file, index);
     }
 
-    if (file) { return; }
+    if (file) {
+      return;
+    }
     // Get quotelinks/backlinks to this post
     // and paint them (Dead).
     for (var quotelink of Get.allQuotelinksLinkingTo(this)) {
@@ -321,14 +368,16 @@ export default class Post {
     $.rmClass(this.nodes.root, 'deleted-post');
     const strong = $('strong.warning', this.nodes.info);
     // no false-positive files
-    if (this.files.some(file => file.isDead)) {
+    if (this.files.some((file) => file.isDead)) {
       $.addClass(this.nodes.root, 'deleted-file');
       strong.textContent = '[File deleted]';
     } else {
       $.rm(strong);
     }
 
-    if (this.isClone) { return; }
+    if (this.isClone) {
+      return;
+    }
     for (var clone of this.clones) {
       clone.resurrect();
     }
@@ -365,9 +414,9 @@ export default class Post {
     this.nodes.root.classList.toggle('opContainer', !isCatalogOP);
     this.nodes.post.classList.toggle('catalog-post', isCatalogOP);
     this.nodes.post.classList.toggle('op', !isCatalogOP);
-    return this.nodes.post.style.left = (this.nodes.post.style.right = null);
+    return (this.nodes.post.style.left = this.nodes.post.style.right = null);
   }
-};
+}
 
 export class PostClone extends Post {
   static suffix = 0;
@@ -379,13 +428,27 @@ export class PostClone extends Post {
     let file, fileRoots, key;
     this.origin = origin;
     this.context = context;
-    for (key of ['ID', 'postID', 'threadID', 'boardID', 'siteID', 'fullID', 'board', 'thread', 'info', 'quotes', 'isReply']) {
+    for (key of [
+      'ID',
+      'postID',
+      'threadID',
+      'boardID',
+      'siteID',
+      'fullID',
+      'board',
+      'thread',
+      'info',
+      'quotes',
+      'isReply',
+    ]) {
       // Copy or point to the origin's key value.
       this[key] = this.origin[key];
     }
 
     const { nodes } = this.origin;
-    const root = contractThumb ? this.cloneWithoutVideo(nodes.root) : nodes.root.cloneNode(true);
+    const root = contractThumb
+      ? this.cloneWithoutVideo(nodes.root)
+      : nodes.root.cloneNode(true);
     for (var node of [root, ...$$('[id]', root)]) {
       node.id += `_${PostClone.suffix}`;
     }
@@ -417,7 +480,9 @@ export class PostClone extends Post {
     this.quotes = [...this.origin.quotes];
 
     this.files = [];
-    if (this.origin.files.length) { fileRoots = this.fileRoots(); }
+    if (this.origin.files.length) {
+      fileRoots = this.fileRoots();
+    }
     for (var originFile of this.origin.files) {
       // Copy values, point to relevant elements.
       file = { ...originFile };
@@ -427,9 +492,13 @@ export class PostClone extends Post {
         file[key] = $(selector, fileRoot);
       }
       file.thumbLink = file.thumb?.parentNode;
-      if (file.thumbLink) { file.fullImage = $('.full-image', file.thumbLink); }
+      if (file.thumbLink) {
+        file.fullImage = $('.full-image', file.thumbLink);
+      }
       file.videoControls = $('.video-controls', file.text);
-      if (file.videoThumb) { file.thumb.muted = true; }
+      if (file.videoThumb) {
+        file.thumb.muted = true;
+      }
       this.files.push(file);
     }
 
@@ -437,23 +506,30 @@ export class PostClone extends Post {
       this.file = this.files[0];
 
       // Contract thumbnails in quote preview
-      if (this.file.thumb && contractThumb) { ImageExpand.contract(this); }
+      if (this.file.thumb && contractThumb) {
+        ImageExpand.contract(this);
+      }
     }
 
-    if (this.origin.isDead) { this.isDead = true; }
+    if (this.origin.isDead) {
+      this.isDead = true;
+    }
     root.dataset.clone = this.origin.clones.push(this) - 1;
     return this;
   }
 
   cloneWithoutVideo(node) {
-    if ((node.tagName === 'VIDEO') && !node.dataset.md5) { // (exception for WebM thumbnails)
+    if (node.tagName === 'VIDEO' && !node.dataset.md5) {
+      // (exception for WebM thumbnails)
       return [];
-    } else if ((node.nodeType === Node.ELEMENT_NODE) && $('video', node)) {
+    } else if (node.nodeType === Node.ELEMENT_NODE && $('video', node)) {
       const clone = node.cloneNode(false);
-      for (var child of node.childNodes) { $.add(clone, this.cloneWithoutVideo(child)); }
+      for (var child of node.childNodes) {
+        $.add(clone, this.cloneWithoutVideo(child));
+      }
       return clone;
     } else {
       return node.cloneNode(true);
     }
   }
-};
+}

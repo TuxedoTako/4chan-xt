@@ -1,5 +1,5 @@
-import { Conf } from "../globals/globals";
-import $ from "../platform/$";
+import { Conf } from '../globals/globals';
+import $ from '../platform/$';
 import PassMessagePage from './PassMessage/PassMessageHtml';
 /*
  * decaffeinate suggestions:
@@ -9,10 +9,13 @@ import PassMessagePage from './PassMessage/PassMessageHtml';
 
 const PassMessage = {
   init() {
-    if (Conf['passMessageClosed']) { return; }
-    const msg = $.el('div',
+    if (Conf['passMessageClosed']) {
+      return;
+    }
+    const msg = $.el(
+      'div',
       { className: 'box-outer top-box' },
-      PassMessagePage,
+      PassMessagePage
     );
     msg.style.cssText = 'padding-bottom: 0;';
     const close = $('a', msg);
@@ -22,12 +25,12 @@ const PassMessage = {
     });
     return $.ready(function () {
       let hd;
-      if (hd = $.id('hd')) {
+      if ((hd = $.id('hd'))) {
         return $.after(hd, msg);
       } else {
         return $.prepend(document.body, msg);
       }
     });
-  }
+  },
 };
 export default PassMessage;

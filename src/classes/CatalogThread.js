@@ -1,7 +1,9 @@
-import $ from "../platform/$";
+import $ from '../platform/$';
 
 export default class CatalogThread {
-  toString() { return this.ID; }
+  toString() {
+    return this.ID;
+  }
 
   constructor(root, thread) {
     this.thread = thread;
@@ -15,7 +17,7 @@ export default class CatalogThread {
       postCount: $('.post-count', post),
       fileCount: $('.file-count', post),
       pageCount: $('.page-count', post),
-      replies: null
+      replies: null,
     };
     this.thread.catalogView = this;
   }

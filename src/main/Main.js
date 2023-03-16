@@ -1,94 +1,94 @@
-import Redirect from "../Archive/Redirect";
-import Board from "../classes/Board";
-import Callbacks from "../classes/Callbacks";
-import CatalogThreadNative from "../classes/CatalogThreadNative";
-import DataBoard from "../classes/DataBoard";
-import Notice from "../classes/Notice";
-import Post from "../classes/Post";
-import SimpleDict from "../classes/SimpleDict";
-import Thread from "../classes/Thread";
-import Config from "../config/Config";
-import Anonymize from "../Filtering/Anonymize";
-import Filter from "../Filtering/Filter";
-import PostHiding from "../Filtering/PostHiding";
-import Recursive from "../Filtering/Recursive";
-import ThreadHiding from "../Filtering/ThreadHiding";
-import Index from "../General/Index";
-import Settings from "../General/Settings";
-import FappeTyme from "../Images/FappeTyme";
-import Gallery from "../Images/Gallery";
-import ImageCommon from "../Images/ImageCommon";
-import ImageExpand from "../Images/ImageExpand";
-import ImageHost from "../Images/ImageHost";
-import ImageHover from "../Images/ImageHover";
-import ImageLoader from "../Images/ImageLoader";
-import Metadata from "../Images/Metadata";
-import RevealSpoilers from "../Images/RevealSpoilers";
-import Sauce from "../Images/Sauce";
-import Volume from "../Images/Volume";
-import Linkify from "../Linkification/Linkify";
-import ArchiveLink from "../Menu/ArchiveLink";
-import CopyTextLink from "../Menu/CopyTextLink";
-import DeleteLink from "../Menu/DeleteLink";
-import DownloadLink from "../Menu/DownloadLink";
-import ReportLink from "../Menu/ReportLink";
-import AntiAutoplay from "../Miscellaneous/AntiAutoplay";
-import Banner from "../Miscellaneous/Banner";
-import CatalogLinks from "../Miscellaneous/CatalogLinks";
-import CustomCSS from "../Miscellaneous/CustomCSS";
-import ExpandComment from "../Miscellaneous/ExpandComment";
-import ExpandThread from "../Miscellaneous/ExpandThread";
-import FileInfo from "../Miscellaneous/FileInfo";
-import Flash from "../Miscellaneous/Flash";
-import Fourchan from "../Miscellaneous/Fourchan";
-import IDColor from "../Miscellaneous/IDColor";
-import IDHighlight from "../Miscellaneous/IDHighlight";
-import IDPostCount from "../Miscellaneous/IDPostCount";
-import Keybinds from "../Miscellaneous/Keybinds";
-import ModContact from "../Miscellaneous/ModContact";
-import Nav from "../Miscellaneous/Nav";
-import NormalizeURL from "../Miscellaneous/NormalizeURL";
-import PostJumper from "../Miscellaneous/PostJumper";
-import PSA from "../Miscellaneous/PSA";
-import PSAHiding from "../Miscellaneous/PSAHiding";
-import RelativeDates from "../Miscellaneous/RelativeDates";
-import RemoveSpoilers from "../Miscellaneous/RemoveSpoilers";
-import ThreadLinks from "../Miscellaneous/ThreadLinks";
-import Time from "../Miscellaneous/Time";
-import Tinyboard from "../Miscellaneous/Tinyboard";
-import Favicon from "../Monitoring/Favicon";
-import MarkNewIPs from "../Monitoring/MarkNewIPs";
-import ReplyPruning from "../Monitoring/ReplyPruning";
-import ThreadStats from "../Monitoring/ThreadStats";
-import ThreadUpdater from "../Monitoring/ThreadUpdater";
-import ThreadWatcher from "../Monitoring/ThreadWatcher";
-import Unread from "../Monitoring/Unread";
-import UnreadIndex from "../Monitoring/UnreadIndex";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import PassLink from "../Posting/PassLink";
-import PostRedirect from "../Posting/PostRedirect";
-import QR from "../Posting/QR";
-import QuoteBacklink from "../Quotelinks/QuoteBacklink";
-import QuoteCT from "../Quotelinks/QuoteCT";
-import QuoteInline from "../Quotelinks/QuoteInline";
-import QuoteOP from "../Quotelinks/QuoteOP";
-import QuotePreview from "../Quotelinks/QuotePreview";
-import QuoteStrikeThrough from "../Quotelinks/QuoteStrikeThrough";
-import QuoteThreading from "../Quotelinks/QuoteThreading";
-import QuoteYou from "../Quotelinks/QuoteYou";
-import Quotify from "../Quotelinks/Quotify";
-import Site from "../site/Site";
-import SW from "../site/SW";
-import CSS from "../css/CSS";
+import Redirect from '../Archive/Redirect';
+import Board from '../classes/Board';
+import Callbacks from '../classes/Callbacks';
+import CatalogThreadNative from '../classes/CatalogThreadNative';
+import DataBoard from '../classes/DataBoard';
+import Notice from '../classes/Notice';
+import Post from '../classes/Post';
+import SimpleDict from '../classes/SimpleDict';
+import Thread from '../classes/Thread';
+import Config from '../config/Config';
+import Anonymize from '../Filtering/Anonymize';
+import Filter from '../Filtering/Filter';
+import PostHiding from '../Filtering/PostHiding';
+import Recursive from '../Filtering/Recursive';
+import ThreadHiding from '../Filtering/ThreadHiding';
+import Index from '../General/Index';
+import Settings from '../General/Settings';
+import FappeTyme from '../Images/FappeTyme';
+import Gallery from '../Images/Gallery';
+import ImageCommon from '../Images/ImageCommon';
+import ImageExpand from '../Images/ImageExpand';
+import ImageHost from '../Images/ImageHost';
+import ImageHover from '../Images/ImageHover';
+import ImageLoader from '../Images/ImageLoader';
+import Metadata from '../Images/Metadata';
+import RevealSpoilers from '../Images/RevealSpoilers';
+import Sauce from '../Images/Sauce';
+import Volume from '../Images/Volume';
+import Linkify from '../Linkification/Linkify';
+import ArchiveLink from '../Menu/ArchiveLink';
+import CopyTextLink from '../Menu/CopyTextLink';
+import DeleteLink from '../Menu/DeleteLink';
+import DownloadLink from '../Menu/DownloadLink';
+import ReportLink from '../Menu/ReportLink';
+import AntiAutoplay from '../Miscellaneous/AntiAutoplay';
+import Banner from '../Miscellaneous/Banner';
+import CatalogLinks from '../Miscellaneous/CatalogLinks';
+import CustomCSS from '../Miscellaneous/CustomCSS';
+import ExpandComment from '../Miscellaneous/ExpandComment';
+import ExpandThread from '../Miscellaneous/ExpandThread';
+import FileInfo from '../Miscellaneous/FileInfo';
+import Flash from '../Miscellaneous/Flash';
+import Fourchan from '../Miscellaneous/Fourchan';
+import IDColor from '../Miscellaneous/IDColor';
+import IDHighlight from '../Miscellaneous/IDHighlight';
+import IDPostCount from '../Miscellaneous/IDPostCount';
+import Keybinds from '../Miscellaneous/Keybinds';
+import ModContact from '../Miscellaneous/ModContact';
+import Nav from '../Miscellaneous/Nav';
+import NormalizeURL from '../Miscellaneous/NormalizeURL';
+import PostJumper from '../Miscellaneous/PostJumper';
+import PSA from '../Miscellaneous/PSA';
+import PSAHiding from '../Miscellaneous/PSAHiding';
+import RelativeDates from '../Miscellaneous/RelativeDates';
+import RemoveSpoilers from '../Miscellaneous/RemoveSpoilers';
+import ThreadLinks from '../Miscellaneous/ThreadLinks';
+import Time from '../Miscellaneous/Time';
+import Tinyboard from '../Miscellaneous/Tinyboard';
+import Favicon from '../Monitoring/Favicon';
+import MarkNewIPs from '../Monitoring/MarkNewIPs';
+import ReplyPruning from '../Monitoring/ReplyPruning';
+import ThreadStats from '../Monitoring/ThreadStats';
+import ThreadUpdater from '../Monitoring/ThreadUpdater';
+import ThreadWatcher from '../Monitoring/ThreadWatcher';
+import Unread from '../Monitoring/Unread';
+import UnreadIndex from '../Monitoring/UnreadIndex';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import PassLink from '../Posting/PassLink';
+import PostRedirect from '../Posting/PostRedirect';
+import QR from '../Posting/QR';
+import QuoteBacklink from '../Quotelinks/QuoteBacklink';
+import QuoteCT from '../Quotelinks/QuoteCT';
+import QuoteInline from '../Quotelinks/QuoteInline';
+import QuoteOP from '../Quotelinks/QuoteOP';
+import QuotePreview from '../Quotelinks/QuotePreview';
+import QuoteStrikeThrough from '../Quotelinks/QuoteStrikeThrough';
+import QuoteThreading from '../Quotelinks/QuoteThreading';
+import QuoteYou from '../Quotelinks/QuoteYou';
+import Quotify from '../Quotelinks/Quotify';
+import Site from '../site/Site';
+import SW from '../site/SW';
+import CSS from '../css/CSS';
 import meta from '../../package.json';
-import Header from "../General/Header";
-import { Conf, E, g } from "../globals/globals";
-import Menu from "../Menu/Menu";
-import BoardConfig from "../General/BoardConfig";
-import CaptchaReplace from "../Posting/Captcha.replace";
-import Get from "../General/Get";
-import { dict, platform } from "../platform/helpers";
+import Header from '../General/Header';
+import { Conf, E, g } from '../globals/globals';
+import Menu from '../Menu/Menu';
+import BoardConfig from '../General/BoardConfig';
+import CaptchaReplace from '../Posting/Captcha.replace';
+import Get from '../General/Get';
+import { dict, platform } from '../platform/helpers';
 // import Test from "../General/Test";
 
 /*
@@ -107,22 +107,41 @@ const Main = {
     let key;
     try {
       let w = window;
-      if (platform === 'crx') { w = (w.wrappedJSObject || w); }
-      if (`${meta.name} antidup` in w) { return; }
+      if (platform === 'crx') {
+        w = w.wrappedJSObject || w;
+      }
+      if (`${meta.name} antidup` in w) {
+        return;
+      }
       w[`${meta.name} antidup`] = true;
-    } catch (error) { }
+    } catch (error) {}
 
     // Don't run inside ad iframes.
     try {
-      if (window.frameElement && ['', 'about:blank'].includes(window.frameElement.src)) { return; }
-    } catch (error1) { }
+      if (
+        window.frameElement &&
+        ['', 'about:blank'].includes(window.frameElement.src)
+      ) {
+        return;
+      }
+    } catch (error1) {}
 
     // Detect multiple copies of 4chan X
-    if (document.documentElement && $.hasClass(document.documentElement, 'fourchan-x')) { return; }
-    $.asap(() => document.documentElement, function () {
-      $.addClass(document.documentElement, 'fourchan-x', 'seaweedchan');
-      if ($.engine) { return $.addClass(document.documentElement, `ua-${$.engine}`); }
-    });
+    if (
+      document.documentElement &&
+      $.hasClass(document.documentElement, 'fourchan-x')
+    ) {
+      return;
+    }
+    $.asap(
+      () => document.documentElement,
+      function () {
+        $.addClass(document.documentElement, 'fourchan-x', 'seaweedchan');
+        if ($.engine) {
+          return $.addClass(document.documentElement, `ua-${$.engine}`);
+        }
+      }
+    );
     $.on(document, '4chanXInitFinished', function () {
       if (Main.expectInitFinished) {
         return delete Main.expectInitFinished;
@@ -140,8 +159,9 @@ const Main = {
         (() => {
           try {
             return cb();
-          } catch (error2) { }
-        })());
+          } catch (error2) {}
+        })()
+      );
     };
     document.addEventListener('mounted', mountedCB, true);
 
@@ -154,25 +174,31 @@ const Main = {
           var val = obj[key];
           flatten(key, val);
         }
-      } else { // string or number
+      } else {
+        // string or number
         Conf[parent] = obj;
       }
     };
 
     // XXX Remove document-breaking ad
-    if (['boards.4chan.org', 'boards.4channel.org'].includes(location.hostname)) {
+    if (
+      ['boards.4chan.org', 'boards.4channel.org'].includes(location.hostname)
+    ) {
       $.global(function () {
         const fromCharCode0 = String.fromCharCode;
-        return String.fromCharCode = function () {
+        return (String.fromCharCode = function () {
           if (document.body) {
             String.fromCharCode = fromCharCode0;
           } else if (document.currentScript && !document.currentScript.src) {
             throw Error();
           }
           return fromCharCode0.apply(this, arguments);
-        };
+        });
       });
-      $.asap(() => document.documentElement, () => $.onExists(document.documentElement, 'iframe[srcdoc]', $.rm));
+      $.asap(
+        () => document.documentElement,
+        () => $.onExists(document.documentElement, 'iframe[srcdoc]', $.rm)
+      );
     }
 
     flatten(null, Config);
@@ -180,13 +206,26 @@ const Main = {
     for (var db of DataBoard.keys) {
       Conf[db] = dict();
     }
-    Conf['customTitles'] = dict.clone({ '4chan.org': { boards: { 'qa': { 'boardTitle': { orig: '/qa/ - Question & Answer', title: '/qa/ - 2D/Random' } } } } });
+    Conf['customTitles'] = dict.clone({
+      '4chan.org': {
+        boards: {
+          qa: {
+            boardTitle: {
+              orig: '/qa/ - Question & Answer',
+              title: '/qa/ - 2D/Random',
+            },
+          },
+        },
+      },
+    });
     Conf['boardConfig'] = { boards: dict() };
     Conf['archives'] = Redirect.archives;
     Conf['selectedArchives'] = dict();
     Conf['cooldowns'] = dict();
     Conf['Index Sort'] = dict();
-    for (let i = 0; i < 2; i++) { Conf[`Last Long Reply Thresholds ${i}`] = dict(); }
+    for (let i = 0; i < 2; i++) {
+      Conf[`Last Long Reply Thresholds ${i}`] = dict();
+    }
     Conf['siteProperties'] = dict();
 
     // XXX old key names
@@ -208,58 +247,83 @@ const Main = {
       /\.4chan(?:nel)?\.org$/.test(location.hostname) &&
       !SW.yotsuba.regexp.pass.test(location.href) &&
       !SW.yotsuba.regexp.captcha.test(location.href) &&
-      !$$('script:not([src])').filter(s => /this\[/.test(s.textContent)).length
+      !$$('script:not([src])').filter((s) => /this\[/.test(s.textContent))
+        .length
     ) {
-      ($.getSync || $.get)({ 'jsWhitelist': Conf['jsWhitelist'] }, ({ jsWhitelist }) => $.addCSP(`script-src ${jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim()}`));
+      ($.getSync || $.get)(
+        { jsWhitelist: Conf['jsWhitelist'] },
+        ({ jsWhitelist }) =>
+          $.addCSP(
+            `script-src ${jsWhitelist
+              .replace(/^#.*$/gm, '')
+              .replace(/[\s;]+/g, ' ')
+              .trim()}`
+          )
+      );
     }
 
     // Get saved values as items
     const items = dict();
-    for (key in Conf) { items[key] = undefined; }
+    for (key in Conf) {
+      items[key] = undefined;
+    }
     items['previousversion'] = undefined;
     return ($.getSync || $.get)(items, function (items) {
-      if (!$.perProtocolSettings && /\.4chan(?:nel)?\.org$/.test(location.hostname) && (items['Redirect to HTTPS'] ?? Conf['Redirect to HTTPS']) && (location.protocol !== 'https:')) {
-        location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+      if (
+        !$.perProtocolSettings &&
+        /\.4chan(?:nel)?\.org$/.test(location.hostname) &&
+        (items['Redirect to HTTPS'] ?? Conf['Redirect to HTTPS']) &&
+        location.protocol !== 'https:'
+      ) {
+        location.replace(
+          'https://' +
+            location.host +
+            location.pathname +
+            location.search +
+            location.hash
+        );
         return;
       }
-      return $.asap(() => document.documentElement, function () {
+      return $.asap(
+        () => document.documentElement,
+        function () {
+          // Don't hide the local storage warning behind a settings panel.
+          if ($.cantSet) {
+            // pass
+            // Fresh install
+          } else if (items.previousversion == null) {
+            Main.isFirstRun = true;
+            Main.ready(function () {
+              $.set('previousversion', g.VERSION);
+              return Settings.open();
+            });
 
-        // Don't hide the local storage warning behind a settings panel.
-        if ($.cantSet) {
-          // pass
+            // Migrate old settings
+          } else if (items.previousversion !== g.VERSION) {
+            Main.upgrade(items);
+          }
 
-          // Fresh install
-        } else if ((items.previousversion == null)) {
-          Main.isFirstRun = true;
-          Main.ready(function () {
-            $.set('previousversion', g.VERSION);
-            return Settings.open();
-          });
+          // Combine default values with saved values
+          for (key in Conf) {
+            var val = Conf[key];
+            Conf[key] = items[key] ?? val;
+          }
 
-          // Migrate old settings
-        } else if (items.previousversion !== g.VERSION) {
-          Main.upgrade(items);
+          return Site.init(Main.initFeatures);
         }
-
-        // Combine default values with saved values
-        for (key in Conf) {
-          var val = Conf[key];
-          Conf[key] = items[key] ?? val;
-        }
-
-        return Site.init(Main.initFeatures);
-      });
+      );
     });
   },
 
   upgrade(items) {
     const { previousversion } = items;
     const changes = Settings.upgrade(items, previousversion);
-    items.previousversion = (changes.previousversion = g.VERSION);
+    items.previousversion = changes.previousversion = g.VERSION;
     return $.set(changes, function () {
       if (items['Show Updated Notifications'] ?? true) {
-        const el = $.el('span',
-          { innerHTML: `${meta.name} has been updated to <a href="${meta.changelog}" target="_blank">version ${g.VERSION}</a>.` });
+        const el = $.el('span', {
+          innerHTML: `${meta.name} has been updated to <a href="${meta.changelog}" target="_blank">version ${g.VERSION}</a>.`,
+        });
         return new Notice('info', el, 15);
       }
     });
@@ -268,10 +332,14 @@ const Main = {
   parseURL(site = g.SITE, url = location) {
     const r = {};
 
-    if (!site) { return r; }
+    if (!site) {
+      return r;
+    }
     r.siteID = site.ID;
 
-    if (site.isBoardlessPage?.(url)) { return r; }
+    if (site.isBoardlessPage?.(url)) {
+      return r;
+    }
     const pathname = url.pathname.split(/\/+/);
     r.boardID = pathname[1];
 
@@ -281,10 +349,10 @@ const Main = {
       // pass
     } else if (['thread', 'res'].includes(pathname[2])) {
       r.VIEW = 'thread';
-      r.threadID = (r.THREADID = +pathname[3].replace(/\.\w+$/, ''));
-    } else if ((pathname[2] === 'archive') && (pathname[3] === 'res')) {
+      r.threadID = r.THREADID = +pathname[3].replace(/\.\w+$/, '');
+    } else if (pathname[2] === 'archive' && pathname[3] === 'res') {
       r.VIEW = 'thread';
-      r.threadID = (r.THREADID = +pathname[4].replace(/\.\w+$/, ''));
+      r.threadID = r.THREADID = +pathname[4].replace(/\.\w+$/, '');
       r.threadArchived = true;
     } else if (/^(?:catalog|archive)(?:\.\w+)?$/.test(pathname[2])) {
       r.VIEW = pathname[2].replace(/\.\w+$/, '');
@@ -297,7 +365,7 @@ const Main = {
   initFeatures() {
     $.global(function () {
       document.documentElement.classList.add('js-enabled');
-      return window.FCX = {};
+      return (window.FCX = {});
     });
     Main.jsEnabled = $.hasClass(document.documentElement, 'js-enabled');
 
@@ -305,7 +373,9 @@ const Main = {
     $.ajaxPageInit?.();
 
     $.extend(g, Main.parseURL());
-    if (g.boardID) { g.BOARD = new Board(g.boardID); }
+    if (g.boardID) {
+      g.BOARD = new Board(g.boardID);
+    }
 
     if (!g.VIEW) {
       g.SITE.initAuxiliary?.();
@@ -313,26 +383,33 @@ const Main = {
     }
 
     if (g.VIEW === 'file') {
-      $.asap((() => document.readyState !== 'loading'), function () {
-        let video;
-        if ((g.SITE.software === 'yotsuba') && Conf['404 Redirect'] && g.SITE.is404?.()) {
-          const pathname = location.pathname.split(/\/+/);
-          return Redirect.navigate('file', {
-            boardID: g.BOARD.ID,
-            filename: pathname[pathname.length - 1]
-          });
-        } else if (video = $('video')) {
-          if (Conf['Volume in New Tab']) {
-            Volume.setup(video);
-          }
-          if (Conf['Loop in New Tab']) {
-            video.loop = true;
-            video.controls = false;
-            video.play();
-            return ImageCommon.addControls(video);
+      $.asap(
+        () => document.readyState !== 'loading',
+        function () {
+          let video;
+          if (
+            g.SITE.software === 'yotsuba' &&
+            Conf['404 Redirect'] &&
+            g.SITE.is404?.()
+          ) {
+            const pathname = location.pathname.split(/\/+/);
+            return Redirect.navigate('file', {
+              boardID: g.BOARD.ID,
+              filename: pathname[pathname.length - 1],
+            });
+          } else if ((video = $('video'))) {
+            if (Conf['Volume in New Tab']) {
+              Volume.setup(video);
+            }
+            if (Conf['Loop in New Tab']) {
+              video.loop = true;
+              video.controls = false;
+              video.play();
+              return ImageCommon.addControls(video);
+            }
           }
         }
-      });
+      );
       return;
     }
 
@@ -344,14 +421,16 @@ const Main = {
 
     // c.time 'All initializations'
     for (var [name, feature] of Main.features) {
-      if (g.SITE.disabledFeatures && g.SITE.disabledFeatures.includes(name)) { continue; }
+      if (g.SITE.disabledFeatures && g.SITE.disabledFeatures.includes(name)) {
+        continue;
+      }
       // c.time "#{name} initialization"
       try {
         feature.init();
       } catch (err) {
         Main.handleErrors({
           message: `\"${name}\" initialization crashed.`,
-          error: err
+          error: err,
         });
       }
     }
@@ -364,18 +443,36 @@ const Main = {
   },
 
   initStyle() {
-    if (!Main.isThisPageLegit()) { return; }
+    if (!Main.isThisPageLegit()) {
+      return;
+    }
 
     // disable the mobile layout
     const mobileLink = $('link[href*=mobile]', document.head);
     if (mobileLink) mobileLink.disabled = true;
     document.documentElement.dataset.host = location.host;
     $.addClass(document.documentElement, `sw-${g.SITE.software}`);
-    $.addClass(document.documentElement, g.VIEW === 'thread' ? 'thread-view' : g.VIEW);
-    $.onExists(document.documentElement, '.ad-cnt, .adg-rects > .desktop', ad => $.onExists(ad, 'img, iframe', () => $.addClass(document.documentElement, 'ads-loaded')));
-    if (Conf['Autohiding Scrollbar']) { $.addClass(document.documentElement, 'autohiding-scrollbar'); }
+    $.addClass(
+      document.documentElement,
+      g.VIEW === 'thread' ? 'thread-view' : g.VIEW
+    );
+    $.onExists(
+      document.documentElement,
+      '.ad-cnt, .adg-rects > .desktop',
+      (ad) =>
+        $.onExists(ad, 'img, iframe', () =>
+          $.addClass(document.documentElement, 'ads-loaded')
+        )
+    );
+    if (Conf['Autohiding Scrollbar']) {
+      $.addClass(document.documentElement, 'autohiding-scrollbar');
+    }
     $.ready(function () {
-      if ((document.body.clientHeight > document.documentElement.clientHeight) && ((window.innerWidth === document.documentElement.clientWidth) !== Conf['Autohiding Scrollbar'])) {
+      if (
+        document.body.clientHeight > document.documentElement.clientHeight &&
+        (window.innerWidth === document.documentElement.clientWidth) !==
+          Conf['Autohiding Scrollbar']
+      ) {
         Conf['Autohiding Scrollbar'] = !Conf['Autohiding Scrollbar'];
         $.set('Autohiding Scrollbar', Conf['Autohiding Scrollbar']);
         return $.toggleClass(document.documentElement, 'autohiding-scrollbar');
@@ -385,20 +482,40 @@ const Main = {
     Main.bgColorStyle = $.el('style', { id: 'fourchanx-bgcolor-css' });
 
     let keyboard = false;
-    $.on(document, 'mousedown', () => keyboard = false);
-    $.on(document, 'keydown', function (e) { if (e.keyCode === 9) { return keyboard = true; } }); // tab
-    window.addEventListener('focus', (() => document.documentElement.classList.toggle('keyboard-focus', keyboard)), true);
+    $.on(document, 'mousedown', () => (keyboard = false));
+    $.on(document, 'keydown', function (e) {
+      if (e.keyCode === 9) {
+        return (keyboard = true);
+      }
+    }); // tab
+    window.addEventListener(
+      'focus',
+      () =>
+        document.documentElement.classList.toggle('keyboard-focus', keyboard),
+      true
+    );
 
     return Main.setClass();
   },
 
   setClass() {
     let mainStyleSheet, style, styleSheets;
-    const knownStyles = ['yotsuba', 'yotsuba-b', 'futaba', 'burichan', 'photon', 'tomorrow', 'spooky'];
+    const knownStyles = [
+      'yotsuba',
+      'yotsuba-b',
+      'futaba',
+      'burichan',
+      'photon',
+      'tomorrow',
+      'spooky',
+    ];
 
-    if ((g.SITE.software === 'yotsuba') && (g.VIEW === 'catalog')) {
-      if (mainStyleSheet = $.id('base-css')) {
-        style = mainStyleSheet.href.match(/catalog_(\w+)/)?.[1].replace('_new', '').replace(/_+/g, '-');
+    if (g.SITE.software === 'yotsuba' && g.VIEW === 'catalog') {
+      if ((mainStyleSheet = $.id('base-css'))) {
+        style = mainStyleSheet.href
+          .match(/catalog_(\w+)/)?.[1]
+          .replace('_new', '')
+          .replace(/_+/g, '-');
         if (knownStyles.includes(style)) {
           $.addClass(document.documentElement, style);
           return;
@@ -406,7 +523,7 @@ const Main = {
       }
     }
 
-    style = (mainStyleSheet = (styleSheets = null));
+    style = mainStyleSheet = styleSheets = null;
 
     const setStyle = function () {
       // Use preconfigured CSS for 4chan's default themes.
@@ -415,9 +532,17 @@ const Main = {
         style = null;
         for (var styleSheet of styleSheets) {
           if (styleSheet.href === mainStyleSheet?.href) {
-            style = styleSheet.title.toLowerCase().replace('new', '').trim().replace(/\s+/g, '-');
-            if (style === '_special') { style = styleSheet.href.match(/[a-z]*(?=[^/]*$)/)[0]; }
-            if (!knownStyles.includes(style)) { style = null; }
+            style = styleSheet.title
+              .toLowerCase()
+              .replace('new', '')
+              .trim()
+              .replace(/\s+/g, '-');
+            if (style === '_special') {
+              style = styleSheet.href.match(/[a-z]*(?=[^/]*$)/)[0];
+            }
+            if (!knownStyles.includes(style)) {
+              style = null;
+            }
             break;
           }
         }
@@ -467,7 +592,7 @@ const Main = {
       }
       new MutationObserver(setStyle).observe(mainStyleSheet, {
         attributes: true,
-        attributeFilter: ['href']
+        attributeFilter: ['href'],
       });
       $.on(mainStyleSheet, 'load', setStyle);
       return setStyle();
@@ -485,12 +610,15 @@ const Main = {
       if (g.VIEW === 'thread') {
         ThreadWatcher.set404(g.BOARD.ID, g.THREADID, function () {
           if (Conf['404 Redirect']) {
-            return Redirect.navigate('thread', {
-              boardID: g.BOARD.ID,
-              threadID: g.THREADID,
-              postID: +location.hash.match(/\d+/)
-            } // post number or 0
-              , `/${g.BOARD}/`);
+            return Redirect.navigate(
+              'thread',
+              {
+                boardID: g.BOARD.ID,
+                threadID: g.THREADID,
+                postID: +location.hash.match(/\d+/),
+              }, // post number or 0
+              `/${g.BOARD}/`
+            );
           }
         });
       }
@@ -499,8 +627,10 @@ const Main = {
     }
 
     if (g.SITE.isIncomplete?.()) {
-      const msg = $.el('div',
-        { innerHTML: 'The page didn&#039;t load completely.<br>Some features may not work unless you <a href="javascript:;">reload</a>.' });
+      const msg = $.el('div', {
+        innerHTML:
+          'The page didn&#039;t load completely.<br>Some features may not work unless you <a href="javascript:;">reload</a>.',
+      });
       $.on($('a', msg), 'click', () => location.reload());
       new Notice('warning', msg);
     }
@@ -523,21 +653,23 @@ const Main = {
   initThread() {
     let board;
     const s = g.SITE.selectors;
-    if (board = $((s.boardFor?.[g.VIEW] || s.board))) {
+    if ((board = $(s.boardFor?.[g.VIEW] || s.board))) {
       const threads = [];
       const posts = [];
       const errors = [];
 
       try {
         g.SITE.preParsingFixes?.(board);
-      } catch (error) { }
+      } catch (error) {}
 
       Main.addThreadsObserver = new MutationObserver(Main.addThreads);
       Main.addPostsObserver = new MutationObserver(Main.addPosts);
       Main.addThreadsObserver.observe(board, { childList: true });
 
       Main.parseThreads($$(s.thread, board), threads, posts, errors);
-      if (errors.length) { Main.handleErrors(errors); }
+      if (errors.length) {
+        Main.handleErrors(errors);
+      }
 
       if (g.VIEW === 'thread') {
         if (g.threadArchived) {
@@ -549,11 +681,12 @@ const Main = {
 
       Main.callbackNodes('Thread', threads);
       return Main.callbackNodesDB('Post', posts, function () {
-        for (var post of posts) { QuoteThreading.insert(post); }
+        for (var post of posts) {
+          QuoteThreading.insert(post);
+        }
         Main.expectInitFinished = true;
         return $.event('4chanXInitFinished');
       });
-
     } else {
       Main.expectInitFinished = true;
       return $.event('4chanXInitFinished');
@@ -564,7 +697,7 @@ const Main = {
     for (var threadRoot of threadRoots) {
       var boardObj = (() => {
         let boardID;
-        if (boardID = threadRoot.dataset.board) {
+        if ((boardID = threadRoot.dataset.board)) {
           boardID = encodeURIComponent(boardID);
           return g.boards[boardID] || new Board(boardID);
         } else {
@@ -572,12 +705,16 @@ const Main = {
         }
       })();
       var threadID = +threadRoot.id.match(/\d*$/)[0];
-      if (!threadID || boardObj.threads.get(threadID)?.nodes.root) { return; }
+      if (!threadID || boardObj.threads.get(threadID)?.nodes.root) {
+        return;
+      }
       var thread = new Thread(threadID, boardObj);
       thread.nodes.root = threadRoot;
       threads.push(thread);
       var postRoots = $$(g.SITE.selectors.postContainer, threadRoot);
-      if (g.SITE.isOPContainerThread) { postRoots.unshift(threadRoot); }
+      if (g.SITE.isOPContainerThread) {
+        postRoots.unshift(threadRoot);
+      }
       Main.parsePosts(postRoots, thread, posts, errors);
       Main.addPostsObserver.observe(threadRoot, { childList: true });
     }
@@ -585,15 +722,20 @@ const Main = {
 
   parsePosts(postRoots, thread, posts, errors) {
     for (var postRoot of postRoots) {
-      if (!(postRoot.dataset.fullID && g.posts.get(postRoot.dataset.fullID)) && $(g.SITE.selectors.comment, postRoot)) {
+      if (
+        !(postRoot.dataset.fullID && g.posts.get(postRoot.dataset.fullID)) &&
+        $(g.SITE.selectors.comment, postRoot)
+      ) {
         try {
           posts.push(new Post(postRoot, thread, thread.board));
         } catch (err) {
           // Skip posts that we failed to parse.
           errors.push({
-            message: `Parsing of Post No.${postRoot.id.match(/\d+/)} failed. Post will be skipped.`,
+            message: `Parsing of Post No.${postRoot.id.match(
+              /\d+/
+            )} failed. Post will be skipped.`,
             error: err,
-            html: postRoot.outerHTML
+            html: postRoot.outerHTML,
           });
         }
       }
@@ -604,19 +746,28 @@ const Main = {
     const threadRoots = [];
     for (var record of records) {
       for (var node of record.addedNodes) {
-        if ((node.nodeType === Node.ELEMENT_NODE) && node.matches(g.SITE.selectors.thread)) {
+        if (
+          node.nodeType === Node.ELEMENT_NODE &&
+          node.matches(g.SITE.selectors.thread)
+        ) {
           threadRoots.push(node);
         }
       }
     }
-    if (!threadRoots.length) { return; }
+    if (!threadRoots.length) {
+      return;
+    }
     const threads = [];
     const posts = [];
     const errors = [];
     Main.parseThreads(threadRoots, threads, posts, errors);
-    if (errors.length) { Main.handleErrors(errors); }
+    if (errors.length) {
+      Main.handleErrors(errors);
+    }
     Main.callbackNodes('Thread', threads);
-    return Main.callbackNodesDB('Post', posts, () => $.event('PostsInserted', null, records[0].target));
+    return Main.callbackNodesDB('Post', posts, () =>
+      $.event('PostsInserted', null, records[0].target)
+    );
   },
 
   addPosts(records) {
@@ -630,19 +781,25 @@ const Main = {
       var postRoots = [];
       for (var node of record.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
-          if (node.matches(g.SITE.selectors.postContainer) || (node = $(g.SITE.selectors.postContainer, node))) {
+          if (
+            node.matches(g.SITE.selectors.postContainer) ||
+            (node = $(g.SITE.selectors.postContainer, node))
+          ) {
             postRoots.push(node);
           }
         }
       }
       var n = posts.length;
       Main.parsePosts(postRoots, thread, posts, errors);
-      if ((posts.length > n) && !threads.includes(thread)) {
+      if (posts.length > n && !threads.includes(thread)) {
         threads.push(thread);
       }
       var anyRemoved = false;
       for (var el of record.removedNodes) {
-        if ((Get.postFromRoot(el)?.nodes.root === el) && !document.documentElement.contains(el)) {
+        if (
+          Get.postFromRoot(el)?.nodes.root === el &&
+          !document.documentElement.contains(el)
+        ) {
           anyRemoved = true;
           break;
         }
@@ -651,7 +808,9 @@ const Main = {
         threadsRM.push(thread);
       }
     }
-    if (errors.length) { Main.handleErrors(errors); }
+    if (errors.length) {
+      Main.handleErrors(errors);
+    }
     return Main.callbackNodesDB('Post', posts, function () {
       for (thread of threads) {
         $.event('PostsInserted', null, thread.nodes.root);
@@ -669,11 +828,15 @@ const Main = {
       const threads = [];
       const errors = [];
 
-      Main.addCatalogThreadsObserver = new MutationObserver(Main.addCatalogThreads);
+      Main.addCatalogThreadsObserver = new MutationObserver(
+        Main.addCatalogThreads
+      );
       Main.addCatalogThreadsObserver.observe(board, { childList: true });
 
       Main.parseCatalogThreads($$(s.thread, board), threads, errors);
-      if (errors.length) { Main.handleErrors(errors); }
+      if (errors.length) {
+        Main.handleErrors(errors);
+      }
 
       Main.callbackNodes('CatalogThreadNative', threads);
     }
@@ -693,9 +856,11 @@ const Main = {
       } catch (err) {
         // Skip threads that we failed to parse.
         errors.push({
-          message: `Parsing of Catalog Thread No.${(threadRoot.dataset.id || threadRoot.id).match(/\d+/)} failed. Thread will be skipped.`,
+          message: `Parsing of Catalog Thread No.${(
+            threadRoot.dataset.id || threadRoot.id
+          ).match(/\d+/)} failed. Thread will be skipped.`,
           error: err,
-          html: threadRoot.outerHTML
+          html: threadRoot.outerHTML,
         });
       }
     }
@@ -705,16 +870,23 @@ const Main = {
     const threadRoots = [];
     for (var record of records) {
       for (var node of record.addedNodes) {
-        if ((node.nodeType === Node.ELEMENT_NODE) && node.matches(g.SITE.selectors.catalog.thread)) {
+        if (
+          node.nodeType === Node.ELEMENT_NODE &&
+          node.matches(g.SITE.selectors.catalog.thread)
+        ) {
           threadRoots.push(node);
         }
       }
     }
-    if (!threadRoots.length) { return; }
+    if (!threadRoots.length) {
+      return;
+    }
     const threads = [];
     const errors = [];
     Main.parseCatalogThreads(threadRoots, threads, errors);
-    if (errors.length) { Main.handleErrors(errors); }
+    if (errors.length) {
+      Main.handleErrors(errors);
+    }
     return Main.callbackNodes('CatalogThreadNative', threads);
   },
 
@@ -732,7 +904,9 @@ const Main = {
     const cbs = Callbacks[klass];
     const fn = function () {
       let node;
-      if (!(node = nodes[i])) { return false; }
+      if (!(node = nodes[i])) {
+        return false;
+      }
       cbs.execute(node);
       return ++i % 25;
     };
@@ -742,7 +916,9 @@ const Main = {
         continue;
       }
       if (!nodes[i]) {
-        if (cb) { cb(); }
+        if (cb) {
+          cb();
+        }
         return;
       }
       return setTimeout(softTask, 0);
@@ -754,19 +930,30 @@ const Main = {
   handleErrors(errors) {
     // Detect conflicts with 4chan X v2
     let error;
-    if (document.body && $.hasClass(document.body, 'fourchan_x') && !$.hasClass(document.documentElement, 'tainted')) {
+    if (
+      document.body &&
+      $.hasClass(document.body, 'fourchan_x') &&
+      !$.hasClass(document.documentElement, 'tainted')
+    ) {
       new Notice('error', 'Error: Multiple copies of 4chan X are enabled.');
       $.addClass(document.documentElement, 'tainted');
     }
 
     // Detect conflicts with native extension
-    if (g.SITE.testNativeExtension && !$.hasClass(document.documentElement, 'tainted')) {
+    if (
+      g.SITE.testNativeExtension &&
+      !$.hasClass(document.documentElement, 'tainted')
+    ) {
       const { enabled } = g.SITE.testNativeExtension();
       if (enabled) {
         $.addClass(document.documentElement, 'tainted');
         if (Conf['Disable Native Extension'] && !Main.isFirstRun) {
-          const msg = $.el('div',
-            { innerHTML: 'Failed to disable the native extension. You may need to <a href="' + E(meta.faq) + '#blocking-native-extension" target="_blank">block it</a>.' });
+          const msg = $.el('div', {
+            innerHTML:
+              'Failed to disable the native extension. You may need to <a href="' +
+              E(meta.faq) +
+              '#blocking-native-extension" target="_blank">block it</a>.',
+          });
           new Notice('error', msg);
         }
       }
@@ -783,20 +970,20 @@ const Main = {
     }
 
     const div = $.el('div', {
-      innerHTML:
-        `${errors.length} errors occurred.${Main.reportLink(errors).innerHTML} [<a href="javascript:;">show</a>]`
+      innerHTML: `${errors.length} errors occurred.${
+        Main.reportLink(errors).innerHTML
+      } [<a href="javascript:;">show</a>]`,
     });
     $.on(div.lastElementChild, 'click', function () {
       let ref;
-      return [this.textContent, logs.hidden] = ref = this.textContent === 'show' ? (
-        ['hide', false]
-      ) : (
-        ['show', true]
-      ), ref;
+      return (
+        ([this.textContent, logs.hidden] = ref =
+          this.textContent === 'show' ? ['hide', false] : ['show', true]),
+        ref
+      );
     });
 
-    var logs = $.el('div',
-      { hidden: true });
+    var logs = $.el('div', { hidden: true });
     for (error of errors) {
       $.add(logs, Main.parseError(error));
     }
@@ -806,13 +993,22 @@ const Main = {
 
   parseError(data, reportLink) {
     console.error(data.message, data.error.stack);
-    const message = $.el('div',
-      { innerHTML: E(data.message) + ((reportLink) ? (reportLink).innerHTML : "") });
-    const error = $.el('div',
-      { textContent: `${data.error.name || 'Error'}: ${data.error.message || 'see console for details'}` });
-    const lines = data.error.stack?.match(/\d+(?=:\d+\)?$)/mg)?.join().replace(/^/, ' at ') || '';
-    const context = $.el('div',
-      { textContent: `(${meta.name} ${meta.fork} v${g.VERSION} ${platform} on ${$.engine}${lines})` });
+    const message = $.el('div', {
+      innerHTML: E(data.message) + (reportLink ? reportLink.innerHTML : ''),
+    });
+    const error = $.el('div', {
+      textContent: `${data.error.name || 'Error'}: ${
+        data.error.message || 'see console for details'
+      }`,
+    });
+    const lines =
+      data.error.stack
+        ?.match(/\d+(?=:\d+\)?$)/gm)
+        ?.join()
+        .replace(/^/, ' at ') || '';
+    const context = $.el('div', {
+      textContent: `(${meta.name} ${meta.fork} v${g.VERSION} ${platform} on ${$.engine}${lines})`,
+    });
     return [message, error, context];
   },
 
@@ -820,11 +1016,17 @@ const Main = {
     let info;
     const data = errors[0];
     let title = data.message;
-    if (errors.length > 1) { title += ` (+${errors.length - 1} other errors)`; }
+    if (errors.length > 1) {
+      title += ` (+${errors.length - 1} other errors)`;
+    }
     let details = '';
     const addDetails = function (text) {
-      if (encodeURIComponent(title + details + text + '\n').length <= "meta.newIssueMaxLength - meta.newIssue.replace(/%(title|details)/, '')".length) {
-        return details += text + '\n';
+      if (
+        encodeURIComponent(title + details + text + '\n').length <=
+        "meta.newIssueMaxLength - meta.newIssue.replace(/%(title|details)/, '')"
+          .length
+      ) {
+        return (details += text + '\n');
       }
     };
     addDetails(`\
@@ -833,37 +1035,53 @@ const Main = {
 Script: ${meta.name} ${meta.fork} v${g.VERSION} ${platform}
 URL: ${location.href}
 User agent: ${navigator.userAgent}\
-`
-    );
-    if ((platform === 'userscript') && (info = (() => {
-      if (typeof GM !== 'undefined' && GM !== null) { return GM.info; } else {
-        if (typeof GM_info !== 'undefined' && GM_info !== null) { return GM_info; }
-      }
-    })())) {
+`);
+    if (
+      platform === 'userscript' &&
+      (info = (() => {
+        if (typeof GM !== 'undefined' && GM !== null) {
+          return GM.info;
+        } else {
+          if (typeof GM_info !== 'undefined' && GM_info !== null) {
+            return GM_info;
+          }
+        }
+      })())
+    ) {
       addDetails(`Userscript manager: ${info.scriptHandler} ${info.version}`);
     }
     addDetails('\n' + data.error);
-    if (data.error.stack) { addDetails(data.error.stack.replace(data.error.toString(), '').trim()); }
-    if (data.html) { addDetails('\n`' + data.html + '`'); }
+    if (data.error.stack) {
+      addDetails(data.error.stack.replace(data.error.toString(), '').trim());
+    }
+    if (data.html) {
+      addDetails('\n`' + data.html + '`');
+    }
     details = details.replace(/file:\/{3}.+\//g, ''); // Remove local file paths
-    const url = meta.newIssue.replace('%title', encodeURIComponent(title)).replace('%details', encodeURIComponent(details));
-    return { innerHTML: `<span class="report-error"> [<a href="${url}" target="_blank">report</a>]</span>` };
+    const url = meta.newIssue
+      .replace('%title', encodeURIComponent(title))
+      .replace('%details', encodeURIComponent(details));
+    return {
+      innerHTML: `<span class="report-error"> [<a href="${url}" target="_blank">report</a>]</span>`,
+    };
   },
 
   isThisPageLegit() {
     // not 404 error page or similar.
     if (!('thisPageIsLegit' in Main)) {
-      Main.thisPageIsLegit = g.SITE.isThisPageLegit ?
-        g.SITE.isThisPageLegit()
-        :
-        !/^[45]\d\d\b/.test(document.title) && !/\.(?:json|rss)$/.test(location.pathname);
+      Main.thisPageIsLegit = g.SITE.isThisPageLegit
+        ? g.SITE.isThisPageLegit()
+        : !/^[45]\d\d\b/.test(document.title) &&
+          !/\.(?:json|rss)$/.test(location.pathname);
     }
     return Main.thisPageIsLegit;
   },
 
   ready(cb) {
     return $.ready(function () {
-      if (Main.isThisPageLegit()) { return cb(); }
+      if (Main.isThisPageLegit()) {
+        return cb();
+      }
     });
   },
 
@@ -959,8 +1177,8 @@ User agent: ${navigator.userAgent}\
     ['Announcements', PSA],
     ['Flash Features', Flash],
     ['Reply Pruning', ReplyPruning],
-    ['Mod Contact Links', ModContact]
-  ]
+    ['Mod Contact Links', ModContact],
+  ],
 };
 export default Main;
 $.ready(() => Main.init());

@@ -1,7 +1,7 @@
-import Callbacks from "../classes/Callbacks";
-import { Conf } from "../globals/globals";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
+import Callbacks from '../classes/Callbacks';
+import { Conf } from '../globals/globals';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
 
 /*
  * decaffeinate suggestions:
@@ -10,22 +10,30 @@ import $$ from "../platform/$$";
  */
 const AntiAutoplay = {
   init() {
-    if (!Conf['Disable Autoplaying Sounds']) { return; }
+    if (!Conf['Disable Autoplaying Sounds']) {
+      return;
+    }
     $.addClass(document.documentElement, 'anti-autoplay');
-    for (var audio of $$('audio[autoplay]', document.documentElement)) { this.stop(audio); }
-    window.addEventListener('loadstart', (e => this.stop(e.target)), true);
+    for (var audio of $$('audio[autoplay]', document.documentElement)) {
+      this.stop(audio);
+    }
+    window.addEventListener('loadstart', (e) => this.stop(e.target), true);
     Callbacks.Post.push({
       name: 'Disable Autoplaying Sounds',
-      cb: this.node
+      cb: this.node,
     });
     return $.ready(() => this.process(document.body));
   },
 
   stop(audio) {
-    if (!audio.autoplay) { return; }
+    if (!audio.autoplay) {
+      return;
+    }
     audio.pause();
     audio.autoplay = false;
-    if (audio.controls) { return; }
+    if (audio.controls) {
+      return;
+    }
     audio.controls = true;
     return $.addClass(audio, 'controls-added');
   },
@@ -38,15 +46,22 @@ const AntiAutoplay = {
     for (var iframe of $$('iframe[src*="youtube"][src*="autoplay=1"]', root)) {
       AntiAutoplay.processVideo(iframe, 'src');
     }
-    for (var object of $$('object[data*="youtube"][data*="autoplay=1"]', root)) {
+    for (var object of $$(
+      'object[data*="youtube"][data*="autoplay=1"]',
+      root
+    )) {
       AntiAutoplay.processVideo(object, 'data');
     }
   },
 
   processVideo(el, attr) {
-    el[attr] = el[attr].replace(/\?autoplay=1&?/, '?').replace('&autoplay=1', '');
-    if (window.getComputedStyle(el).display === 'none') { el.style.display = 'block'; }
+    el[attr] = el[attr]
+      .replace(/\?autoplay=1&?/, '?')
+      .replace('&autoplay=1', '');
+    if (window.getComputedStyle(el).display === 'none') {
+      el.style.display = 'block';
+    }
     return $.addClass(el, 'autoplay-removed');
-  }
+  },
 };
 export default AntiAutoplay;

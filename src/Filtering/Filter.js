@@ -1,17 +1,17 @@
-import Callbacks from "../classes/Callbacks";
-import Notice from "../classes/Notice";
-import Config from "../config/Config";
-import Get from "../General/Get";
-import Settings from "../General/Settings";
-import { g, Conf } from "../globals/globals";
-import Menu from "../Menu/Menu";
-import Unread from "../Monitoring/Unread";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import { dict } from "../platform/helpers";
-import QuoteYou from "../Quotelinks/QuoteYou";
-import PostHiding from "./PostHiding";
-import ThreadHiding from "./ThreadHiding";
+import Callbacks from '../classes/Callbacks';
+import Notice from '../classes/Notice';
+import Config from '../config/Config';
+import Get from '../General/Get';
+import Settings from '../General/Settings';
+import { g, Conf } from '../globals/globals';
+import Menu from '../Menu/Menu';
+import Unread from '../Monitoring/Unread';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import { dict } from '../platform/helpers';
+import QuoteYou from '../Quotelinks/QuoteYou';
+import PostHiding from './PostHiding';
+import ThreadHiding from './ThreadHiding';
 
 /*
  * decaffeinate suggestions:
@@ -23,8 +23,12 @@ import ThreadHiding from "./ThreadHiding";
 const Filter = {
   filters: dict(),
   init() {
-    if (!['index', 'thread', 'catalog'].includes(g.VIEW) || !Conf['Filter']) { return; }
-    if ((g.VIEW === 'catalog') && !Conf['Filter in Native Catalog']) { return; }
+    if (!['index', 'thread', 'catalog'].includes(g.VIEW) || !Conf['Filter']) {
+      return;
+    }
+    if (g.VIEW === 'catalog' && !Conf['Filter in Native Catalog']) {
+      return;
+    }
 
     if (!Conf['Filtered Backlinks']) {
       $.addClass(document.documentElement, 'hide-backlinks');
@@ -33,7 +37,9 @@ const Filter = {
     for (var key in Config.filter) {
       for (var line of Conf[key].split('\n')) {
         var hl, isstring, regexp, top, types;
-        if (line[0] === '#') { continue; }
+        if (line[0] === '#') {
+          continue;
+        }
 
         if (!(regexp = line.match(/\/(.*)\/(\w*)/))) {
           continue;
@@ -43,12 +49,16 @@ const Filter = {
         var filter = line.replace(regexp[0], '');
 
         // List of the boards this filter applies to.
-        var boards = this.parseBoards(filter.match(/(?:^|;)\s*boards:([^;]+)/)?.[1]);
+        var boards = this.parseBoards(
+          filter.match(/(?:^|;)\s*boards:([^;]+)/)?.[1]
+        );
 
         // Boards to exclude from an otherwise global rule.
-        var excludes = this.parseBoards(filter.match(/(?:^|;)\s*exclude:([^;]+)/)?.[1]);
+        var excludes = this.parseBoards(
+          filter.match(/(?:^|;)\s*exclude:([^;]+)/)?.[1]
+        );
 
-        if (isstring = (['uniqueID', 'MD5'].includes(key))) {
+        if ((isstring = ['uniqueID', 'MD5'].includes(key))) {
           // MD5 filter will use strings instead of regular expressions.
           regexp = regexp[1];
         } else {
@@ -57,24 +67,28 @@ const Filter = {
             regexp = RegExp(regexp[1], regexp[2]);
           } catch (err) {
             // I warned you, bro.
-            new Notice('warning', [
-              $.tn(`Invalid ${key} filter:`),
-              $.el('br'),
-              $.tn(line),
-              $.el('br'),
-              $.tn(err.message)
-            ], 60);
+            new Notice(
+              'warning',
+              [
+                $.tn(`Invalid ${key} filter:`),
+                $.el('br'),
+                $.tn(line),
+                $.el('br'),
+                $.tn(err.message),
+              ],
+              60
+            );
             continue;
           }
         }
 
         // Filter OPs along with their threads or replies only.
         var op = filter.match(/(?:^|;)\s*op:(no|only)/)?.[1] || '';
-        var mask = $.getOwn({ 'no': 1, 'only': 2 }, op) || 0;
+        var mask = $.getOwn({ no: 1, only: 2 }, op) || 0;
 
         // Filter only posts with/without files.
         var file = filter.match(/(?:^|;)\s*file:(no|only)/)?.[1] || '';
-        mask = mask | ($.getOwn({ 'no': 4, 'only': 8 }, file) || 0);
+        mask = mask | ($.getOwn({ no: 4, only: 8 }, file) || 0);
 
         // Overrule the `Show Stubs` setting.
         // Defaults to stub showing.
@@ -94,8 +108,10 @@ const Filter = {
 
         // Highlight the post.
         // If not specified, the highlight class will be filter-highlight.
-        if (hl = /(?:^|;)\s*highlight/.test(filter)) {
-          hl = filter.match(/(?:^|;)\s*highlight:([\w-]+)/)?.[1] || 'filter-highlight';
+        if ((hl = /(?:^|;)\s*highlight/.test(filter))) {
+          hl =
+            filter.match(/(?:^|;)\s*highlight:([\w-]+)/)?.[1] ||
+            'filter-highlight';
           // Put highlighted OP's thread on top of the board page or not.
           // Defaults to on top.
           top = filter.match(/(?:^|;)\s*top:(yes|no)/)?.[1] || 'yes';
@@ -104,7 +120,7 @@ const Filter = {
 
         // Fields that this filter applies to (for 'general' filters)
         if (key === 'general') {
-          if (types = filter.match(/(?:^|;)\s*type:([^;]*)/)) {
+          if ((types = filter.match(/(?:^|;)\s*type:([^;]*)/))) {
             types = types[1].split(',');
           } else {
             types = ['subject', 'name', 'filename', 'comment'];
@@ -114,7 +130,18 @@ const Filter = {
         // Hide the post (default case).
         var hide = !(hl || noti);
 
-        filter = { isstring, regexp, boards, excludes, mask, hide, stub, hl, top, noti };
+        filter = {
+          isstring,
+          regexp,
+          boards,
+          excludes,
+          mask,
+          hide,
+          stub,
+          hl,
+          top,
+          noti,
+        };
         if (key === 'general') {
           for (var type of types) {
             (this.filters[type] || (this.filters[type] = [])).push(filter);
@@ -125,13 +152,15 @@ const Filter = {
       }
     }
 
-    if (!Object.keys(this.filters).length) { return; }
+    if (!Object.keys(this.filters).length) {
+      return;
+    }
     if (g.VIEW === 'catalog') {
       return Filter.catalog();
     } else {
       return Callbacks.Post.push({
         name: 'Filter',
-        cb: this.node
+        cb: this.node,
       });
     }
   },
@@ -140,8 +169,12 @@ const Filter = {
   // Sites can be specified by a beginning part of the site domain followed by a colon.
   parseBoards(boardsRaw) {
     let boards;
-    if (!boardsRaw) { return false; }
-    if (boards = Filter.parseBoardsMemo[boardsRaw]) { return boards; }
+    if (!boardsRaw) {
+      return false;
+    }
+    if ((boards = Filter.parseBoardsMemo[boardsRaw])) {
+      return boards;
+    }
     boards = dict();
     let siteFilter = '';
     for (var boardID of boardsRaw.split(',')) {
@@ -168,7 +201,9 @@ const Filter = {
   parseBoardsMemo: dict(),
 
   test(post, hideable = true) {
-    if (post.filterResults) { return post.filterResults; }
+    if (post.filterResults) {
+      return post.filterResults;
+    }
     let hide = false;
     let stub = true;
     let hl = undefined;
@@ -177,8 +212,8 @@ const Filter = {
     if (QuoteYou.isYou(post)) {
       hideable = false;
     }
-    let mask = (post.isReply ? 2 : 1);
-    mask = (mask | (post.file ? 4 : 8));
+    let mask = post.isReply ? 2 : 1;
+    mask = mask | (post.file ? 4 : 8);
     const board = `${post.siteID}/${post.boardID}`;
     const site = `${post.siteID}/*`;
     for (var key in Filter.filters) {
@@ -186,17 +221,20 @@ const Filter = {
         for (var filter of Filter.filters[key]) {
           if (
             (filter.boards && !(filter.boards[board] || filter.boards[site])) ||
-            (filter.excludes && (filter.excludes[board] || filter.excludes[site])) ||
-            (filter.mask & mask) ||
-            (filter.isstring ? (filter.regexp !== value) : !filter.regexp.test(value))
-          ) { continue; }
+            (filter.excludes &&
+              (filter.excludes[board] || filter.excludes[site])) ||
+            filter.mask & mask ||
+            (filter.isstring
+              ? filter.regexp !== value
+              : !filter.regexp.test(value))
+          ) {
+            continue;
+          }
           if (filter.hide) {
             if (hideable) {
               hide = true;
               if (stub) {
-                ({
-                  stub
-                } = filter);
+                ({ stub } = filter);
               }
             }
           } else {
@@ -204,9 +242,7 @@ const Filter = {
               (hl || (hl = [])).push(filter.hl);
             }
             if (!top) {
-              ({
-                top
-              } = filter);
+              ({ top } = filter);
             }
             if (filter.noti) {
               noti = true;
@@ -223,8 +259,13 @@ const Filter = {
   },
 
   node() {
-    if (this.isClone) { return; }
-    const { hide, stub, hl, top, noti } = Filter.test(this, (!this.isFetchedQuote && (this.isReply || (g.VIEW === 'index'))));
+    if (this.isClone) {
+      return;
+    }
+    const { hide, stub, hl, top, noti } = Filter.test(
+      this,
+      !this.isFetchedQuote && (this.isReply || g.VIEW === 'index')
+    );
     if (hide) {
       if (this.isReply) {
         PostHiding.hide(this, stub);
@@ -237,26 +278,40 @@ const Filter = {
         $.addClass(this.nodes.root, ...hl);
       }
     }
-    if (noti && Unread.posts && (this.ID > Unread.lastReadPost) && !QuoteYou.isYou(this)) {
+    if (
+      noti &&
+      Unread.posts &&
+      this.ID > Unread.lastReadPost &&
+      !QuoteYou.isYou(this)
+    ) {
       return Unread.openNotification(this, ' triggered a notification filter');
     }
   },
 
   catalog() {
     let url;
-    if (!(url = g.SITE.urls.catalogJSON?.(g.BOARD))) { return; }
+    if (!(url = g.SITE.urls.catalogJSON?.(g.BOARD))) {
+      return;
+    }
     Filter.catalogData = dict();
-    $.ajax(url,
-      { onloadend: Filter.catalogParse });
+    $.ajax(url, { onloadend: Filter.catalogParse });
     return Callbacks.CatalogThreadNative.push({
       name: 'Filter',
-      cb: this.catalogNode
+      cb: this.catalogNode,
     });
   },
 
   catalogParse() {
     if (![200, 404].includes(this.status)) {
-      new Notice('warning', `Failed to fetch catalog JSON data. ${this.status ? `Error ${this.statusText} (${this.status})` : 'Connection Error'}`, 1);
+      new Notice(
+        'warning',
+        `Failed to fetch catalog JSON data. ${
+          this.status
+            ? `Error ${this.statusText} (${this.status})`
+            : 'Connection Error'
+        }`,
+        1
+      );
       return;
     }
     for (var page of this.response) {
@@ -272,11 +327,24 @@ const Filter = {
   },
 
   catalogNode() {
-    if ((this.boardID !== g.BOARD.ID) || !Filter.catalogData[this.ID]) { return; }
-    if (QuoteYou.db?.get({ siteID: g.SITE.ID, boardID: this.boardID, threadID: this.ID, postID: this.ID })) { return; }
-    const { hide, hl, top } = Filter.test(g.SITE.Build.parseJSON(Filter.catalogData[this.ID], this));
+    if (this.boardID !== g.BOARD.ID || !Filter.catalogData[this.ID]) {
+      return;
+    }
+    if (
+      QuoteYou.db?.get({
+        siteID: g.SITE.ID,
+        boardID: this.boardID,
+        threadID: this.ID,
+        postID: this.ID,
+      })
+    ) {
+      return;
+    }
+    const { hide, hl, top } = Filter.test(
+      g.SITE.Build.parseJSON(Filter.catalogData[this.ID], this)
+    );
     if (hide) {
-      return this.nodes.root.hidden = true;
+      return (this.nodes.root.hidden = true);
     } else {
       if (hl) {
         this.highlights = hl;
@@ -294,47 +362,86 @@ const Filter = {
   },
 
   valueF: {
-    postID(post) { return [`${post.ID}`]; },
-    name(post) { return [post.info.name]; },
-    uniqueID(post) { return [post.info.uniqueID || '']; },
-    tripcode(post) { return [post.info.tripcode]; },
-    capcode(post) { return [post.info.capcode]; },
-    pass(post) { return [post.info.pass]; },
-    email(post) { return [post.info.email]; },
-    subject(post) { return [post.info.subject || (post.isReply ? undefined : '')]; },
-    comment(post) { return [(post.info.comment != null ? post.info.comment : (post.info.comment = g.sites[post.siteID]?.Build?.parseComment?.(post.info.commentHTML.innerHTML)))]; },
-    flag(post) { return [post.info.flag]; },
-    filename(post) { return post.files.map(f => f.name); },
-    dimensions(post) { return post.files.map(f => f.dimensions); },
-    filesize(post) { return post.files.map(f => f.size); },
-    MD5(post) { return post.files.map(f => f.MD5); }
+    postID(post) {
+      return [`${post.ID}`];
+    },
+    name(post) {
+      return [post.info.name];
+    },
+    uniqueID(post) {
+      return [post.info.uniqueID || ''];
+    },
+    tripcode(post) {
+      return [post.info.tripcode];
+    },
+    capcode(post) {
+      return [post.info.capcode];
+    },
+    pass(post) {
+      return [post.info.pass];
+    },
+    email(post) {
+      return [post.info.email];
+    },
+    subject(post) {
+      return [post.info.subject || (post.isReply ? undefined : '')];
+    },
+    comment(post) {
+      return [
+        post.info.comment != null
+          ? post.info.comment
+          : (post.info.comment = g.sites[post.siteID]?.Build?.parseComment?.(
+              post.info.commentHTML.innerHTML
+            )),
+      ];
+    },
+    flag(post) {
+      return [post.info.flag];
+    },
+    filename(post) {
+      return post.files.map((f) => f.name);
+    },
+    dimensions(post) {
+      return post.files.map((f) => f.dimensions);
+    },
+    filesize(post) {
+      return post.files.map((f) => f.size);
+    },
+    MD5(post) {
+      return post.files.map((f) => f.MD5);
+    },
   },
 
   values(key, post) {
     if ($.hasOwn(Filter.valueF, key)) {
-      return Filter.valueF[key](post).filter(v => v != null);
+      return Filter.valueF[key](post).filter((v) => v != null);
     } else {
-      return [key.split('+').map(function (k) {
-        let f;
-        if (f = $.getOwn(Filter.valueF, k)) {
-          return f(post).map(v => v || '').join('\n');
-        } else {
-          return '';
-        }
-      }).join('\n')];
+      return [
+        key
+          .split('+')
+          .map(function (k) {
+            let f;
+            if ((f = $.getOwn(Filter.valueF, k))) {
+              return f(post)
+                .map((v) => v || '')
+                .join('\n');
+            } else {
+              return '';
+            }
+          })
+          .join('\n'),
+      ];
     }
   },
 
   addFilter(type, re, cb) {
-    if (!$.hasOwn(Config.filter, type)) { return; }
+    if (!$.hasOwn(Config.filter, type)) {
+      return;
+    }
     return $.get(type, Conf[type], function (item) {
       let save = item[type];
       // Add a new line before the regexp unless the text is empty.
-      save =
-        save ?
-          `${save}\n${re}`
-          :
-          re;
+      save = save ? `${save}\n${re}` : re;
       return $.set(type, save, cb);
     });
   },
@@ -364,9 +471,11 @@ const Filter = {
 
   quickFilterMD5() {
     const post = Get.postFromNode(this);
-    const files = post.files.filter(f => f.MD5);
-    if (!files.length) { return; }
-    const filter = files.map(f => `/${f.MD5}/`).join('\n');
+    const files = post.files.filter((f) => f.MD5);
+    if (!files.length) {
+      return;
+    }
+    const filter = files.map((f) => `/${f.MD5}/`).join('\n');
     Filter.addFilter('MD5', filter);
     const origin = post.origin || post;
     if (origin.isReply) {
@@ -387,11 +496,21 @@ const Filter = {
     if (notice) {
       notice.filters.push(filter);
       notice.posts.push(origin);
-      return $('span', notice.el).textContent = `${notice.filters.length} MD5s filtered.`;
+      return ($(
+        'span',
+        notice.el
+      ).textContent = `${notice.filters.length} MD5s filtered.`);
     } else {
-      const msg = $.el('div',
-        { innerHTML: "<span>MD5 filtered.</span> [<a href=\"javascript:;\">show</a>] [<a href=\"javascript:;\">undo</a>]" });
-      notice = (Filter.quickFilterMD5.notice = new Notice('info', msg, undefined, () => delete Filter.quickFilterMD5.notice));
+      const msg = $.el('div', {
+        innerHTML:
+          '<span>MD5 filtered.</span> [<a href="javascript:;">show</a>] [<a href="javascript:;">undo</a>]',
+      });
+      notice = Filter.quickFilterMD5.notice = new Notice(
+        'info',
+        msg,
+        undefined,
+        () => delete Filter.quickFilterMD5.notice
+      );
       notice.filters = [filter];
       notice.posts = [origin];
       const links = $$('a', msg);
@@ -415,11 +534,13 @@ const Filter = {
         }
       }
       return this.close();
-    }
+    },
   },
 
   escape(value) {
-    return value.replace(new RegExp(`\
+    return value.replace(
+      new RegExp(
+        `\
 /\
 |\\\\\
 |\\^\
@@ -436,23 +557,32 @@ const Filter = {
 |\\*\
 |\\+\
 |\\|\
-`, 'g'), function (c) {
-      if (c === '\n') {
-        return '\\n';
-      } else if (c === '\\') {
-        return '\\\\';
-      } else {
-        return `\\${c}`;
+`,
+        'g'
+      ),
+      function (c) {
+        if (c === '\n') {
+          return '\\n';
+        } else if (c === '\\') {
+          return '\\\\';
+        } else {
+          return `\\${c}`;
+        }
       }
-    });
+    );
   },
 
   menu: {
     init() {
-      if (!['index', 'thread'].includes(g.VIEW) || !Conf['Menu'] || !Conf['Filter']) { return; }
+      if (
+        !['index', 'thread'].includes(g.VIEW) ||
+        !Conf['Menu'] ||
+        !Conf['Filter']
+      ) {
+        return;
+      }
 
-      const div = $.el('div',
-        { textContent: 'Filter' });
+      const div = $.el('div', { textContent: 'Filter' });
 
       const entry = {
         el: div,
@@ -461,7 +591,7 @@ const Filter = {
           Filter.menu.post = post;
           return true;
         },
-        subEntries: []
+        subEntries: [],
       };
 
       for (var type of [
@@ -477,7 +607,7 @@ const Filter = {
         ['Filename', 'filename'],
         ['Image dimensions', 'dimensions'],
         ['Filesize', 'filesize'],
-        ['Image MD5', 'MD5']
+        ['Image MD5', 'MD5'],
       ]) {
         // Add a sub entry for each filter type.
         entry.subEntries.push(Filter.menu.createSubEntry(type[0], type[1]));
@@ -489,9 +619,8 @@ const Filter = {
     createSubEntry(text, type) {
       const el = $.el('a', {
         href: 'javascript:;',
-        textContent: text
-      }
-      );
+        textContent: text,
+      });
       el.dataset.type = type;
       $.on(el, 'click', Filter.menu.makeFilter);
 
@@ -499,7 +628,7 @@ const Filter = {
         el,
         open(post) {
           return Filter.values(type, post).length;
-        }
+        },
       };
     },
 
@@ -507,17 +636,21 @@ const Filter = {
       const { type } = this.dataset;
       // Convert value -> regexp, unless type is MD5
       const values = Filter.values(type, Filter.menu.post);
-      const res = values.map(function (value) {
-        const re = ['uniqueID', 'MD5'].includes(type) ? value : Filter.escape(value);
-        if (['uniqueID', 'MD5'].includes(type)) {
-          return `/${re}/`;
-        } else {
-          return `/^${re}$/`;
-        }
-      }).join('\n');
+      const res = values
+        .map(function (value) {
+          const re = ['uniqueID', 'MD5'].includes(type)
+            ? value
+            : Filter.escape(value);
+          if (['uniqueID', 'MD5'].includes(type)) {
+            return `/${re}/`;
+          } else {
+            return `/^${re}$/`;
+          }
+        })
+        .join('\n');
 
       return Filter.addFilter(type, res, () => Filter.showFilters(type));
-    }
-  }
+    },
+  },
 };
 export default Filter;

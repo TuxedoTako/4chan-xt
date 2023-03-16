@@ -1,8 +1,8 @@
-import { Conf } from "../globals/globals";
-import Main from "../main/Main";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import Header from "./Header";
+import { Conf } from '../globals/globals';
+import Main from '../main/Main';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import Header from './Header';
 
 /*
  * decaffeinate suggestions:
@@ -15,17 +15,18 @@ import Header from "./Header";
 const dialog = function (id, properties) {
   const el = $.el('div', {
     className: 'dialog',
-    id
-  }
-  );
+    id,
+  });
   $.extend(el, properties);
   el.style.cssText = Conf[`${id}.position`];
 
   const move = $('.move', el);
   $.on(move, 'touchstart mousedown', dragstart);
   for (var child of move.children) {
-    if (!child.tagName) { continue; }
-    $.on(child, 'touchstart mousedown', e => e.stopPropagation());
+    if (!child.tagName) {
+      continue;
+    }
+    $.on(child, 'touchstart mousedown', (e) => e.stopPropagation());
   }
 
   return el;
@@ -49,7 +50,9 @@ var Menu = (function () {
       this.addEntry = this.addEntry.bind(this);
       this.type = type;
       $.on(document, 'AddMenuEntry', ({ detail }) => {
-        if (detail.type !== this.type) { return; }
+        if (detail.type !== this.type) {
+          return;
+        }
         delete detail.open;
         return this.addEntry(detail);
       });
@@ -60,11 +63,10 @@ var Menu = (function () {
       const menu = $.el('div', {
         className: 'dialog',
         id: 'menu',
-        tabIndex: 0
-      }
-      );
+        tabIndex: 0,
+      });
       menu.dataset.type = this.type;
-      $.on(menu, 'click', e => e.stopPropagation());
+      $.on(menu, 'click', (e) => e.stopPropagation());
       $.on(menu, 'keydown', this.keybinds);
       return menu;
     }
@@ -78,10 +80,14 @@ var Menu = (function () {
         // Reopen if we clicked on another button.
         const previousButton = lastToggledButton;
         currentMenu.close();
-        if (previousButton === button) { return; }
+        if (previousButton === button) {
+          return;
+        }
       }
 
-      if (!this.entries.length) { return; }
+      if (!this.entries.length) {
+        return;
+      }
       return this.open(button, data);
     }
 
@@ -122,14 +128,16 @@ var Menu = (function () {
       const bLeft = window.scrollX + bRect.left;
       const cHeight = document.documentElement.clientHeight;
       const cWidth = document.documentElement.clientWidth;
-      const [top, bottom] = Array.from((bRect.top + bRect.height + mRect.height) < cHeight ?
-        [`${bRect.bottom}px`, '']
-        :
-        ['', `${cHeight - bRect.top}px`]);
-      const [left, right] = Array.from((bRect.left + mRect.width) < cWidth ?
-        [`${bRect.left}px`, '']
-        :
-        ['', `${cWidth - bRect.right}px`]);
+      const [top, bottom] = Array.from(
+        bRect.top + bRect.height + mRect.height < cHeight
+          ? [`${bRect.bottom}px`, '']
+          : ['', `${cHeight - bRect.top}px`]
+      );
+      const [left, right] = Array.from(
+        bRect.left + mRect.width < cWidth
+          ? [`${bRect.left}px`, '']
+          : ['', `${cWidth - bRect.right}px`]
+      );
       $.extend(this.menu.style, { top, right, bottom, left });
       return this.menu.classList.toggle('left', right);
     }
@@ -138,24 +146,27 @@ var Menu = (function () {
       let submenu;
       if (typeof entry.open === 'function') {
         try {
-          if (!entry.open(data)) { return; }
+          if (!entry.open(data)) {
+            return;
+          }
         } catch (err) {
           Main.handleErrors({
             message: `Error in building the ${this.type} menu.`,
-            error: err
+            error: err,
           });
           return;
         }
       }
       $.add(parent, entry.el);
 
-      if (!entry.subEntries) { return; }
-      if (submenu = $('.submenu', entry.el)) {
+      if (!entry.subEntries) {
+        return;
+      }
+      if ((submenu = $('.submenu', entry.el))) {
         // Reset sub menu, remove irrelevant entries.
         $.rm(submenu);
       }
-      submenu = $.el('div',
-        { className: 'dialog submenu' });
+      submenu = $.el('div', { className: 'dialog submenu' });
       for (var subEntry of entry.subEntries) {
         this.insertEntry(subEntry, submenu, data);
       }
@@ -192,21 +203,25 @@ var Menu = (function () {
           lastToggledButton.focus();
           this.close();
           break;
-        case 13: case 32: // Enter, Space
+        case 13:
+        case 32: // Enter, Space
           entry.click();
           break;
         case 38: // Up
-          if (next = this.findNextEntry(entry, -1)) {
+          if ((next = this.findNextEntry(entry, -1))) {
             this.focus(next);
           }
           break;
         case 40: // Down
-          if (next = this.findNextEntry(entry, +1)) {
+          if ((next = this.findNextEntry(entry, +1))) {
             this.focus(next);
           }
           break;
         case 39: // Right
-          if ((submenu = $('.submenu', entry)) && (next = submenu.firstElementChild)) {
+          if (
+            (submenu = $('.submenu', entry)) &&
+            (next = submenu.firstElementChild)
+          ) {
             let nextPrev;
             while ((nextPrev = this.findNextEntry(next, -1))) {
               next = nextPrev;
@@ -215,7 +230,12 @@ var Menu = (function () {
           }
           break;
         case 37: // Left
-          if (next = $.x('parent::*[contains(@class,"submenu")]/parent::*', entry)) {
+          if (
+            (next = $.x(
+              'parent::*[contains(@class,"submenu")]/parent::*',
+              entry
+            ))
+          ) {
             this.focus(next);
           }
           break;
@@ -234,7 +254,9 @@ var Menu = (function () {
 
     focus(entry) {
       let focused, submenu;
-      while ((focused = $.x('parent::*/child::*[contains(@class,"focused")]', entry))) {
+      while (
+        (focused = $.x('parent::*/child::*[contains(@class,"focused")]', entry))
+      ) {
         $.rmClass(focused, 'focused');
       }
       for (focused of $$('.focused', entry)) {
@@ -243,24 +265,26 @@ var Menu = (function () {
       $.addClass(entry, 'focused');
 
       // Submenu positioning.
-      if (!(submenu = $('.submenu', entry))) { return; }
+      if (!(submenu = $('.submenu', entry))) {
+        return;
+      }
       const sRect = submenu.getBoundingClientRect();
       const eRect = entry.getBoundingClientRect();
       const cHeight = document.documentElement.clientHeight;
       const cWidth = document.documentElement.clientWidth;
-      const [top, bottom] = Array.from((eRect.top + sRect.height) < cHeight ?
-        ['0px', 'auto']
-        :
-        ['auto', '0px']);
-      const [left, right] = Array.from((eRect.right + sRect.width) < (cWidth - 150) ?
-        ['100%', 'auto']
-        :
-        ['auto', '100%']);
+      const [top, bottom] = Array.from(
+        eRect.top + sRect.height < cHeight ? ['0px', 'auto'] : ['auto', '0px']
+      );
+      const [left, right] = Array.from(
+        eRect.right + sRect.width < cWidth - 150
+          ? ['100%', 'auto']
+          : ['auto', '100%']
+      );
       const { style } = submenu;
       style.top = top;
       style.bottom = bottom;
       style.left = left;
-      return style.right = right;
+      return (style.right = right);
     }
 
     addEntry(entry) {
@@ -273,7 +297,9 @@ var Menu = (function () {
       $.addClass(el, 'entry');
       $.on(el, 'focus mouseover', this.onFocus);
       el.style.order = entry.order || 100;
-      if (!subEntries) { return; }
+      if (!subEntries) {
+        return;
+      }
       $.addClass(el, 'has-submenu');
       for (var subEntry of subEntries) {
         this.parseEntry(subEntry);
@@ -286,10 +312,12 @@ var Menu = (function () {
 
 export var dragstart = function (e) {
   let isTouching;
-  if ((e.type === 'mousedown') && (e.button !== 0)) { return; } // not LMB
+  if (e.type === 'mousedown' && e.button !== 0) {
+    return;
+  } // not LMB
   // prevent text selection
   e.preventDefault();
-  if (isTouching = e.type === 'touchstart') {
+  if ((isTouching = e.type === 'touchstart')) {
     e = e.changedTouches[e.changedTouches.length - 1];
   }
   // distance from pointer to el edge is constant; calculate it here.
@@ -306,15 +334,16 @@ export var dragstart = function (e) {
     width: screenWidth - rect.width,
     screenHeight,
     screenWidth,
-    isTouching
+    isTouching,
   };
 
-  [o.topBorder, o.bottomBorder] = Array.from(Conf['Header auto-hide'] || !Conf['Fixed Header'] ?
-    [0, 0]
-    : Conf['Bottom Header'] ?
-      [0, Header.bar.getBoundingClientRect().height]
-      :
-      [Header.bar.getBoundingClientRect().height, 0]);
+  [o.topBorder, o.bottomBorder] = Array.from(
+    Conf['Header auto-hide'] || !Conf['Fixed Header']
+      ? [0, 0]
+      : Conf['Bottom Header']
+      ? [0, Header.bar.getBoundingClientRect().height]
+      : [Header.bar.getBoundingClientRect().height, 0]
+  );
 
   if (isTouching) {
     o.identifier = e.identifier;
@@ -322,7 +351,8 @@ export var dragstart = function (e) {
     o.up = touchend.bind(o);
     $.on(document, 'touchmove', o.move);
     return $.on(document, 'touchend touchcancel', o.up);
-  } else { // mousedown
+  } else {
+    // mousedown
     o.move = drag.bind(o);
     o.up = dragend.bind(o);
     $.on(document, 'mousemove', o.move);
@@ -343,36 +373,30 @@ export var drag = function (e) {
   const { clientX, clientY } = e;
 
   let left = clientX - this.dx;
-  left = left < 10 ?
-    0
-    : (this.width - left) < 10 ?
-      ''
-      :
-      ((left / this.screenWidth) * 100) + '%';
+  left =
+    left < 10
+      ? 0
+      : this.width - left < 10
+      ? ''
+      : (left / this.screenWidth) * 100 + '%';
 
   let top = clientY - this.dy;
-  top = top < (10 + this.topBorder) ?
-    this.topBorder + 'px'
-    : (this.height - top) < (10 + this.bottomBorder) ?
-      ''
-      :
-      ((top / this.screenHeight) * 100) + '%';
+  top =
+    top < 10 + this.topBorder
+      ? this.topBorder + 'px'
+      : this.height - top < 10 + this.bottomBorder
+      ? ''
+      : (top / this.screenHeight) * 100 + '%';
 
-  const right = left === '' ?
-    0
-    :
-    '';
+  const right = left === '' ? 0 : '';
 
-  const bottom = top === '' ?
-    this.bottomBorder + 'px'
-    :
-    '';
+  const bottom = top === '' ? this.bottomBorder + 'px' : '';
 
   const { style } = this;
   style.left = left;
   style.right = right;
   style.top = top;
-  return style.bottom = bottom;
+  return (style.bottom = bottom);
 };
 
 export var touchend = function (e) {
@@ -388,14 +412,24 @@ export var dragend = function () {
   if (this.isTouching) {
     $.off(document, 'touchmove', this.move);
     $.off(document, 'touchend touchcancel', this.up);
-  } else { // mouseup
+  } else {
+    // mouseup
     $.off(document, 'mousemove', this.move);
     $.off(document, 'mouseup', this.up);
   }
   return $.set(`${this.id}.position`, this.style.cssText);
 };
 
-const hoverstart = function ({ root, el, latestEvent, endEvents, height, width, cb, noRemove }) {
+const hoverstart = function ({
+  root,
+  el,
+  latestEvent,
+  endEvents,
+  height,
+  width,
+  cb,
+  noRemove,
+}) {
   const rect = root.getBoundingClientRect();
   const o = {
     root,
@@ -411,14 +445,16 @@ const hoverstart = function ({ root, el, latestEvent, endEvents, height, width, 
     width,
     noRemove,
     clientX: (rect.left + rect.right) / 2,
-    clientY: (rect.top + rect.bottom) / 2
+    clientY: (rect.top + rect.bottom) / 2,
   };
   o.hover = hover.bind(o);
   o.hoverend = hoverend.bind(o);
 
   o.hover(o.latestEvent);
   new MutationObserver(function () {
-    if (el.parentNode) { return o.hover(o.latestEvent); }
+    if (el.parentNode) {
+      return o.hover(o.latestEvent);
+    }
   }).observe(el, { childList: true });
 
   $.on(root, endEvents, o.hoverend);
@@ -428,7 +464,11 @@ const hoverstart = function ({ root, el, latestEvent, endEvents, height, width, 
   $.on(root, 'mousemove', o.hover);
 
   // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=674955
-  o.workaround = function (e) { if (!root.contains(e.target)) { return o.hoverend(e); } };
+  o.workaround = function (e) {
+    if (!root.contains(e.target)) {
+      return o.hoverend(e);
+    }
+  };
   return $.on(document.documentElement, 'mousemove', o.workaround);
 };
 
@@ -437,40 +477,57 @@ hoverstart.padding = 25;
 export var hover = function (e) {
   this.latestEvent = e;
   const height = (this.height || this.el.offsetHeight) + hoverstart.padding;
-  const width = (this.width || this.el.offsetWidth);
+  const width = this.width || this.el.offsetWidth;
   const { clientX, clientY } = Conf['Follow Cursor'] ? e : this;
 
-  const top = this.isImage ?
-    Math.max(0, (clientY * (this.clientHeight - height)) / this.clientHeight)
-    :
-    Math.max(0, Math.min(this.clientHeight - height, clientY - 120));
+  const top = this.isImage
+    ? Math.max(0, (clientY * (this.clientHeight - height)) / this.clientHeight)
+    : Math.max(0, Math.min(this.clientHeight - height, clientY - 120));
 
   let threshold = this.clientWidth / 2;
-  if (!this.isImage) { threshold = Math.max(threshold, this.clientWidth - 400); }
-  let marginX = (clientX <= threshold ? clientX : this.clientWidth - clientX) + 45;
-  if (this.isImage) { marginX = Math.min(marginX, this.clientWidth - width); }
+  if (!this.isImage) {
+    threshold = Math.max(threshold, this.clientWidth - 400);
+  }
+  let marginX =
+    (clientX <= threshold ? clientX : this.clientWidth - clientX) + 45;
+  if (this.isImage) {
+    marginX = Math.min(marginX, this.clientWidth - width);
+  }
   marginX += 'px';
-  const [left, right] = Array.from(clientX <= threshold ? [marginX, ''] : ['', marginX]);
+  const [left, right] = Array.from(
+    clientX <= threshold ? [marginX, ''] : ['', marginX]
+  );
 
   const { style } = this;
   style.top = top + 'px';
   style.left = left;
-  return style.right = right;
+  return (style.right = right);
 };
 
 export var hoverend = function (e) {
-  if (((e.type === 'keydown') && (e.keyCode !== 13)) || (e.target.nodeName === "TEXTAREA")) { return; }
-  if (!this.noRemove) { $.rm(this.el); }
+  if (
+    (e.type === 'keydown' && e.keyCode !== 13) ||
+    e.target.nodeName === 'TEXTAREA'
+  ) {
+    return;
+  }
+  if (!this.noRemove) {
+    $.rm(this.el);
+  }
   $.off(this.root, this.endEvents, this.hoverend);
   $.off(document, 'keydown', this.hoverend);
   $.off(this.root, 'mousemove', this.hover);
   // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=674955
   $.off(document.documentElement, 'mousemove', this.workaround);
-  if (this.cb) { return this.cb.call(this); }
+  if (this.cb) {
+    return this.cb.call(this);
+  }
 };
 
 export const checkbox = function (name, text, checked) {
-  if (checked == null) { checked = Conf[name]; }
+  if (checked == null) {
+    checked = Conf[name];
+  }
   const label = $.el('label');
   const input = $.el('input', { type: 'checkbox', name, checked });
   $.add(label, [input, $.tn(` ${text}`)]);
@@ -481,6 +538,6 @@ const UI = {
   dialog,
   Menu,
   hover: hoverstart,
-  checkbox
+  checkbox,
 };
 export default UI;

@@ -1,6 +1,6 @@
-import BoardConfig from "../General/BoardConfig";
-import { g } from "../globals/globals";
-import SimpleDict from "./SimpleDict";
+import BoardConfig from '../General/BoardConfig';
+import { g } from '../globals/globals';
+import SimpleDict from './SimpleDict';
 
 /*
  * decaffeinate suggestions:
@@ -8,7 +8,9 @@ import SimpleDict from "./SimpleDict";
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
  */
 export default class Board {
-  toString() { return this.ID; }
+  toString() {
+    return this.ID;
+  }
 
   constructor(ID) {
     this.ID = ID;
@@ -27,7 +29,7 @@ export default class Board {
       thread: c2.threads || 0,
       reply: c2.replies || 0,
       image: c2.images || 0,
-      thread_global: 300 // inter-board thread cooldown
+      thread_global: 300, // inter-board thread cooldown
     };
     // Pass users have reduced cooldowns.
     if (document.cookie.indexOf('pass_enabled=1') >= 0) {

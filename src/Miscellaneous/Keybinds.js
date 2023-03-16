@@ -1,28 +1,28 @@
-import Notice from "../classes/Notice";
-import Config from "../config/Config";
-import Filter from "../Filtering/Filter";
-import ThreadHiding from "../Filtering/ThreadHiding";
-import BoardConfig from "../General/BoardConfig";
-import Get from "../General/Get";
-import Header from "../General/Header";
-import Index from "../General/Index";
-import Settings from "../General/Settings";
-import { Conf, g } from "../globals/globals";
-import FappeTyme from "../Images/FappeTyme";
-import Gallery from "../Images/Gallery";
-import ImageExpand from "../Images/ImageExpand";
-import Embedding from "../Linkification/Embedding";
-import ThreadUpdater from "../Monitoring/ThreadUpdater";
-import ThreadWatcher from "../Monitoring/ThreadWatcher";
-import UnreadIndex from "../Monitoring/UnreadIndex";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import QR from "../Posting/QR";
-import QuoteThreading from "../Quotelinks/QuoteThreading";
-import QuoteYou from "../Quotelinks/QuoteYou";
-import CatalogLinks from "./CatalogLinks";
-import ExpandThread from "./ExpandThread";
-import Nav from "./Nav";
+import Notice from '../classes/Notice';
+import Config from '../config/Config';
+import Filter from '../Filtering/Filter';
+import ThreadHiding from '../Filtering/ThreadHiding';
+import BoardConfig from '../General/BoardConfig';
+import Get from '../General/Get';
+import Header from '../General/Header';
+import Index from '../General/Index';
+import Settings from '../General/Settings';
+import { Conf, g } from '../globals/globals';
+import FappeTyme from '../Images/FappeTyme';
+import Gallery from '../Images/Gallery';
+import ImageExpand from '../Images/ImageExpand';
+import Embedding from '../Linkification/Embedding';
+import ThreadUpdater from '../Monitoring/ThreadUpdater';
+import ThreadWatcher from '../Monitoring/ThreadWatcher';
+import UnreadIndex from '../Monitoring/UnreadIndex';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import QR from '../Posting/QR';
+import QuoteThreading from '../Quotelinks/QuoteThreading';
+import QuoteYou from '../Quotelinks/QuoteYou';
+import CatalogLinks from './CatalogLinks';
+import ExpandThread from './ExpandThread';
+import Nav from './Nav';
 
 /*
  * decaffeinate suggestions:
@@ -33,7 +33,9 @@ import Nav from "./Nav";
  */
 const Keybinds = {
   init() {
-    if (!Conf['Keybinds']) { return; }
+    if (!Conf['Keybinds']) {
+      return;
+    }
 
     for (var hotkey in Config.hotkeys) {
       $.sync(hotkey, Keybinds.sync);
@@ -50,16 +52,23 @@ const Keybinds = {
   },
 
   sync(key, hotkey) {
-    return Conf[hotkey] = key;
+    return (Conf[hotkey] = key);
   },
 
   keydown(e) {
     let key, thread, threadRoot;
     let catalog, notifications;
-    if (!(key = Keybinds.keyCode(e))) { return; }
+    if (!(key = Keybinds.keyCode(e))) {
+      return;
+    }
     const { target } = e;
     if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
-      if (!/(Esc|Alt|Ctrl|Meta|Shift\+\w{2,})/.test(key) || !!/^Alt\+(\d|Up|Down|Left|Right)$/.test(key)) { return; }
+      if (
+        !/(Esc|Alt|Ctrl|Meta|Shift\+\w{2,})/.test(key) ||
+        !!/^Alt\+(\d|Up|Down|Left|Right)$/.test(key)
+      ) {
+        return;
+      }
     }
     if (['index', 'thread'].includes(g.VIEW)) {
       threadRoot = Nav.getThread();
@@ -68,18 +77,24 @@ const Keybinds = {
     switch (key) {
       // QR & Options
       case Conf['Toggle board list']:
-        if (!Conf['Custom Board Navigation']) { return; }
+        if (!Conf['Custom Board Navigation']) {
+          return;
+        }
         Header.toggleBoardList();
         break;
       case Conf['Toggle header']:
         Header.toggleBarVisibility();
         break;
       case Conf['Open empty QR']:
-        if (!QR.postingIsEnabled) { return; }
+        if (!QR.postingIsEnabled) {
+          return;
+        }
         Keybinds.qr();
         break;
       case Conf['Open QR']:
-        if (!QR.postingIsEnabled || !threadRoot) { return; }
+        if (!QR.postingIsEnabled || !threadRoot) {
+          return;
+        }
         Keybinds.qr(threadRoot);
         break;
       case Conf['Open settings']:
@@ -92,7 +107,13 @@ const Keybinds = {
           for (var notification of notifications) {
             $('.close', notification).click();
           }
-        } else if (QR.nodes && !(QR.nodes.el.hidden || (window.getComputedStyle(QR.nodes.form).display === 'none'))) {
+        } else if (
+          QR.nodes &&
+          !(
+            QR.nodes.el.hidden ||
+            window.getComputedStyle(QR.nodes.form).display === 'none'
+          )
+        ) {
           if (Conf['Persistent QR']) {
             QR.hide();
           } else {
@@ -105,54 +126,84 @@ const Keybinds = {
         }
         break;
       case Conf['Spoiler tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
+        if (target.nodeName !== 'TEXTAREA') {
+          return;
+        }
         Keybinds.tags('spoiler', target);
         break;
       case Conf['Code tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
+        if (target.nodeName !== 'TEXTAREA') {
+          return;
+        }
         Keybinds.tags('code', target);
         break;
       case Conf['Eqn tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
+        if (target.nodeName !== 'TEXTAREA') {
+          return;
+        }
         Keybinds.tags('eqn', target);
         break;
       case Conf['Math tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
+        if (target.nodeName !== 'TEXTAREA') {
+          return;
+        }
         Keybinds.tags('math', target);
         break;
       case Conf['SJIS tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
+        if (target.nodeName !== 'TEXTAREA') {
+          return;
+        }
         Keybinds.tags('sjis', target);
         break;
       case Conf['Toggle sage']:
-        if (!QR.nodes || !!QR.nodes.el.hidden) { return; }
+        if (!QR.nodes || !!QR.nodes.el.hidden) {
+          return;
+        }
         Keybinds.sage();
         break;
       case Conf['Toggle Cooldown']:
-        if (!QR.nodes || !!QR.nodes.el.hidden || !$.hasClass(QR.nodes.fileSubmit, 'custom-cooldown')) { return; }
+        if (
+          !QR.nodes ||
+          !!QR.nodes.el.hidden ||
+          !$.hasClass(QR.nodes.fileSubmit, 'custom-cooldown')
+        ) {
+          return;
+        }
         QR.toggleCustomCooldown();
         break;
       case Conf['Post from URL']:
-        if (!QR.postingIsEnabled) { return; }
+        if (!QR.postingIsEnabled) {
+          return;
+        }
         QR.handleUrl('');
         break;
       case Conf['Add new post']:
-        if (!QR.postingIsEnabled) { return; }
+        if (!QR.postingIsEnabled) {
+          return;
+        }
         QR.addPost();
         break;
       case Conf['Submit QR']:
-        if (!QR.nodes || !!QR.nodes.el.hidden) { return; }
-        if (!QR.status()) { QR.submit(); }
+        if (!QR.nodes || !!QR.nodes.el.hidden) {
+          return;
+        }
+        if (!QR.status()) {
+          QR.submit();
+        }
         break;
       // Index/Thread related
       case Conf['Update']:
         switch (g.VIEW) {
           case 'thread':
-            if (!ThreadUpdater.enabled) { return; }
+            if (!ThreadUpdater.enabled) {
+              return;
+            }
             ThreadUpdater.update();
             break;
           case 'index':
-            if (!Index.enabled) { return; }
+            if (!Index.enabled) {
+              return;
+            }
             Index.update();
             break;
           default:
@@ -160,45 +211,67 @@ const Keybinds = {
         }
         break;
       case Conf['Watch']:
-        if (!ThreadWatcher.enabled || !thread) { return; }
+        if (!ThreadWatcher.enabled || !thread) {
+          return;
+        }
         ThreadWatcher.toggle(thread);
         break;
       case Conf['Update thread watcher']:
-        if (!ThreadWatcher.enabled) { return; }
+        if (!ThreadWatcher.enabled) {
+          return;
+        }
         ThreadWatcher.buttonFetchAll();
         break;
       case Conf['Toggle thread watcher']:
-        if (!ThreadWatcher.enabled) { return; }
+        if (!ThreadWatcher.enabled) {
+          return;
+        }
         ThreadWatcher.toggleWatcher();
         break;
       case Conf['Toggle threading']:
-        if (!QuoteThreading.ready) { return; }
+        if (!QuoteThreading.ready) {
+          return;
+        }
         QuoteThreading.toggleThreading();
         break;
       case Conf['Mark thread read']:
-        if ((g.VIEW !== 'index') || !thread || !UnreadIndex.enabled) { return; }
+        if (g.VIEW !== 'index' || !thread || !UnreadIndex.enabled) {
+          return;
+        }
         UnreadIndex.markRead.call(threadRoot);
         break;
       // Images
       case Conf['Expand image']:
-        if (!ImageExpand.enabled || !threadRoot) { return; }
+        if (!ImageExpand.enabled || !threadRoot) {
+          return;
+        }
         var post = Get.postFromNode(Keybinds.post(threadRoot));
-        if (post.file) { ImageExpand.toggle(post); }
+        if (post.file) {
+          ImageExpand.toggle(post);
+        }
         break;
       case Conf['Expand images']:
-        if (!ImageExpand.enabled) { return; }
+        if (!ImageExpand.enabled) {
+          return;
+        }
         ImageExpand.cb.toggleAll();
         break;
       case Conf['Open Gallery']:
-        if (!Gallery.enabled) { return; }
+        if (!Gallery.enabled) {
+          return;
+        }
         Gallery.cb.toggle();
         break;
       case Conf['fappeTyme']:
-        if (!FappeTyme.nodes?.fappe) { return; }
+        if (!FappeTyme.nodes?.fappe) {
+          return;
+        }
         FappeTyme.toggle('fappe');
         break;
       case Conf['werkTyme']:
-        if (!FappeTyme.nodes?.werk) { return; }
+        if (!FappeTyme.nodes?.werk) {
+          return;
+        }
         FappeTyme.toggle('werk');
         break;
       // Board Navigation
@@ -213,108 +286,155 @@ const Keybinds = {
         $.open(`${location.origin}/${g.BOARD}/`);
         break;
       case Conf['Next page']:
-        if ((g.VIEW !== 'index') || !!g.SITE.isOnePage?.(g.BOARD)) { return; }
+        if (g.VIEW !== 'index' || !!g.SITE.isOnePage?.(g.BOARD)) {
+          return;
+        }
         if (Index.enabled) {
-          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
+          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) {
+            return;
+          }
           $('.next button', Index.pagelist).click();
         } else {
           $(g.SITE.selectors.nav.next)?.click();
         }
         break;
       case Conf['Previous page']:
-        if ((g.VIEW !== 'index') || !!g.SITE.isOnePage?.(g.BOARD)) { return; }
+        if (g.VIEW !== 'index' || !!g.SITE.isOnePage?.(g.BOARD)) {
+          return;
+        }
         if (Index.enabled) {
-          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
+          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) {
+            return;
+          }
           $('.prev button', Index.pagelist).click();
         } else {
           $(g.SITE.selectors.nav.prev)?.click();
         }
         break;
       case Conf['Search form']:
-        if (g.VIEW !== 'index') { return; }
-        var searchInput = Index.enabled ?
-          Index.searchInput
-          : g.SITE.selectors.searchBox ?
-            $(g.SITE.selectors.searchBox)
-            :
-            undefined;
-        if (!searchInput) { return; }
+        if (g.VIEW !== 'index') {
+          return;
+        }
+        var searchInput = Index.enabled
+          ? Index.searchInput
+          : g.SITE.selectors.searchBox
+          ? $(g.SITE.selectors.searchBox)
+          : undefined;
+        if (!searchInput) {
+          return;
+        }
         Header.scrollToIfNeeded(searchInput);
         searchInput.focus();
         break;
       case Conf['Paged mode']:
-        if (!Index.enabledOn(g.BOARD)) { return; }
+        if (!Index.enabledOn(g.BOARD)) {
+          return;
+        }
         location.href = g.VIEW === 'index' ? '#paged' : `/${g.BOARD}/#paged`;
         break;
       case Conf['Infinite scrolling mode']:
-        if (!Index.enabledOn(g.BOARD)) { return; }
-        location.href = g.VIEW === 'index' ? '#infinite' : `/${g.BOARD}/#infinite`;
+        if (!Index.enabledOn(g.BOARD)) {
+          return;
+        }
+        location.href =
+          g.VIEW === 'index' ? '#infinite' : `/${g.BOARD}/#infinite`;
         break;
       case Conf['All pages mode']:
-        if (!Index.enabledOn(g.BOARD)) { return; }
-        location.href = g.VIEW === 'index' ? '#all-pages' : `/${g.BOARD}/#all-pages`;
+        if (!Index.enabledOn(g.BOARD)) {
+          return;
+        }
+        location.href =
+          g.VIEW === 'index' ? '#all-pages' : `/${g.BOARD}/#all-pages`;
         break;
       case Conf['Open catalog']:
-        if (!(catalog = CatalogLinks.catalog())) { return; }
+        if (!(catalog = CatalogLinks.catalog())) {
+          return;
+        }
         location.href = catalog;
         break;
       case Conf['Cycle sort type']:
-        if (!Index.enabled) { return; }
+        if (!Index.enabled) {
+          return;
+        }
         Index.cycleSortType();
         break;
       // Thread Navigation
       case Conf['Next thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
+        if (g.VIEW !== 'index' || !threadRoot) {
+          return;
+        }
         Nav.scroll(+1);
         break;
       case Conf['Previous thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
+        if (g.VIEW !== 'index' || !threadRoot) {
+          return;
+        }
         Nav.scroll(-1);
         break;
       case Conf['Expand thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
+        if (g.VIEW !== 'index' || !threadRoot) {
+          return;
+        }
         ExpandThread.toggle(thread);
         // Keep thread from moving off screen when contracted.
         Header.scrollTo(threadRoot);
         break;
       case Conf['Open thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
+        if (g.VIEW !== 'index' || !threadRoot) {
+          return;
+        }
         Keybinds.open(thread);
         break;
       case Conf['Open thread tab']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
+        if (g.VIEW !== 'index' || !threadRoot) {
+          return;
+        }
         Keybinds.open(thread, true);
         break;
       // Reply Navigation
       case Conf['Next reply']:
-        if (!threadRoot) { return; }
+        if (!threadRoot) {
+          return;
+        }
         Keybinds.hl(+1, threadRoot);
         break;
       case Conf['Previous reply']:
-        if (!threadRoot) { return; }
+        if (!threadRoot) {
+          return;
+        }
         Keybinds.hl(-1, threadRoot);
         break;
       case Conf['Deselect reply']:
-        if (!threadRoot) { return; }
+        if (!threadRoot) {
+          return;
+        }
         Keybinds.hl(0, threadRoot);
         break;
       case Conf['Hide']:
-        if (!thread || !ThreadHiding.db) { return; }
+        if (!thread || !ThreadHiding.db) {
+          return;
+        }
         Header.scrollTo(threadRoot);
         ThreadHiding.toggle(thread);
         break;
       case Conf['Quick Filter MD5']:
-        if (!threadRoot) { return; }
+        if (!threadRoot) {
+          return;
+        }
         post = Keybinds.post(threadRoot);
         Keybinds.hl(+1, threadRoot);
         Filter.quickFilterMD5.call(post, e);
         break;
       case Conf['Previous Post Quoting You']:
-        if (!threadRoot || !QuoteYou.db) { return; }
+        if (!threadRoot || !QuoteYou.db) {
+          return;
+        }
         QuoteYou.cb.seek('preceding');
         break;
       case Conf['Next Post Quoting You']:
-        if (!threadRoot || !QuoteYou.db) { return; }
+        if (!threadRoot || !QuoteYou.db) {
+          return;
+        }
         QuoteYou.cb.seek('following');
         break;
       default:
@@ -350,12 +470,15 @@ const Keybinds = {
           return 'Period';
         case 191:
           return 'Slash';
-        case 59: case 186:
+        case 59:
+        case 186:
           return 'Semicolon';
         default:
-          if ((48 <= kc && kc <= 57) || (65 <= kc && kc <= 90)) { // 0-9, A-Z
+          if ((48 <= kc && kc <= 57) || (65 <= kc && kc <= 90)) {
+            // 0-9, A-Z
             return String.fromCharCode(kc).toLowerCase();
-          } else if (96 <= kc && kc <= 105) { // numpad 0-9
+          } else if (96 <= kc && kc <= 105) {
+            // numpad 0-9
             return String.fromCharCode(kc - 48).toLowerCase();
           } else {
             return null;
@@ -363,10 +486,18 @@ const Keybinds = {
       }
     })();
     if (key) {
-      if (e.altKey) { key = 'Alt+' + key; }
-      if (e.ctrlKey) { key = 'Ctrl+' + key; }
-      if (e.metaKey) { key = 'Meta+' + key; }
-      if (e.shiftKey) { key = 'Shift+' + key; }
+      if (e.altKey) {
+        key = 'Alt+' + key;
+      }
+      if (e.ctrlKey) {
+        key = 'Ctrl+' + key;
+      }
+      if (e.metaKey) {
+        key = 'Meta+' + key;
+      }
+      if (e.shiftKey) {
+        key = 'Shift+' + key;
+      }
     }
     return key;
   },
@@ -374,8 +505,16 @@ const Keybinds = {
   post(thread) {
     const s = g.SITE.selectors;
     return (
-      $(`${s.postContainer}${s.highlightable.reply}.${g.SITE.classes.highlight}`, thread) ||
-      $(`${g.SITE.isOPContainerThread ? s.thread : s.postContainer}${s.highlightable.op}`, thread)
+      $(
+        `${s.postContainer}${s.highlightable.reply}.${g.SITE.classes.highlight}`,
+        thread
+      ) ||
+      $(
+        `${g.SITE.isOPContainerThread ? s.thread : s.postContainer}${
+          s.highlightable.op
+        }`,
+        thread
+      )
     );
   },
 
@@ -392,28 +531,39 @@ const Keybinds = {
       const { config } = g.BOARD;
       const supported = (() => {
         switch (tag) {
-          case 'spoiler': return !!config.spoilers;
-          case 'code': return !!config.code_tags;
-          case 'math': case 'eqn': return !!config.math_tags;
-          case 'sjis': return !!config.sjis_tags;
+          case 'spoiler':
+            return !!config.spoilers;
+          case 'code':
+            return !!config.code_tags;
+          case 'math':
+          case 'eqn':
+            return !!config.math_tags;
+          case 'sjis':
+            return !!config.sjis_tags;
         }
       })();
-      if (!supported) { return new Notice('warning', `[${tag}] tags are not supported on /${g.BOARD}/.`, 20); }
+      if (!supported) {
+        return new Notice(
+          'warning',
+          `[${tag}] tags are not supported on /${g.BOARD}/.`,
+          20
+        );
+      }
     });
 
-    const {
-      value
-    } = ta;
+    const { value } = ta;
     const selStart = ta.selectionStart;
     const selEnd = ta.selectionEnd;
 
     ta.value =
       value.slice(0, selStart) +
-      `[${tag}]` + value.slice(selStart, selEnd) + `[/${tag}]` +
+      `[${tag}]` +
+      value.slice(selStart, selEnd) +
+      `[/${tag}]` +
       value.slice(selEnd);
 
     // Move the caret to the end of the selection.
-    const range = (`[${tag}]`).length + selEnd;
+    const range = `[${tag}]`.length + selEnd;
     ta.setSelectionRange(range, range);
 
     // Fire the 'input' event
@@ -422,18 +572,18 @@ const Keybinds = {
 
   sage() {
     const isSage = /sage/i.test(QR.nodes.email.value);
-    return QR.nodes.email.value = isSage ?
-      ""
-      : "sage";
+    return (QR.nodes.email.value = isSage ? '' : 'sage');
   },
 
   open(thread, tab) {
-    if (g.VIEW !== 'index') { return; }
+    if (g.VIEW !== 'index') {
+      return;
+    }
     const url = Get.url('thread', thread);
     if (tab) {
       return $.open(url);
     } else {
-      return location.href = url;
+      return (location.href = url);
     }
   },
 
@@ -444,21 +594,33 @@ const Keybinds = {
     const postEl = $(`${replySelector}.${highlight}`, thread);
 
     if (!delta) {
-      if (postEl) { $.rmClass(postEl, highlight); }
+      if (postEl) {
+        $.rmClass(postEl, highlight);
+      }
       return;
     }
 
     if (postEl) {
       const { height } = postEl.getBoundingClientRect();
-      if ((Header.getTopOf(postEl) >= -height) && (Header.getBottomOf(postEl) >= -height)) { // We're at least partially visible
+      if (
+        Header.getTopOf(postEl) >= -height &&
+        Header.getBottomOf(postEl) >= -height
+      ) {
+        // We're at least partially visible
         let next;
         const { root } = Get.postFromNode(postEl).nodes;
-        const axis = delta === +1 ?
-          'following'
-          :
-          'preceding';
-        if (!(next = $.x(`${axis}-sibling::${g.SITE.xpath.replyContainer}[not(@hidden) and not(child::div[@class='stub'])][1]`, root))) { return; }
-        if (!next.matches(replySelector)) { next = $(replySelector, next); }
+        const axis = delta === +1 ? 'following' : 'preceding';
+        if (
+          !(next = $.x(
+            `${axis}-sibling::${g.SITE.xpath.replyContainer}[not(@hidden) and not(child::div[@class='stub'])][1]`,
+            root
+          ))
+        ) {
+          return;
+        }
+        if (!next.matches(replySelector)) {
+          next = $(replySelector, next);
+        }
         Header.scrollToIfNeeded(next, delta === +1);
         $.addClass(next, highlight);
         $.rmClass(postEl, highlight);
@@ -468,13 +630,18 @@ const Keybinds = {
     }
 
     const replies = $$(replySelector, thread);
-    if (delta === -1) { replies.reverse(); }
+    if (delta === -1) {
+      replies.reverse();
+    }
     for (var reply of replies) {
-      if (((delta === +1) && (Header.getTopOf(reply) > 0)) || ((delta === -1) && (Header.getBottomOf(reply) > 0))) {
+      if (
+        (delta === +1 && Header.getTopOf(reply) > 0) ||
+        (delta === -1 && Header.getBottomOf(reply) > 0)
+      ) {
         $.addClass(reply, highlight);
         return;
       }
     }
-  }
+  },
 };
 export default Keybinds;

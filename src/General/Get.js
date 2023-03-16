@@ -1,5 +1,5 @@
-import { Conf, g } from "../globals/globals";
-import $ from "../platform/$";
+import { Conf, g } from '../globals/globals';
+import $ from '../platform/$';
 
 /*
  * decaffeinate suggestions:
@@ -18,45 +18,69 @@ var Get = {
   },
   threadExcerpt(thread) {
     const { OP } = thread;
-    const excerpt = (`/${decodeURIComponent(thread.board.ID)}/ - `) + (
-      OP.info.subject?.trim() ||
-      OP.commentDisplay().replace(/\n+/g, ' // ') ||
-      OP.file?.name ||
-      `No.${OP}`);
-    if (excerpt.length > 73) { return `${excerpt.slice(0, 70)}...`; }
+    const excerpt =
+      `/${decodeURIComponent(thread.board.ID)}/ - ` +
+      (OP.info.subject?.trim() ||
+        OP.commentDisplay().replace(/\n+/g, ' // ') ||
+        OP.file?.name ||
+        `No.${OP}`);
+    if (excerpt.length > 73) {
+      return `${excerpt.slice(0, 70)}...`;
+    }
     return excerpt;
   },
   threadFromRoot(root) {
-    if (root == null) { return null; }
+    if (root == null) {
+      return null;
+    }
     const { board } = root.dataset;
-    return g.threads.get(`${board ? encodeURIComponent(board) : g.BOARD.ID}.${root.id.match(/\d*$/)[0]}`);
+    return g.threads.get(
+      `${board ? encodeURIComponent(board) : g.BOARD.ID}.${
+        root.id.match(/\d*$/)[0]
+      }`
+    );
   },
   threadFromNode(node) {
-    return Get.threadFromRoot($.x(`ancestor-or-self::${g.SITE.xpath.thread}`, node));
+    return Get.threadFromRoot(
+      $.x(`ancestor-or-self::${g.SITE.xpath.thread}`, node)
+    );
   },
   postFromRoot(root) {
-    if (root == null) { return null; }
+    if (root == null) {
+      return null;
+    }
     const post = g.posts.get(root.dataset.fullID);
     const index = root.dataset.clone;
-    if (index) { return post.clones[+index]; } else { return post; }
+    if (index) {
+      return post.clones[+index];
+    } else {
+      return post;
+    }
   },
   postFromNode(root) {
-    return Get.postFromRoot($.x(`ancestor-or-self::${g.SITE.xpath.postContainer}[1]`, root));
+    return Get.postFromRoot(
+      $.x(`ancestor-or-self::${g.SITE.xpath.postContainer}[1]`, root)
+    );
   },
   postDataFromLink(link) {
     let boardID, postID, threadID;
-    if (link.dataset.postID) { // resurrected quote
+    if (link.dataset.postID) {
+      // resurrected quote
       ({ boardID, threadID, postID } = link.dataset);
-      if (!threadID) { threadID = 0; }
+      if (!threadID) {
+        threadID = 0;
+      }
     } else {
       const match = link.href.match(g.SITE.regexp.quotelink);
       [boardID, threadID, postID] = match.slice(1);
-      if (!postID) { postID = threadID; }
+      if (!postID) {
+        postID = threadID;
+      }
     }
     return {
       boardID,
       threadID: +threadID,
-      postID: +postID
+      postID: +postID,
     };
   },
   allQuotelinksLinkingTo(post) {
@@ -66,7 +90,9 @@ var Get = {
     const { fullID } = post;
     const handleQuotes = function (qPost, type) {
       quotelinks.push(...(qPost.nodes[type] || []));
-      for (var clone of qPost.clones) { quotelinks.push(...(clone.nodes[type] || [])); }
+      for (var clone of qPost.clones) {
+        quotelinks.push(...(clone.nodes[type] || []));
+      }
     };
     // First:
     //   In every posts,
@@ -86,7 +112,9 @@ var Get = {
     if (Conf['Quote Backlinks']) {
       for (var quote of post.quotes) {
         var qPost;
-        if ((qPost = posts.get(quote))) { handleQuotes(qPost, 'backlinks'); }
+        if ((qPost = posts.get(quote))) {
+          handleQuotes(qPost, 'backlinks');
+        }
       }
     }
 
@@ -94,8 +122,8 @@ var Get = {
     //   Filter out irrelevant quotelinks.
     return quotelinks.filter(function (quotelink) {
       const { boardID, postID } = Get.postDataFromLink(quotelink);
-      return (boardID === post.board.ID) && (postID === post.ID);
+      return boardID === post.board.ID && postID === post.ID;
     });
-  }
+  },
 };
 export default Get;

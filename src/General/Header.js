@@ -1,15 +1,15 @@
-import Redirect from "../Archive/Redirect";
-import Notice from "../classes/Notice";
-import { Conf, g } from "../globals/globals";
-import Main from "../main/Main";
-import CatalogLinks from "../Miscellaneous/CatalogLinks";
-import ReplyPruning from "../Monitoring/ReplyPruning";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import BoardConfig from "./BoardConfig";
-import Get from "./Get";
-import Settings from "./Settings";
-import UI from "./UI";
+import Redirect from '../Archive/Redirect';
+import Notice from '../classes/Notice';
+import { Conf, g } from '../globals/globals';
+import Main from '../main/Main';
+import CatalogLinks from '../Miscellaneous/CatalogLinks';
+import ReplyPruning from '../Monitoring/ReplyPruning';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import BoardConfig from './BoardConfig';
+import Get from './Get';
+import Settings from './Settings';
+import UI from './UI';
 import meta from '../../package.json';
 
 /*
@@ -22,7 +22,9 @@ import meta from '../../package.json';
 var Header = {
   init() {
     $.onExists(document.documentElement, 'body', () => {
-      if (!Main.isThisPageLegit()) { return; }
+      if (!Main.isThisPageLegit()) {
+        return;
+      }
       $.add(this.bar, [this.noticesRoot, this.toggle]);
       $.prepend(document.body, this.bar);
       $.add(document.body, Header.hover);
@@ -31,25 +33,29 @@ var Header = {
 
     this.menu = new UI.Menu('header');
 
-    const menuButton = $.el('span',
-      { className: 'menu-button' });
-    $.extend(menuButton, { innerHTML: "<i></i>" });
+    const menuButton = $.el('span', { className: 'menu-button' });
+    $.extend(menuButton, { innerHTML: '<i></i>' });
 
     const box = UI.checkbox;
 
     const barFixedToggler = box('Fixed Header', 'Fixed Header');
     const headerToggler = box('Header auto-hide', 'Auto-hide header');
-    const scrollHeaderToggler = box('Header auto-hide on scroll', 'Auto-hide header on scroll');
+    const scrollHeaderToggler = box(
+      'Header auto-hide on scroll',
+      'Auto-hide header on scroll'
+    );
     const barPositionToggler = box('Bottom Header', 'Bottom header');
     const linkJustifyToggler = box('Centered links', 'Centered links');
-    const customNavToggler = box('Custom Board Navigation', 'Custom board navigation');
+    const customNavToggler = box(
+      'Custom Board Navigation',
+      'Custom board navigation'
+    );
     const footerToggler = box('Bottom Board List', 'Hide bottom board list');
     const shortcutToggler = box('Shortcut Icons', 'Shortcut Icons');
     const editCustomNav = $.el('a', {
       textContent: 'Edit custom board navigation',
-      href: 'javascript:;'
-    }
-    );
+      href: 'javascript:;',
+    });
 
     this.barFixedToggler = barFixedToggler.firstElementChild;
     this.scrollHeaderToggler = scrollHeaderToggler.firstElementChild;
@@ -89,28 +95,19 @@ var Header = {
     this.addShortcut('menu', menuButton, 900);
 
     this.menu.addEntry({
-      el: $.el('span',
-        { textContent: 'Header' }),
+      el: $.el('span', { textContent: 'Header' }),
       order: 107,
       subEntries: [
-        { el: barFixedToggler }
-        ,
-        { el: headerToggler }
-        ,
-        { el: scrollHeaderToggler }
-        ,
-        { el: barPositionToggler }
-        ,
-        { el: linkJustifyToggler }
-        ,
-        { el: footerToggler }
-        ,
-        { el: shortcutToggler }
-        ,
-        { el: customNavToggler }
-        ,
-        { el: editCustomNav }
-      ]
+        { el: barFixedToggler },
+        { el: headerToggler },
+        { el: scrollHeaderToggler },
+        { el: barPositionToggler },
+        { el: linkJustifyToggler },
+        { el: footerToggler },
+        { el: shortcutToggler },
+        { el: customNavToggler },
+        { el: editCustomNav },
+      ],
     });
 
     $.on(window, 'load popstate', Header.hashScroll);
@@ -118,35 +115,52 @@ var Header = {
 
     this.setBoardList();
 
-    $.onExists(document.documentElement, `${g.SITE.selectors.boardList} + *`, Header.generateFullBoardList);
+    $.onExists(
+      document.documentElement,
+      `${g.SITE.selectors.boardList} + *`,
+      Header.generateFullBoardList
+    );
 
     Main.ready(function () {
       let footer;
-      if ((g.SITE.software === 'yotsuba') && !(footer = $.id('boardNavDesktopFoot'))) {
+      if (
+        g.SITE.software === 'yotsuba' &&
+        !(footer = $.id('boardNavDesktopFoot'))
+      ) {
         let absbot;
-        if (!(absbot = $.id('absbot'))) { return; }
+        if (!(absbot = $.id('absbot'))) {
+          return;
+        }
         footer = $.id('boardNavDesktop').cloneNode(true);
         footer.id = 'boardNavDesktopFoot';
         $('#navtopright', footer).id = 'navbotright';
         $('#settingsWindowLink', footer).id = 'settingsWindowLinkBot';
         $.before(absbot, footer);
-        $.global(() => window.cloneTopNav = function () { });
+        $.global(() => (window.cloneTopNav = function () {}));
       }
-      if (Header.bottomBoardList = $(g.SITE.selectors.boardListBottom)) {
+      if ((Header.bottomBoardList = $(g.SITE.selectors.boardListBottom))) {
         for (var a of $$('a', Header.bottomBoardList)) {
-          if ((a.hostname === location.hostname) && (a.pathname.split('/')[1] === g.BOARD.ID)) { a.className = 'current'; }
+          if (
+            a.hostname === location.hostname &&
+            a.pathname.split('/')[1] === g.BOARD.ID
+          ) {
+            a.className = 'current';
+          }
         }
         return CatalogLinks.setLinks(Header.bottomBoardList);
       }
     });
 
-    if ((g.SITE.software === 'yotsuba') && ((g.VIEW === 'catalog') || !Conf['Disable Native Extension'])) {
+    if (
+      g.SITE.software === 'yotsuba' &&
+      (g.VIEW === 'catalog' || !Conf['Disable Native Extension'])
+    ) {
       const cs = $.el('a', { href: 'javascript:;' });
       if (g.VIEW === 'catalog') {
-        cs.title = (cs.textContent = 'Catalog Settings');
+        cs.title = cs.textContent = 'Catalog Settings';
         cs.className = 'fa fa-book';
       } else {
-        cs.title = (cs.textContent = '4chan Settings');
+        cs.title = cs.textContent = '4chan Settings';
         cs.className = 'native-settings';
       }
       $.on(cs, 'click', () => $.id('settingsWindowLink').click());
@@ -156,26 +170,23 @@ var Header = {
     return this.enableDesktopNotifications();
   },
 
-  bar: $.el('div',
-    { id: 'header-bar' }),
+  bar: $.el('div', { id: 'header-bar' }),
 
-  noticesRoot: $.el('div',
-    { id: 'notifications' }),
+  noticesRoot: $.el('div', { id: 'notifications' }),
 
-  shortcuts: $.el('span',
-    { id: 'shortcuts' }),
+  shortcuts: $.el('span', { id: 'shortcuts' }),
 
-  hover: $.el('div',
-    { id: 'hoverUI' }),
+  hover: $.el('div', { id: 'hoverUI' }),
 
-  toggle: $.el('div',
-    { id: 'scroll-marker' }),
+  toggle: $.el('div', { id: 'scroll-marker' }),
 
   setBoardList() {
     let boardList;
-    Header.boardList = (boardList = $.el('span',
-      { id: 'board-list' }));
-    $.extend(boardList, { innerHTML: "<span id=\"custom-board-list\"></span><span id=\"full-board-list\" hidden><span class=\"hide-board-list-container brackets-wrap\"><a href=\"javascript:;\" class=\"hide-board-list-button\">&nbsp;-&nbsp;</a></span> <span class=\"boardList\"></span></span>" });
+    Header.boardList = boardList = $.el('span', { id: 'board-list' });
+    $.extend(boardList, {
+      innerHTML:
+        '<span id="custom-board-list"></span><span id="full-board-list" hidden><span class="hide-board-list-container brackets-wrap"><a href="javascript:;" class="hide-board-list-button">&nbsp;-&nbsp;</a></span> <span class="boardList"></span></span>',
+    });
 
     const btn = $('.hide-board-list-button', boardList);
     $.on(btn, 'click', Header.toggleBoardList);
@@ -194,12 +205,19 @@ var Header = {
     if (g.SITE.transformBoardList) {
       nodes = g.SITE.transformBoardList();
     } else {
-      nodes = [...Array.from($(g.SITE.selectors.boardList).cloneNode(true).childNodes)];
+      nodes = [
+        ...Array.from($(g.SITE.selectors.boardList).cloneNode(true).childNodes),
+      ];
     }
     const fullBoardList = $('.boardList', Header.boardList);
     $.add(fullBoardList, nodes);
     for (var a of $$('a', fullBoardList)) {
-      if ((a.hostname === location.hostname) && (a.pathname.split('/')[1] === g.BOARD.ID)) { a.className = 'current'; }
+      if (
+        a.hostname === location.hostname &&
+        a.pathname.split('/')[1] === g.BOARD.ID
+      ) {
+        a.className = 'current';
+      }
     }
     return CatalogLinks.setLinks(fullBoardList);
   },
@@ -207,10 +225,13 @@ var Header = {
   generateBoardList(boardnav) {
     const list = $('#custom-board-list', Header.boardList);
     $.rmAll(list);
-    if (!boardnav) { return; }
+    if (!boardnav) {
+      return;
+    }
     boardnav = boardnav.replace(/(\r\n|\n|\r)/g, ' ');
-    const re = /[\w@]+(-(all|title|replace|full|index|catalog|archive|expired|nt|(mode|sort|text):"[^"]+"(,"[^"]+")?))*|[^\w@]+/g;
-    const nodes = (boardnav.match(re).map((t) => Header.mapCustomNavigation(t)));
+    const re =
+      /[\w@]+(-(all|title|replace|full|index|catalog|archive|expired|nt|(mode|sort|text):"[^"]+"(,"[^"]+")?))*|[^\w@]+/g;
+    const nodes = boardnav.match(re).map((t) => Header.mapCustomNavigation(t));
     $.add(list, nodes);
     return CatalogLinks.setLinks(list);
   },
@@ -239,9 +260,8 @@ var Header = {
       a = $.el('a', {
         className: 'show-board-list-button',
         textContent: text || '+',
-        href: 'javascript:;'
-      }
-      );
+        href: 'javascript:;',
+      });
       $.on(a, 'click', Header.toggleBoardList);
       return a;
     }
@@ -250,9 +270,8 @@ var Header = {
       a = $.el('a', {
         href: url || 'javascript:;',
         textContent: text || '+',
-        className: 'external'
-      }
-      );
+        className: 'external',
+      });
       if (/-nt/.test(t)) {
         a.target = '_blank';
         a.rel = 'noopener';
@@ -262,15 +281,16 @@ var Header = {
 
     let boardID = t.split('-')[0];
     if (boardID === 'current') {
-      if (['boards.4chan.org', 'boards.4channel.org'].includes(location.hostname)) {
+      if (
+        ['boards.4chan.org', 'boards.4channel.org'].includes(location.hostname)
+      ) {
         boardID = g.BOARD.ID;
       } else {
         a = $.el('a', {
           href: `/${g.BOARD.ID}/`,
           textContent: text || decodeURIComponent(g.BOARD.ID),
-          className: 'current'
-        }
-        );
+          className: 'current',
+        });
         if (/-nt/.test(t)) {
           a.target = '_blank';
           a.rel = 'noopener';
@@ -293,37 +313,45 @@ var Header = {
         return $.el('a', {
           href: 'https://twitter.com/4chan',
           title: '4chan Twitter',
-          textContent: '@'
-        }
-        );
+          textContent: '@',
+        });
       }
 
       a = $.el('a', {
         href: `//${BoardConfig.domain(boardID)}/${boardID}/`,
         textContent: boardID,
-        title: BoardConfig.title(boardID)
-      }
-      );
-      if (['catalog', 'archive'].includes(g.VIEW) && (urlV = Get.url(g.VIEW, { siteID: '4chan.org', boardID }))) {
+        title: BoardConfig.title(boardID),
+      });
+      if (
+        ['catalog', 'archive'].includes(g.VIEW) &&
+        (urlV = Get.url(g.VIEW, { siteID: '4chan.org', boardID }))
+      ) {
         a.href = urlV;
       }
-      if ((a.hostname === location.hostname) && (boardID === g.BOARD.ID)) { a.className = 'current'; }
+      if (a.hostname === location.hostname && boardID === g.BOARD.ID) {
+        a.className = 'current';
+      }
       return a;
     })();
 
-    a.textContent = /-title/.test(t) || (/-replace/.test(t) && (a.hostname === location.hostname) && (boardID === g.BOARD.ID)) ?
-      a.title || a.textContent
-      : /-full/.test(t) ?
-        (`/${boardID}/`) + (a.title ? ` - ${a.title}` : '')
-        :
-        text || boardID;
+    a.textContent =
+      /-title/.test(t) ||
+      (/-replace/.test(t) &&
+        a.hostname === location.hostname &&
+        boardID === g.BOARD.ID)
+        ? a.title || a.textContent
+        : /-full/.test(t)
+        ? `/${boardID}/` + (a.title ? ` - ${a.title}` : '')
+        : text || boardID;
 
-    if (m = t.match(/-(index|catalog)/)) {
+    if ((m = t.match(/-(index|catalog)/))) {
       const urlIC = CatalogLinks[m[1]]({ siteID: '4chan.org', boardID });
       if (urlIC) {
         a.dataset.only = m[1];
         a.href = urlIC;
-        if (m[1] === 'catalog') { $.addClass(a, 'catalog'); }
+        if (m[1] === 'catalog') {
+          $.addClass(a, 'catalog');
+        }
       } else {
         return a.firstChild; // Its text node.
       }
@@ -331,13 +359,16 @@ var Header = {
 
     if (Conf['JSON Index'] && indexOptions) {
       a.dataset.indexOptions = indexOptions;
-      if (['boards.4chan.org', 'boards.4channel.org'].includes(a.hostname) && (a.pathname.split('/')[2] === '')) {
+      if (
+        ['boards.4chan.org', 'boards.4channel.org'].includes(a.hostname) &&
+        a.pathname.split('/')[2] === ''
+      ) {
         a.href += (a.hash ? '/' : '#') + indexOptions;
       }
     }
 
     if (/-archive/.test(t)) {
-      if (href = Redirect.to('board', { boardID })) {
+      if ((href = Redirect.to('board', { boardID }))) {
         a.href = href;
       } else {
         return a.firstChild; // Its text node.
@@ -357,7 +388,9 @@ var Header = {
       a.rel = 'noopener';
     }
 
-    if (boardID === '@') { $.addClass(a, 'navSmall'); }
+    if (boardID === '@') {
+      $.addClass(a, 'navSmall');
+    }
     return a;
   },
 
@@ -367,7 +400,7 @@ var Header = {
     const full = $('#full-board-list', bar);
     const showBoardList = !full.hidden;
     custom.hidden = !showBoardList;
-    return full.hidden = showBoardList;
+    return (full.hidden = showBoardList);
   },
 
   setLinkJustify(centered) {
@@ -381,8 +414,7 @@ var Header = {
 
   toggleLinkJustify() {
     $.event('CloseMenu');
-    const centered = this.nodeName === 'INPUT' ?
-      this.checked : undefined;
+    const centered = this.nodeName === 'INPUT' ? this.checked : undefined;
     Header.setLinkJustify(centered);
     return $.set('Centered links', centered);
   },
@@ -429,22 +461,24 @@ var Header = {
     Header.headerToggler.checked = hide;
     $.event('CloseMenu');
     (hide ? $.addClass : $.rmClass)(Header.bar, 'autohide');
-    return (hide ? $.addClass : $.rmClass)(document.documentElement, 'autohide');
+    return (hide ? $.addClass : $.rmClass)(
+      document.documentElement,
+      'autohide'
+    );
   },
 
   toggleBarVisibility() {
-    const hide = this.nodeName === 'INPUT' ?
-      this.checked
-      :
-      !$.hasClass(Header.bar, 'autohide');
+    const hide =
+      this.nodeName === 'INPUT'
+        ? this.checked
+        : !$.hasClass(Header.bar, 'autohide');
 
     Conf['Header auto-hide'] = hide;
     $.set('Header auto-hide', hide);
     Header.setBarVisibility(hide);
-    const message = `The header bar will ${hide ?
-      'automatically hide itself.'
-      :
-      'remain visible.'}`;
+    const message = `The header bar will ${
+      hide ? 'automatically hide itself.' : 'remain visible.'
+    }`;
     return new Notice('info', message, 2);
   },
 
@@ -472,21 +506,15 @@ var Header = {
     } else {
       $.rmClass(Header.bar, 'autohide', 'scroll');
     }
-    return Header.previousOffset = offsetY;
+    return (Header.previousOffset = offsetY);
   },
 
   setBarPosition(bottom) {
     if (Header.barPositionToggler) Header.barPositionToggler.checked = bottom;
     $.event('CloseMenu');
-    const args = bottom ? [
-      'bottom-header',
-      'top-header',
-      'after'
-    ] : [
-      'top-header',
-      'bottom-header',
-      'add'
-    ];
+    const args = bottom
+      ? ['bottom-header', 'top-header', 'after']
+      : ['top-header', 'bottom-header', 'add'];
 
     $.addClass(document.documentElement, args[0]);
     $.rmClass(document.documentElement, args[1]);
@@ -500,21 +528,23 @@ var Header = {
 
   setFooterVisibility(hide) {
     Header.footerToggler.checked = hide;
-    return document.documentElement.classList.toggle('hide-bottom-board-list', hide);
+    return document.documentElement.classList.toggle(
+      'hide-bottom-board-list',
+      hide
+    );
   },
 
   toggleFooterVisibility() {
     $.event('CloseMenu');
-    const hide = this.nodeName === 'INPUT' ?
-      this.checked
-      :
-      $.hasClass(document.documentElement, 'hide-bottom-board-list');
+    const hide =
+      this.nodeName === 'INPUT'
+        ? this.checked
+        : $.hasClass(document.documentElement, 'hide-bottom-board-list');
     Header.setFooterVisibility(hide);
     $.set('Bottom Board List', hide);
-    const message = hide ?
-      'The bottom navigation will now be hidden.'
-      :
-      'The bottom navigation will remain visible.';
+    const message = hide
+      ? 'The bottom navigation will now be hidden.'
+      : 'The bottom navigation will remain visible.';
     return new Notice('info', message, 2);
   },
 
@@ -524,10 +554,12 @@ var Header = {
     const cust = $('#custom-board-list', Header.bar);
     const full = $('#full-board-list', Header.bar);
     const btn = $('.hide-board-list-container', full);
-    return [cust.hidden, full.hidden, btn.hidden] = Array.from(ref = show ?
-      [false, true, false]
-      :
-      [true, false, true]), ref;
+    return (
+      ([cust.hidden, full.hidden, btn.hidden] = Array.from(
+        (ref = show ? [false, true, false] : [true, false, true])
+      )),
+      ref
+    );
   },
 
   toggleCustomNav() {
@@ -545,14 +577,18 @@ var Header = {
     let hash;
     if (e) {
       // Don't scroll when navigating to an already visited state.
-      if (e.state) { return; }
-      if (!history.state) { history.replaceState({}, ''); }
+      if (e.state) {
+        return;
+      }
+      if (!history.state) {
+        history.replaceState({}, '');
+      }
     }
 
-    if (hash = location.hash.slice(1)) {
+    if ((hash = location.hash.slice(1))) {
       let el;
       ReplyPruning.showIfHidden(hash);
-      if (el = $.id(hash)) {
+      if ((el = $.id(hash))) {
         return $.queueTask(() => Header.scrollTo(el));
       }
     }
@@ -560,29 +596,51 @@ var Header = {
 
   scrollTo(root, down, needed) {
     let height, x;
-    if (!root.offsetParent) { return; } // hidden or fixed
+    if (!root.offsetParent) {
+      return;
+    } // hidden or fixed
     if (down) {
       x = Header.getBottomOf(root);
-      if (Conf['Fixed Header'] && Conf['Header auto-hide on scroll'] && Conf['Bottom header']) {
+      if (
+        Conf['Fixed Header'] &&
+        Conf['Header auto-hide on scroll'] &&
+        Conf['Bottom header']
+      ) {
         ({ height } = Header.bar.getBoundingClientRect());
         if (x <= 0) {
-          if (!Header.isHidden()) { x += height; }
+          if (!Header.isHidden()) {
+            x += height;
+          }
         } else {
-          if (Header.isHidden()) { x -= height; }
+          if (Header.isHidden()) {
+            x -= height;
+          }
         }
       }
-      if (!needed || (x < 0)) { return window.scrollBy(0, -x); }
+      if (!needed || x < 0) {
+        return window.scrollBy(0, -x);
+      }
     } else {
       x = Header.getTopOf(root);
-      if (Conf['Fixed Header'] && Conf['Header auto-hide on scroll'] && !Conf['Bottom header']) {
+      if (
+        Conf['Fixed Header'] &&
+        Conf['Header auto-hide on scroll'] &&
+        !Conf['Bottom header']
+      ) {
         ({ height } = Header.bar.getBoundingClientRect());
         if (x >= 0) {
-          if (!Header.isHidden()) { x += height; }
+          if (!Header.isHidden()) {
+            x += height;
+          }
         } else {
-          if (Header.isHidden()) { x -= height; }
+          if (Header.isHidden()) {
+            x -= height;
+          }
         }
       }
-      if (!needed || (x < 0)) { return window.scrollBy(0, x); }
+      if (!needed || x < 0) {
+        return window.scrollBy(0, x);
+      }
     }
   },
 
@@ -604,15 +662,20 @@ var Header = {
     let bottom = clientHeight - root.getBoundingClientRect().bottom;
     if (Conf['Fixed Header'] && Conf['Bottom Header']) {
       const headRect = Header.toggle.getBoundingClientRect();
-      bottom -= (clientHeight - headRect.bottom) + headRect.height;
+      bottom -= clientHeight - headRect.bottom + headRect.height;
     }
     return bottom;
   },
 
   isNodeVisible(node) {
-    if (document.hidden || !document.documentElement.contains(node)) { return false; }
+    if (document.hidden || !document.documentElement.contains(node)) {
+      return false;
+    }
     const { height } = node.getBoundingClientRect();
-    return ((Header.getTopOf(node) + height) >= 0) && ((Header.getBottomOf(node) + height) >= 0);
+    return (
+      Header.getTopOf(node) + height >= 0 &&
+      Header.getBottomOf(node) + height >= 0
+    );
   },
 
   isHidden() {
@@ -627,9 +690,8 @@ var Header = {
   addShortcut(id, el, index) {
     const shortcut = $.el('span', {
       id: `shortcut-${id}`,
-      className: 'shortcut brackets-wrap'
-    }
-    );
+      className: 'shortcut brackets-wrap',
+    });
     $.add(shortcut, el);
     shortcut.dataset.index = index;
     for (var item of $$('[data-index]', Header.shortcuts)) {
@@ -652,13 +714,15 @@ var Header = {
   createNotification(e) {
     let notice;
     const { type, content, lifetime } = e.detail;
-    return notice = new Notice(type, content, lifetime);
+    return (notice = new Notice(type, content, lifetime));
   },
 
   areNotificationsEnabled: false,
   enableDesktopNotifications() {
     let notice;
-    if (!window.Notification || !Conf['Desktop Notifications']) { return; }
+    if (!window.Notification || !Conf['Desktop Notifications']) {
+      return;
+    }
     switch (Notification.permission) {
       case 'granted':
         Header.areNotificationsEnabled = true;
@@ -675,19 +739,23 @@ var Header = {
       innerHTML:
         `${meta.name} needs your permission to show desktop notifications. ` +
         `[<a href=\"${meta.faq}#why-is-4chan-x-asking-for-permission-to-show-desktop-notifications\" target=\"_blank\">FAQ</a>]` +
-        `<br><button>Authorize</button> or <button>Disable</button>`
+        `<br><button>Authorize</button> or <button>Disable</button>`,
     });
     const [authorize, disable] = Array.from($$('button', el));
-    $.on(authorize, 'click', () => Notification.requestPermission(function (status) {
-      Header.areNotificationsEnabled = status === 'granted';
-      if (status === 'default') { return; }
-      return notice.close();
-    }));
+    $.on(authorize, 'click', () =>
+      Notification.requestPermission(function (status) {
+        Header.areNotificationsEnabled = status === 'granted';
+        if (status === 'default') {
+          return;
+        }
+        return notice.close();
+      })
+    );
     $.on(disable, 'click', function () {
       $.set('Desktop Notifications', false);
       return notice.close();
     });
-    return notice = new Notice('info', el);
-  }
+    return (notice = new Notice('info', el));
+  },
 };
 export default Header;

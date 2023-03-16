@@ -1,5 +1,5 @@
-import Callbacks from "../classes/Callbacks";
-import { g } from "../globals/globals";
+import Callbacks from '../classes/Callbacks';
+import { g } from '../globals/globals';
 
 /*
  * decaffeinate suggestions:
@@ -10,15 +10,19 @@ import { g } from "../globals/globals";
 const Recursive = {
   recursives: Object.create(null),
   init() {
-    if (!['index', 'thread'].includes(g.VIEW)) { return; }
+    if (!['index', 'thread'].includes(g.VIEW)) {
+      return;
+    }
     return Callbacks.Post.push({
       name: 'Recursive',
-      cb: this.node
+      cb: this.node,
     });
   },
 
   node() {
-    if (this.isClone || this.isFetchedQuote) { return; }
+    if (this.isClone || this.isFetchedQuote) {
+      return;
+    }
     for (var quote of this.quotes) {
       var obj;
       if ((obj = Recursive.recursives[quote])) {
@@ -31,17 +35,21 @@ const Recursive = {
   },
 
   add(recursive, post, ...args) {
-    const obj = Recursive.recursives[post.fullID] || (Recursive.recursives[post.fullID] = {
-      recursives: [],
-      args: []
-    });
+    const obj =
+      Recursive.recursives[post.fullID] ||
+      (Recursive.recursives[post.fullID] = {
+        recursives: [],
+        args: [],
+      });
     obj.recursives.push(recursive);
     return obj.args.push(args);
   },
 
   rm(recursive, post) {
     let obj;
-    if (!(obj = Recursive.recursives[post.fullID])) { return; }
+    if (!(obj = Recursive.recursives[post.fullID])) {
+      return;
+    }
     for (let i = 0; i < obj.recursives.length; i++) {
       var rec = obj.recursives[i];
       if (rec === recursive) {
@@ -58,6 +66,6 @@ const Recursive = {
         return recursive(post, ...args);
       }
     });
-  }
+  },
 };
 export default Recursive;

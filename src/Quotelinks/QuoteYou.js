@@ -1,14 +1,14 @@
-import Callbacks from "../classes/Callbacks";
-import DataBoard from "../classes/DataBoard";
-import Notice from "../classes/Notice";
-import Get from "../General/Get";
-import Header from "../General/Header";
-import { Conf, g } from "../globals/globals";
-import Menu from "../Menu/Menu";
-import ExpandComment from "../Miscellaneous/ExpandComment";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import PostRedirect from "../Posting/PostRedirect";
+import Callbacks from '../classes/Callbacks';
+import DataBoard from '../classes/DataBoard';
+import Notice from '../classes/Notice';
+import Get from '../General/Get';
+import Header from '../General/Header';
+import { Conf, g } from '../globals/globals';
+import Menu from '../Menu/Menu';
+import ExpandComment from '../Miscellaneous/ExpandComment';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import PostRedirect from '../Posting/PostRedirect';
 
 /*
  * decaffeinate suggestions:
@@ -17,20 +17,33 @@ import PostRedirect from "../Posting/PostRedirect";
  */
 const QuoteYou = {
   init() {
-    if (!Conf['Remember Your Posts']) { return; }
+    if (!Conf['Remember Your Posts']) {
+      return;
+    }
 
     this.db = new DataBoard('yourPosts');
-    $.sync('Remember Your Posts', enabled => Conf['Remember Your Posts'] = enabled);
+    $.sync(
+      'Remember Your Posts',
+      (enabled) => (Conf['Remember Your Posts'] = enabled)
+    );
     $.on(document, 'QRPostSuccessful', function (e) {
       const cb = PostRedirect.delay();
-      return $.get('Remember Your Posts', Conf['Remember Your Posts'], function (items) {
-        if (!items['Remember Your Posts']) { return; }
-        const { boardID, threadID, postID } = e.detail;
-        return QuoteYou.db.set({ boardID, threadID, postID, val: true }, cb);
-      });
+      return $.get(
+        'Remember Your Posts',
+        Conf['Remember Your Posts'],
+        function (items) {
+          if (!items['Remember Your Posts']) {
+            return;
+          }
+          const { boardID, threadID, postID } = e.detail;
+          return QuoteYou.db.set({ boardID, threadID, postID, val: true }, cb);
+        }
+      );
     });
 
-    if (!['index', 'thread', 'archive'].includes(g.VIEW)) { return; }
+    if (!['index', 'thread', 'archive'].includes(g.VIEW)) {
+      return;
+    }
 
     if (Conf['Highlight Own Posts']) {
       $.addClass(document.documentElement, 'highlight-own');
@@ -47,12 +60,11 @@ const QuoteYou = {
     // \u00A0 is nbsp
     this.mark = $.el('span', {
       textContent: '\u00A0(You)',
-      className: 'qmark-you'
-    }
-    );
+      className: 'qmark-you',
+    });
     Callbacks.Post.push({
       name: 'Mark Quotes of You',
-      cb: this.node
+      cb: this.node,
     });
 
     return QuoteYou.menu.init();
@@ -62,23 +74,29 @@ const QuoteYou = {
     return !!QuoteYou.db?.get({
       boardID: post.boardID,
       threadID: post.threadID,
-      postID: post.ID
+      postID: post.ID,
     });
   },
 
   node() {
-    if (this.isClone) { return; }
+    if (this.isClone) {
+      return;
+    }
 
     if (QuoteYou.isYou(this)) {
       $.addClass(this.nodes.root, 'yourPost');
     }
 
     // Stop there if there's no quotes in that post.
-    if (!this.quotes.length) { return; }
+    if (!this.quotes.length) {
+      return;
+    }
 
     for (var quotelink of this.nodes.quotelinks) {
       if (QuoteYou.db.get(Get.postDataFromLink(quotelink))) {
-        if (Conf['Mark Quotes of You']) { $.add(quotelink, QuoteYou.mark.cloneNode(true)); }
+        if (Conf['Mark Quotes of You']) {
+          $.add(quotelink, QuoteYou.mark.cloneNode(true));
+        }
         $.addClass(quotelink, 'you');
         $.addClass(this.nodes.root, 'quotesYou');
       }
@@ -87,26 +105,32 @@ const QuoteYou = {
 
   menu: {
     init() {
-      const label = $.el('label',
-        { className: 'toggle-you' }
-        ,
-        { innerHTML: '<input type="checkbox"> You' });
+      const label = $.el(
+        'label',
+        { className: 'toggle-you' },
+        { innerHTML: '<input type="checkbox"> You' }
+      );
       const input = $('input', label);
       $.on(input, 'change', QuoteYou.menu.toggle);
       return Menu.menu?.addEntry({
         el: label,
         order: 80,
         open(post) {
-          QuoteYou.menu.post = (post.origin || post);
+          QuoteYou.menu.post = post.origin || post;
           input.checked = QuoteYou.isYou(post);
           return true;
-        }
+        },
       });
     },
 
     toggle() {
       const { post } = QuoteYou.menu;
-      const data = { boardID: post.board.ID, threadID: post.thread.ID, postID: post.ID, val: true };
+      const data = {
+        boardID: post.board.ID,
+        threadID: post.thread.ID,
+        postID: post.ID,
+        val: true,
+      };
       if (this.checked) {
         QuoteYou.db.set(data);
       } else {
@@ -117,7 +141,9 @@ const QuoteYou = {
       }
       for (var quotelink of Get.allQuotelinksLinkingTo(post)) {
         if (this.checked) {
-          if (Conf['Mark Quotes of You']) { $.add(quotelink, QuoteYou.mark.cloneNode(true)); }
+          if (Conf['Mark Quotes of You']) {
+            $.add(quotelink, QuoteYou.mark.cloneNode(true));
+          }
         } else {
           $.rm($('.qmark-you', quotelink));
         }
@@ -127,7 +153,7 @@ const QuoteYou = {
           quoter.classList.toggle('quotesYou', !!$('.quotelink.you', quoter));
         }
       }
-    }
+    },
   },
 
   cb: {
@@ -135,26 +161,46 @@ const QuoteYou = {
       let highlighted, post;
       let result;
       const { highlight } = g.SITE.classes;
-      if (highlighted = $(`.${highlight}`)) { $.rmClass(highlighted, highlight); }
+      if ((highlighted = $(`.${highlight}`))) {
+        $.rmClass(highlighted, highlight);
+      }
 
-      if (!QuoteYou.lastRead || !document.documentElement.contains(QuoteYou.lastRead) || !$.hasClass(QuoteYou.lastRead, 'quotesYou')) {
-        if (!(post = (QuoteYou.lastRead = $('.quotesYou')))) {
-          new Notice('warning', 'No posts are currently quoting you, loser.', 20);
+      if (
+        !QuoteYou.lastRead ||
+        !document.documentElement.contains(QuoteYou.lastRead) ||
+        !$.hasClass(QuoteYou.lastRead, 'quotesYou')
+      ) {
+        if (!(post = QuoteYou.lastRead = $('.quotesYou'))) {
+          new Notice(
+            'warning',
+            'No posts are currently quoting you, loser.',
+            20
+          );
           return;
         }
-        if (QuoteYou.cb.scroll(post)) { return; }
+        if (QuoteYou.cb.scroll(post)) {
+          return;
+        }
       } else {
         post = QuoteYou.lastRead;
       }
 
       const str = `${type}::div[contains(@class,'quotesYou')]`;
 
-      while (post = (result = $.X(str, post)).snapshotItem(type === 'preceding' ? result.snapshotLength - 1 : 0)) {
-        if (QuoteYou.cb.scroll(post)) { return; }
+      while (
+        (post = (result = $.X(str, post)).snapshotItem(
+          type === 'preceding' ? result.snapshotLength - 1 : 0
+        ))
+      ) {
+        if (QuoteYou.cb.scroll(post)) {
+          return;
+        }
       }
 
       const posts = $$('.quotesYou');
-      return QuoteYou.cb.scroll(posts[type === 'following' ? 0 : posts.length - 1]);
+      return QuoteYou.cb.scroll(
+        posts[type === 'following' ? 0 : posts.length - 1]
+      );
     },
 
     scroll(root) {
@@ -168,12 +214,14 @@ const QuoteYou = {
         if (post.isReply) {
           const sel = `${g.SITE.selectors.postContainer}${g.SITE.selectors.highlightable.reply}`;
           let node = post.nodes.root;
-          if (!node.matches(sel)) { node = $(sel, node); }
+          if (!node.matches(sel)) {
+            node = $(sel, node);
+          }
           $.addClass(node, g.SITE.classes.highlight);
         }
         return true;
       }
-    }
-  }
+    },
+  },
 };
 export default QuoteYou;

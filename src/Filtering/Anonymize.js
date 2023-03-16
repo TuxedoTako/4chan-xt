@@ -1,5 +1,5 @@
-import { Conf } from "../globals/globals";
-import $ from "../platform/$";
+import { Conf } from '../globals/globals';
+import $ from '../platform/$';
 
 /*
  * decaffeinate suggestions:
@@ -8,8 +8,10 @@ import $ from "../platform/$";
  */
 const Anonymize = {
   init() {
-    if (!Conf['Anonymize']) { return; }
+    if (!Conf['Anonymize']) {
+      return;
+    }
     return $.addClass(document.documentElement, 'anonymize');
-  }
+  },
 };
 export default Anonymize;

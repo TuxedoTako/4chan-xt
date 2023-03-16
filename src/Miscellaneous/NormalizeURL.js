@@ -1,4 +1,4 @@
-import { Conf, g } from "../globals/globals";
+import { Conf, g } from '../globals/globals';
 
 /*
  * decaffeinate suggestions:
@@ -7,7 +7,9 @@ import { Conf, g } from "../globals/globals";
  */
 const NormalizeURL = {
   init() {
-    if (!Conf['Normalize URL']) { return; }
+    if (!Conf['Normalize URL']) {
+      return;
+    }
 
     let pathname = location.pathname.split(/\/+/);
     if (g.SITE.software === 'yotsuba') {
@@ -24,8 +26,12 @@ const NormalizeURL = {
 
     pathname = pathname.join('/');
     if (location.pathname !== pathname) {
-      return history.replaceState(history.state, '', `${location.protocol}//${location.host}${pathname}${location.hash}`);
+      return history.replaceState(
+        history.state,
+        '',
+        `${location.protocol}//${location.host}${pathname}${location.hash}`
+      );
     }
-  }
+  },
 };
 export default NormalizeURL;

@@ -22,7 +22,11 @@ import { debounce, dict, SECOND } from '../platform/helpers';
 
 const Gallery = {
   init() {
-    if (!(this.enabled = Conf['Gallery'] && ['index', 'thread'].includes(g.VIEW))) { return; }
+    if (
+      !(this.enabled = Conf['Gallery'] && ['index', 'thread'].includes(g.VIEW))
+    ) {
+      return;
+    }
 
     this.delay = Conf['Slide Delay'];
 
@@ -30,9 +34,8 @@ const Gallery = {
       href: 'javascript:;',
       title: 'Gallery',
       className: 'fa fa-picture-o',
-      textContent: 'Gallery'
-    }
-    );
+      textContent: 'Gallery',
+    });
 
     $.on(el, 'click', this.cb.toggle);
 
@@ -40,7 +43,7 @@ const Gallery = {
 
     return Callbacks.Post.push({
       name: 'Gallery',
-      cb: this.node
+      cb: this.node,
     });
   },
 
@@ -54,7 +57,10 @@ const Gallery = {
             Gallery.nodes.total.textContent = Gallery.images.length;
           }
 
-          if (!Conf['Image Expansion'] && ((g.SITE.software !== 'tinyboard') || !Main.jsEnabled)) {
+          if (
+            !Conf['Image Expansion'] &&
+            (g.SITE.software !== 'tinyboard' || !Main.jsEnabled)
+          ) {
             result.push($.on(file.thumbLink, 'click', Gallery.cb.image));
           } else {
             result.push(undefined);
@@ -70,9 +76,20 @@ const Gallery = {
     const { cb } = Gallery;
 
     if (Conf['Fullscreen Gallery']) {
-      $.one(document, 'fullscreenchange mozfullscreenchange webkitfullscreenchange', () => $.on(document, 'fullscreenchange mozfullscreenchange webkitfullscreenchange', cb.close));
+      $.one(
+        document,
+        'fullscreenchange mozfullscreenchange webkitfullscreenchange',
+        () =>
+          $.on(
+            document,
+            'fullscreenchange mozfullscreenchange webkitfullscreenchange',
+            cb.close
+          )
+      );
       document.documentElement.mozRequestFullScreen?.();
-      document.documentElement.webkitRequestFullScreen?.(Element.ALLOW_KEYBOARD_INPUT);
+      document.documentElement.webkitRequestFullScreen?.(
+        Element.ALLOW_KEYBOARD_INPUT
+      );
     }
 
     Gallery.images = [];
@@ -80,8 +97,7 @@ const Gallery = {
     Gallery.fileIDs = dict();
     Gallery.slideshow = false;
 
-    nodes.el = (dialog = $.el('div',
-      { id: 'a-gallery' }));
+    nodes.el = dialog = $.el('div', { id: 'a-gallery' });
     $.extend(dialog, { innerHTML: galleryPage });
 
     const object = {
@@ -93,15 +109,20 @@ const Gallery = {
       sauce: '.gal-sauce',
       thumbs: '.gal-thumbnails',
       next: '.gal-image a',
-      current: '.gal-image img'
+      current: '.gal-image img',
     };
-    for (var key in object) { var value = object[key]; nodes[key] = $(value, dialog); }
+    for (var key in object) {
+      var value = object[key];
+      nodes[key] = $(value, dialog);
+    }
 
     const menuButton = $('.menu-button', dialog);
     nodes.menu = new UI.Menu('gallery');
 
     $.on(nodes.frame, 'click', cb.blank);
-    if (Conf['Mouse Wheel Volume']) { $.on(nodes.frame, 'wheel', Volume.wheel); }
+    if (Conf['Mouse Wheel Volume']) {
+      $.on(nodes.frame, 'wheel', Volume.wheel);
+    }
     $.on(nodes.next, 'click', cb.click);
     $.on(nodes.name, 'click', ImageCommon.download);
 
@@ -121,20 +142,28 @@ const Gallery = {
     }
 
     $.on(document, 'keydown', cb.keybinds);
-    if (Conf['Keybinds']) { $.off(document, 'keydown', Keybinds.keydown); }
+    if (Conf['Keybinds']) {
+      $.off(document, 'keydown', Keybinds.keydown);
+    }
 
     $.on(window, 'resize', Gallery.cb.setHeight);
 
     for (var postThumb of $$(g.SITE.selectors.file.thumb)) {
       var post;
-      if (!(post = Get.postFromNode(postThumb))) { continue; }
+      if (!(post = Get.postFromNode(postThumb))) {
+        continue;
+      }
       for (var file of post.files) {
         if (file.thumb) {
           Gallery.generateThumb(post, file);
           // If no image to open is given, pick image we have scrolled to.
           if (!image && Gallery.fileIDs[`${post.fullID}.${file.index}`]) {
             var candidate = file.thumbLink;
-            if ((Header.getTopOf(candidate) + candidate.getBoundingClientRect().height) >= 0) {
+            if (
+              Header.getTopOf(candidate) +
+                candidate.getBoundingClientRect().height >=
+              0
+            ) {
               image = candidate;
             }
           }
@@ -148,18 +177,34 @@ const Gallery = {
     nodes.thumbs.scrollTop = 0;
     nodes.current.parentElement.scrollTop = 0;
 
-    if (image) { thumb = $(`[href='${image.href}']`, nodes.thumbs); }
-    if (!thumb) { thumb = Gallery.images[Gallery.images.length - 1]; }
-    if (thumb) { Gallery.open(thumb); }
+    if (image) {
+      thumb = $(`[href='${image.href}']`, nodes.thumbs);
+    }
+    if (!thumb) {
+      thumb = Gallery.images[Gallery.images.length - 1];
+    }
+    if (thumb) {
+      Gallery.open(thumb);
+    }
 
     document.documentElement.style.overflow = 'hidden';
-    return nodes.total.textContent = Gallery.images.length;
+    return (nodes.total.textContent = Gallery.images.length);
   },
 
   generateThumb(post, file) {
-    if (post.isClone || post.isHidden) { return; }
-    if (!file || !file.thumb || (!file.isImage && !file.isVideo && !Conf['PDF in Gallery'])) { return; }
-    if (Gallery.fileIDs[`${post.fullID}.${file.index}`]) { return; }
+    if (post.isClone || post.isHidden) {
+      return;
+    }
+    if (
+      !file ||
+      !file.thumb ||
+      (!file.isImage && !file.isVideo && !Conf['PDF in Gallery'])
+    ) {
+      return;
+    }
+    if (Gallery.fileIDs[`${post.fullID}.${file.index}`]) {
+      return;
+    }
 
     Gallery.fileIDs[`${post.fullID}.${file.index}`] = true;
 
@@ -167,9 +212,8 @@ const Gallery = {
       className: 'gal-thumb',
       href: file.url,
       target: '_blank',
-      title: file.name
-    }
-    );
+      title: file.name,
+    });
 
     thumb.dataset.id = Gallery.images.length;
     thumb.dataset.post = post.fullID;
@@ -187,7 +231,11 @@ const Gallery = {
 
   load(thumb, errorCB) {
     const ext = thumb.href.match(/\w*$/);
-    const elType = $.getOwn({ 'webm': 'video', 'mp4': 'video', 'ogv': 'video', 'pdf': 'iframe' }, ext) || 'img';
+    const elType =
+      $.getOwn(
+        { webm: 'video', mp4: 'video', ogv: 'video', pdf: 'iframe' },
+        ext
+      ) || 'img';
     const file = $.el(elType);
     $.extend(file.dataset, thumb.dataset);
     $.on(file, 'error', errorCB);
@@ -202,12 +250,15 @@ const Gallery = {
     const newID = +thumb.dataset.id;
 
     // Highlight, center selected thumbnail
-    if (el = Gallery.images[oldID]) { $.rmClass(el, 'gal-highlight'); }
+    if ((el = Gallery.images[oldID])) {
+      $.rmClass(el, 'gal-highlight');
+    }
     $.addClass(thumb, 'gal-highlight');
-    nodes.thumbs.scrollTop = (thumb.offsetTop + (thumb.offsetHeight / 2)) - (nodes.thumbs.clientHeight / 2);
+    nodes.thumbs.scrollTop =
+      thumb.offsetTop + thumb.offsetHeight / 2 - nodes.thumbs.clientHeight / 2;
 
     // Load image or use preloaded image
-    if (Gallery.cache?.dataset.id === ('' + newID)) {
+    if (Gallery.cache?.dataset.id === '' + newID) {
       file = Gallery.cache;
       $.off(file, 'error', Gallery.cacheError);
       $.on(file, 'error', Gallery.error);
@@ -224,25 +275,42 @@ const Gallery = {
     if (file.nodeName === 'VIDEO') {
       file.loop = true;
       Volume.setup(file);
-      if (Conf['Autoplay']) { file.play(); }
-      if (Conf['Show Controls']) { ImageCommon.addControls(file); }
+      if (Conf['Autoplay']) {
+        file.play();
+      }
+      if (Conf['Show Controls']) {
+        ImageCommon.addControls(file);
+      }
     }
 
-    document.documentElement.classList.toggle('gal-pdf', file.nodeName === 'IFRAME');
+    document.documentElement.classList.toggle(
+      'gal-pdf',
+      file.nodeName === 'IFRAME'
+    );
     Gallery.cb.setHeight();
     nodes.count.textContent = +thumb.dataset.id + 1;
-    nodes.name.download = (nodes.name.textContent = thumb.title);
+    nodes.name.download = nodes.name.textContent = thumb.title;
     nodes.name.href = thumb.href;
     nodes.frame.scrollTop = 0;
     nodes.next.focus();
 
     // Set sauce links
     $.rmAll(nodes.sauce);
-    if (Conf['Sauce'] && Sauce.links && (post = g.posts.get(file.dataset.post))) {
+    if (
+      Conf['Sauce'] &&
+      Sauce.links &&
+      (post = g.posts.get(file.dataset.post))
+    ) {
       const sauces = [];
       for (var link of Sauce.links) {
         var node;
-        if (node = Sauce.createSauceLink(link, post, post.files[+file.dataset.file])) {
+        if (
+          (node = Sauce.createSauceLink(
+            link,
+            post,
+            post.files[+file.dataset.file]
+          ))
+        ) {
           sauces.push($.tn(' '), node);
         }
       }
@@ -250,7 +318,10 @@ const Gallery = {
     }
 
     // Continue slideshow if moving forward, stop otherwise
-    if (Gallery.slideshow && ((newID > oldID) || ((oldID === (Gallery.images.length - 1)) && (newID === 0)))) {
+    if (
+      Gallery.slideshow &&
+      (newID > oldID || (oldID === Gallery.images.length - 1 && newID === 0))
+    ) {
       Gallery.setupTimer();
     } else {
       Gallery.cb.stop();
@@ -262,8 +333,11 @@ const Gallery = {
     }
 
     // Preload next image
-    if (isNaN(oldID) || (newID === ((oldID + 1) % Gallery.images.length))) {
-      return Gallery.cache = Gallery.load(Gallery.images[(newID + 1) % Gallery.images.length], Gallery.cacheError);
+    if (isNaN(oldID) || newID === (oldID + 1) % Gallery.images.length) {
+      return (Gallery.cache = Gallery.load(
+        Gallery.images[(newID + 1) % Gallery.images.length],
+        Gallery.cacheError
+      ));
     }
   },
 
@@ -271,13 +345,19 @@ const Gallery = {
     if (this.error?.code === MediaError.MEDIA_ERR_DECODE) {
       return new Notice('error', 'Corrupt or unplayable video', 30);
     }
-    if (ImageCommon.isFromArchive(this)) { return; }
+    if (ImageCommon.isFromArchive(this)) {
+      return;
+    }
     const post = g.posts.get(this.dataset.post);
     const file = post.files[+this.dataset.file];
-    return ImageCommon.error(this, post, file, null, url => {
-      if (!url) { return; }
+    return ImageCommon.error(this, post, file, null, (url) => {
+      if (!url) {
+        return;
+      }
       Gallery.images[+this.dataset.id].href = url;
-      if (Gallery.nodes.current === this) { return this.src = url; }
+      if (Gallery.nodes.current === this) {
+        return (this.src = url);
+      }
     });
   },
 
@@ -293,26 +373,38 @@ const Gallery = {
   },
 
   startTimer() {
-    return Gallery.timeoutID = setTimeout(Gallery.checkTimer, Gallery.delay * SECOND);
+    return (Gallery.timeoutID = setTimeout(
+      Gallery.checkTimer,
+      Gallery.delay * SECOND
+    ));
   },
 
   setupTimer() {
     Gallery.cleanupTimer();
     const { current } = Gallery.nodes;
     const isVideo = current.nodeName === 'VIDEO';
-    if (isVideo) { current.play(); }
-    if ((isVideo ? current.readyState >= 4 : current.complete) || (current.nodeName === 'IFRAME')) {
+    if (isVideo) {
+      current.play();
+    }
+    if (
+      (isVideo ? current.readyState >= 4 : current.complete) ||
+      current.nodeName === 'IFRAME'
+    ) {
       return Gallery.startTimer();
     } else {
-      return $.on(current, (isVideo ? 'canplaythrough' : 'load'), Gallery.startTimer);
+      return $.on(
+        current,
+        isVideo ? 'canplaythrough' : 'load',
+        Gallery.startTimer
+      );
     }
   },
 
   checkTimer() {
     const { current } = Gallery.nodes;
-    if ((current.nodeName === 'VIDEO') && !current.paused) {
+    if (current.nodeName === 'VIDEO' && !current.paused) {
       $.on(current, 'ended', Gallery.cb.next);
-      return current.loop = false;
+      return (current.loop = false);
     } else {
       return Gallery.cb.next();
     }
@@ -321,11 +413,14 @@ const Gallery = {
   cb: {
     keybinds(e) {
       let key;
-      if (!(key = Keybinds.keyCode(e))) { return; }
+      if (!(key = Keybinds.keyCode(e))) {
+        return;
+      }
 
       const cb = (() => {
         switch (key) {
-          case Conf['Close']: case Conf['Open Gallery']:
+          case Conf['Close']:
+          case Conf['Open Gallery']:
             return Gallery.cb.close;
           case Conf['Next Gallery Image']:
             return Gallery.cb.next;
@@ -346,15 +441,21 @@ const Gallery = {
         }
       })();
 
-      if (!cb) { return; }
+      if (!cb) {
+        return;
+      }
       e.stopPropagation();
       e.preventDefault();
       return cb();
     },
 
     open(e) {
-      if (e) { e.preventDefault(); }
-      if (this) { return Gallery.open(this); }
+      if (e) {
+        e.preventDefault();
+      }
+      if (this) {
+        return Gallery.open(this);
+      }
     },
 
     image(e) {
@@ -365,25 +466,43 @@ const Gallery = {
 
     prev() {
       return Gallery.cb.open.call(
-        Gallery.images[+Gallery.nodes.current.dataset.id - 1] || Gallery.images[Gallery.images.length - 1]
+        Gallery.images[+Gallery.nodes.current.dataset.id - 1] ||
+          Gallery.images[Gallery.images.length - 1]
       );
     },
     next() {
       return Gallery.cb.open.call(
-        Gallery.images[+Gallery.nodes.current.dataset.id + 1] || Gallery.images[0]
+        Gallery.images[+Gallery.nodes.current.dataset.id + 1] ||
+          Gallery.images[0]
       );
     },
 
     click(e) {
-      if (ImageCommon.onControls(e)) { return; }
+      if (ImageCommon.onControls(e)) {
+        return;
+      }
       e.preventDefault();
       return Gallery.cb.advance();
     },
 
-    advance() { if (!Conf['Autoplay'] && Gallery.nodes.current.paused) { return Gallery.nodes.current.play(); } else { return Gallery.cb.next(); } },
-    toggle() { return (Gallery.nodes ? Gallery.cb.close : Gallery.build)(); },
-    blank(e) { if (e.target === this) { return Gallery.cb.close(); } },
-    toggleSlideshow() { return Gallery.cb[Gallery.slideshow ? 'stop' : 'start'](); },
+    advance() {
+      if (!Conf['Autoplay'] && Gallery.nodes.current.paused) {
+        return Gallery.nodes.current.play();
+      } else {
+        return Gallery.cb.next();
+      }
+    },
+    toggle() {
+      return (Gallery.nodes ? Gallery.cb.close : Gallery.build)();
+    },
+    blank(e) {
+      if (e.target === this) {
+        return Gallery.cb.close();
+      }
+    },
+    toggleSlideshow() {
+      return Gallery.cb[Gallery.slideshow ? 'stop' : 'start']();
+    },
 
     download() {
       const name = $('.gal-name');
@@ -393,7 +512,9 @@ const Gallery = {
     pause() {
       Gallery.cb.stop();
       const { current } = Gallery.nodes;
-      if (current.nodeName === 'VIDEO') { return current[current.paused ? 'play' : 'pause'](); }
+      if (current.nodeName === 'VIDEO') {
+        return current[current.paused ? 'play' : 'pause']();
+      }
     },
 
     start() {
@@ -403,20 +524,30 @@ const Gallery = {
     },
 
     stop() {
-      if (!Gallery.slideshow) { return; }
+      if (!Gallery.slideshow) {
+        return;
+      }
       Gallery.cleanupTimer();
       const { current } = Gallery.nodes;
-      if (current.nodeName === 'VIDEO') { current.loop = true; }
+      if (current.nodeName === 'VIDEO') {
+        current.loop = true;
+      }
       $.rmClass(Gallery.nodes.buttons, 'gal-playing');
-      return Gallery.slideshow = false;
+      return (Gallery.slideshow = false);
     },
 
-    rotateLeft() { return Gallery.cb.rotate(270); },
-    rotateRight() { return Gallery.cb.rotate(90); },
+    rotateLeft() {
+      return Gallery.cb.rotate(270);
+    },
+    rotateRight() {
+      return Gallery.cb.rotate(90);
+    },
 
     rotate: debounce(100, function (delta) {
       const { current } = Gallery.nodes;
-      if (current.nodeName === 'IFRAME') { return; }
+      if (current.nodeName === 'IFRAME') {
+        return;
+      }
       current.dataRotate = ((current.dataRotate || 0) + delta) % 360;
       current.style.transform = `rotate(${current.dataRotate}deg)`;
       return Gallery.cb.setHeight();
@@ -428,7 +559,11 @@ const Gallery = {
       $.rm(Gallery.nodes.el);
       $.rmClass(document.documentElement, 'gallery-open');
       if (Conf['Fullscreen Gallery']) {
-        $.off(document, 'fullscreenchange mozfullscreenchange webkitfullscreenchange', Gallery.cb.close);
+        $.off(
+          document,
+          'fullscreenchange mozfullscreenchange webkitfullscreenchange',
+          Gallery.cb.close
+        );
         document.mozCancelFullScreen?.();
         document.webkitExitFullscreen?.();
       }
@@ -437,13 +572,18 @@ const Gallery = {
       document.documentElement.style.overflow = '';
 
       $.off(document, 'keydown', Gallery.cb.keybinds);
-      if (Conf['Keybinds']) { $.on(document, 'keydown', Keybinds.keydown); }
+      if (Conf['Keybinds']) {
+        $.on(document, 'keydown', Keybinds.keydown);
+      }
       $.off(window, 'resize', Gallery.cb.setHeight);
       return clearTimeout(Gallery.timeoutID);
     },
 
     setFitness() {
-      return (this.checked ? $.addClass : $.rmClass)(document.documentElement, `gal-${this.name.toLowerCase().replace(/\s+/g, '-')}`);
+      return (this.checked ? $.addClass : $.rmClass)(
+        document.documentElement,
+        `gal-${this.name.toLowerCase().replace(/\s+/g, '-')}`
+      );
     },
 
     setHeight: debounce(100, function () {
@@ -451,64 +591,96 @@ const Gallery = {
       const { current, frame } = Gallery.nodes;
       const { style } = current;
 
-      if (Conf['Stretch to Fit'] && (dim = g.posts.get(current.dataset.post)?.files[+current.dataset.file].dimensions)) {
+      if (
+        Conf['Stretch to Fit'] &&
+        (dim = g.posts.get(current.dataset.post)?.files[+current.dataset.file]
+          .dimensions)
+      ) {
         const [width, height] = dim.split('x');
         let containerWidth = frame.clientWidth;
         let containerHeight = document.documentElement.clientHeight - 25;
-        if (((current.dataRotate || 0) % 180) === 90) {
+        if ((current.dataRotate || 0) % 180 === 90) {
           [containerWidth, containerHeight] = [containerHeight, containerWidth];
         }
-        minHeight = Math.min(containerHeight, (height / width) * containerWidth);
+        minHeight = Math.min(
+          containerHeight,
+          (height / width) * containerWidth
+        );
         style.minHeight = minHeight + 'px';
-        style.minWidth = ((width / height) * minHeight) + 'px';
+        style.minWidth = (width / height) * minHeight + 'px';
       } else {
-        style.minHeight = (style.minWidth = '');
+        style.minHeight = style.minWidth = '';
       }
 
-      if (((current.dataRotate || 0) % 180) === 90) {
-        style.maxWidth = Conf['Fit Height'] ? `${document.documentElement.clientHeight - 25}px` : 'none';
+      if ((current.dataRotate || 0) % 180 === 90) {
+        style.maxWidth = Conf['Fit Height']
+          ? `${document.documentElement.clientHeight - 25}px`
+          : 'none';
         style.maxHeight = Conf['Fit Width'] ? `${frame.clientWidth}px` : 'none';
         margin = (current.clientWidth - current.clientHeight) / 2;
-        return style.margin = `${margin}px ${-margin}px`;
+        return (style.margin = `${margin}px ${-margin}px`);
       } else {
-        return style.maxWidth = (style.maxHeight = (style.margin = ''));
+        return (style.maxWidth = style.maxHeight = style.margin = '');
       }
     }),
 
-    setDelay() { return Gallery.delay = +this.value; }
+    setDelay() {
+      return (Gallery.delay = +this.value);
+    },
   },
 
   menu: {
     init() {
-      if (!Gallery.enabled) { return; }
+      if (!Gallery.enabled) {
+        return;
+      }
 
       const el = $.el('span', {
         textContent: 'Gallery',
-        className: 'gallery-link'
-      }
-      );
+        className: 'gallery-link',
+      });
 
       return Header.menu.addEntry({
         el,
         order: 105,
-        subEntries: Gallery.menu.createSubEntries()
+        subEntries: Gallery.menu.createSubEntries(),
       });
     },
 
     createSubEntry(name) {
       const label = UI.checkbox(name, name);
       const input = label.firstElementChild;
-      if (['Hide Thumbnails', 'Fit Width', 'Fit Height'].includes(name)) { $.on(input, 'change', Gallery.cb.setFitness); }
+      if (['Hide Thumbnails', 'Fit Width', 'Fit Height'].includes(name)) {
+        $.on(input, 'change', Gallery.cb.setFitness);
+      }
       $.event('change', null, input);
       $.on(input, 'change', $.cb.checked);
-      if (['Hide Thumbnails', 'Fit Width', 'Fit Height', 'Stretch to Fit'].includes(name)) { $.on(input, 'change', Gallery.cb.setHeight); }
+      if (
+        [
+          'Hide Thumbnails',
+          'Fit Width',
+          'Fit Height',
+          'Stretch to Fit',
+        ].includes(name)
+      ) {
+        $.on(input, 'change', Gallery.cb.setHeight);
+      }
       return { el: label };
     },
 
     createSubEntries() {
-      const subEntries = (['Hide Thumbnails', 'Fit Width', 'Fit Height', 'Stretch to Fit', 'Scroll to Post'].map((item) => Gallery.menu.createSubEntry(item)));
+      const subEntries = [
+        'Hide Thumbnails',
+        'Fit Width',
+        'Fit Height',
+        'Stretch to Fit',
+        'Scroll to Post',
+      ].map((item) => Gallery.menu.createSubEntry(item));
 
-      const delayLabel = $.el('label', { innerHTML: 'Slide Delay: <input type="number" name="Slide Delay" min="0" step="any" class="field">' });
+      const delayLabel = $.el('label', {
+        innerHTML:
+          'Slide Delay: <input type="number" name="Slide Delay" min="0" step="any" class="field">',
+      });
       const delayInput = delayLabel.firstElementChild;
       delayInput.value = Gallery.delay;
       $.on(delayInput, 'change', Gallery.cb.setDelay);
@@ -516,7 +688,7 @@ const Gallery = {
       subEntries.push({ el: delayLabel });
 
       return subEntries;
-    }
-  }
+    },
+  },
 };
 export default Gallery;

@@ -1,6 +1,6 @@
-import SimpleDict from "./SimpleDict";
-import $ from "../platform/$";
-import { g } from "../globals/globals";
+import SimpleDict from './SimpleDict';
+import $ from '../platform/$';
+import { g } from '../globals/globals';
 
 /*
  * decaffeinate suggestions:
@@ -8,7 +8,9 @@ import { g } from "../globals/globals";
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
  */
 export default class Thread {
-  toString() { return this.ID; }
+  toString() {
+    return this.ID;
+  }
 
   constructor(ID, board) {
     this.board = board;
@@ -32,8 +34,7 @@ export default class Thread {
     this.OP = null;
     this.catalogView = null;
 
-    this.nodes =
-      { root: null };
+    this.nodes = { root: null };
 
     this.board.threads.push(this.ID, this);
     g.threads.push(this.fullID, this);
@@ -48,11 +49,15 @@ export default class Thread {
     }
     icon.title = `This thread is on page ${pageNum} in the original index.`;
     icon.textContent = `[${pageNum}]`;
-    if (this.catalogView) { return this.catalogView.nodes.pageCount.textContent = pageNum; }
+    if (this.catalogView) {
+      return (this.catalogView.nodes.pageCount.textContent = pageNum);
+    }
   }
 
   setCount(type, count, reachedLimit) {
-    if (!this.catalogView) { return; }
+    if (!this.catalogView) {
+      return;
+    }
     const el = this.catalogView.nodes[`${type}Count`];
     el.textContent = count;
     return (reachedLimit ? $.addClass : $.rmClass)(el, 'warning');
@@ -60,9 +65,13 @@ export default class Thread {
 
   setStatus(type, status) {
     const name = `is${type}`;
-    if (this[name] === status) { return; }
+    if (this[name] === status) {
+      return;
+    }
     this[name] = status;
-    if (!this.OP) { return; }
+    if (!this.OP) {
+      return;
+    }
     this.setIcon('Sticky', this.isSticky);
     this.setIcon('Closed', this.isClosed && !this.isArchived);
     return this.setIcon('Archived', this.isArchived);
@@ -71,37 +80,45 @@ export default class Thread {
   setIcon(type, status) {
     const typeLC = type.toLowerCase();
     let icon = $(`.${typeLC}Icon`, this.OP.nodes.info);
-    if (!!icon === status) { return; }
+    if (!!icon === status) {
+      return;
+    }
 
     if (!status) {
       $.rm(icon.previousSibling);
       $.rm(icon);
-      if (this.catalogView) { $.rm($(`.${typeLC}Icon`, this.catalogView.nodes.icons)); }
+      if (this.catalogView) {
+        $.rm($(`.${typeLC}Icon`, this.catalogView.nodes.icons));
+      }
       return;
     }
     icon = $.el('img', {
       src: `${g.SITE.Build.staticPath}${typeLC}${g.SITE.Build.gifIcon}`,
       alt: type,
       title: type,
-      className: `${typeLC}Icon retina`
-    }
-    );
+      className: `${typeLC}Icon retina`,
+    });
     if (g.BOARD.ID === 'f') {
       icon.style.cssText = 'height: 18px; width: 18px;';
     }
 
-    const root = (type !== 'Sticky') && this.isSticky ?
-      $('.stickyIcon', this.OP.nodes.info)
-      :
-      $('.page-num', this.OP.nodes.info) || this.OP.nodes.quote;
+    const root =
+      type !== 'Sticky' && this.isSticky
+        ? $('.stickyIcon', this.OP.nodes.info)
+        : $('.page-num', this.OP.nodes.info) || this.OP.nodes.quote;
     $.after(root, [$.tn(' '), icon]);
 
-    if (!this.catalogView) { return; }
-    return ((type === 'Sticky') && this.isClosed ? $.prepend : $.add)(this.catalogView.nodes.icons, icon.cloneNode());
+    if (!this.catalogView) {
+      return;
+    }
+    return (type === 'Sticky' && this.isClosed ? $.prepend : $.add)(
+      this.catalogView.nodes.icons,
+      icon.cloneNode()
+    );
   }
 
   kill() {
-    return this.isDead = true;
+    return (this.isDead = true);
   }
 
   collect() {

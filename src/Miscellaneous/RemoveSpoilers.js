@@ -1,7 +1,7 @@
-import Callbacks from "../classes/Callbacks";
-import { Conf, g } from "../globals/globals";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
+import Callbacks from '../classes/Callbacks';
+import { Conf, g } from '../globals/globals';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
 
 /*
  * decaffeinate suggestions:
@@ -14,11 +14,13 @@ const RemoveSpoilers = {
       $.addClass(document.documentElement, 'reveal-spoilers');
     }
 
-    if (!Conf['Remove Spoilers']) { return; }
+    if (!Conf['Remove Spoilers']) {
+      return;
+    }
 
     Callbacks.Post.push({
       name: 'Reveal Spoilers',
-      cb: this.node
+      cb: this.node,
     });
 
     if (g.VIEW === 'archive') {
@@ -37,6 +39,6 @@ const RemoveSpoilers = {
       $.replace(spoiler, span);
       $.add(span, spoiler.childNodes);
     }
-  }
+  },
 };
 export default RemoveSpoilers;

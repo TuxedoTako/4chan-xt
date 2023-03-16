@@ -1,9 +1,9 @@
-import Callbacks from "../classes/Callbacks";
-import Post from "../classes/Post";
-import Index from "../General/Index";
-import { g, Conf } from "../globals/globals";
-import $ from "../platform/$";
-import { DAY, HOUR, MINUTE, SECOND } from "../platform/helpers";
+import Callbacks from '../classes/Callbacks';
+import Post from '../classes/Post';
+import Index from '../General/Index';
+import { g, Conf } from '../globals/globals';
+import $ from '../platform/$';
+import { DAY, HOUR, MINUTE, SECOND } from '../platform/helpers';
 
 /*
  * decaffeinate suggestions:
@@ -16,7 +16,9 @@ const RelativeDates = {
 
   init() {
     if (
-      (['index', 'thread', 'archive'].includes(g.VIEW) && Conf['Relative Post Dates'] && !Conf['Relative Date Title']) ||
+      (['index', 'thread', 'archive'].includes(g.VIEW) &&
+        Conf['Relative Post Dates'] &&
+        !Conf['Relative Date Title']) ||
       Index.enabled
     ) {
       this.flush();
@@ -26,19 +28,23 @@ const RelativeDates = {
     if (Conf['Relative Post Dates']) {
       return Callbacks.Post.push({
         name: 'Relative Post Dates',
-        cb: this.node
+        cb: this.node,
       });
     }
   },
 
   node() {
-    if (!this.info.date) { return; }
+    if (!this.info.date) {
+      return;
+    }
     const dateEl = this.nodes.date;
     if (Conf['Relative Date Title']) {
       $.on(dateEl, 'mouseover', () => RelativeDates.hover(this));
       return;
     }
-    if (this.isClone) { return; }
+    if (this.isClone) {
+      return;
+    }
 
     // Show original absolute time as tooltip so users can still know exact times
     // Since "Time Formatting" runs its `node` before us, the title tooltip will
@@ -52,28 +58,28 @@ const RelativeDates = {
   relative(diff, now, date, abbrev) {
     let number;
     let unit = (() => {
-      if ((number = (diff / DAY)) >= 1) {
+      if ((number = diff / DAY) >= 1) {
         const years = now.getFullYear() - date.getFullYear();
         let months = now.getMonth() - date.getMonth();
         const days = now.getDate() - date.getDate();
         if (years > 1) {
-          number = years - ((months < 0) || ((months === 0) && (days < 0)));
+          number = years - (months < 0 || (months === 0 && days < 0));
           return 'year';
-        } else if ((years === 1) && ((months > 0) || ((months === 0) && (days >= 0)))) {
+        } else if (years === 1 && (months > 0 || (months === 0 && days >= 0))) {
           number = years;
           return 'year';
-        } else if ((months = months + (12 * years)) > 1) {
+        } else if ((months = months + 12 * years) > 1) {
           number = months - (days < 0);
           return 'month';
-        } else if ((months === 1) && (days >= 0)) {
+        } else if (months === 1 && days >= 0) {
           number = months;
           return 'month';
         } else {
           return 'day';
         }
-      } else if ((number = (diff / HOUR)) >= 1) {
+      } else if ((number = diff / HOUR) >= 1) {
         return 'hour';
-      } else if ((number = (diff / MINUTE)) >= 1) {
+      } else if ((number = diff / MINUTE) >= 1) {
         return 'minute';
       } else {
         // prevent "-1 seconds ago"
@@ -87,10 +93,16 @@ const RelativeDates = {
     if (abbrev) {
       unit = unit === 'month' ? 'mo' : unit[0];
     } else {
-      if (rounded !== 1) { unit += 's'; } // pluralize
+      if (rounded !== 1) {
+        unit += 's';
+      } // pluralize
     }
 
-    if (abbrev) { return `${rounded}${unit}`; } else { return `${rounded} ${unit} ago`; }
+    if (abbrev) {
+      return `${rounded}${unit}`;
+    } else {
+      return `${rounded} ${unit} ago`;
+    }
   },
 
   // Changing all relative dates as soon as possible incurs many annoying
@@ -104,24 +116,29 @@ const RelativeDates = {
   stale: [],
   flush() {
     // No point in changing the dates until the user sees them.
-    if (document.hidden) { return; }
+    if (document.hidden) {
+      return;
+    }
 
     const now = new Date();
-    for (var data of RelativeDates.stale) { RelativeDates.update(data, now); }
+    for (var data of RelativeDates.stale) {
+      RelativeDates.update(data, now);
+    }
     RelativeDates.stale = [];
 
     // Reset automatic flush.
     clearTimeout(RelativeDates.timeout);
-    return RelativeDates.timeout = setTimeout(RelativeDates.flush, RelativeDates.INTERVAL);
+    return (RelativeDates.timeout = setTimeout(
+      RelativeDates.flush,
+      RelativeDates.INTERVAL
+    ));
   },
 
   hover(post) {
-    const {
-      date
-    } = post.info;
+    const { date } = post.info;
     const now = new Date();
     const diff = now - date;
-    return post.nodes.date.title = RelativeDates.relative(diff, now, date);
+    return (post.nodes.date.title = RelativeDates.relative(diff, now, date));
   },
 
   // `update()`, when called from `flush()`, updates the elements,
@@ -130,15 +147,15 @@ const RelativeDates = {
     let abbrev, date;
     const isPost = data instanceof Post;
     if (isPost) {
-      ({
-        date
-      } = data.info);
+      ({ date } = data.info);
       abbrev = false;
     } else {
       date = new Date(+data.dataset.utc);
       abbrev = !!data.dataset.abbrev;
     }
-    if (!now) { now = new Date(); }
+    if (!now) {
+      now = new Date();
+    }
     const diff = now - date;
     const relative = RelativeDates.relative(diff, now, date, abbrev);
     if (isPost) {
@@ -152,22 +169,28 @@ const RelativeDates = {
   },
 
   setOwnTimeout(diff, data) {
-    const delay = diff < MINUTE ?
-      SECOND - ((diff + (SECOND / 2)) % SECOND)
-      : diff < HOUR ?
-        MINUTE - ((diff + (MINUTE / 2)) % MINUTE)
-        : diff < DAY ?
-          HOUR - ((diff + (HOUR / 2)) % HOUR)
-          :
-          DAY - ((diff + (DAY / 2)) % DAY);
+    const delay =
+      diff < MINUTE
+        ? SECOND - ((diff + SECOND / 2) % SECOND)
+        : diff < HOUR
+        ? MINUTE - ((diff + MINUTE / 2) % MINUTE)
+        : diff < DAY
+        ? HOUR - ((diff + HOUR / 2) % HOUR)
+        : DAY - ((diff + DAY / 2) % DAY);
     return setTimeout(RelativeDates.markStale, delay, data);
   },
 
   markStale(data) {
-    if (RelativeDates.stale.includes(data)) { return; } // We can call RelativeDates.update() multiple times.
-    if (data instanceof Post && !g.posts.get(data.fullID)) { return; } // collected post.
-    if (data instanceof Element && !document.documentElement.contains(data)) { return; } // removed catalog reply.
+    if (RelativeDates.stale.includes(data)) {
+      return;
+    } // We can call RelativeDates.update() multiple times.
+    if (data instanceof Post && !g.posts.get(data.fullID)) {
+      return;
+    } // collected post.
+    if (data instanceof Element && !document.documentElement.contains(data)) {
+      return;
+    } // removed catalog reply.
     return RelativeDates.stale.push(data);
-  }
+  },
 };
 export default RelativeDates;

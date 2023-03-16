@@ -1,6 +1,6 @@
-import { Conf, g } from "../globals/globals";
-import $ from "../platform/$";
-import { dict, HOUR } from "../platform/helpers";
+import { Conf, g } from '../globals/globals';
+import $ from '../platform/$';
+import { dict, HOUR } from '../platform/helpers';
 
 /*
  * decaffeinate suggestions:
@@ -10,7 +10,15 @@ import { dict, HOUR } from "../platform/helpers";
  * Full docs: https://github.com/decaffeinate/decaffeinate/blob/main/docs/suggestions.md
  */
 export default class DataBoard {
-  static keys = ['hiddenThreads', 'hiddenPosts', 'lastReadPosts', 'yourPosts', 'watchedThreads', 'watcherLastModified', 'customTitles'];
+  static keys = [
+    'hiddenThreads',
+    'hiddenPosts',
+    'lastReadPosts',
+    'yourPosts',
+    'watchedThreads',
+    'watcherLastModified',
+    'customTitles',
+  ];
   static changes = [];
 
   constructor(key, sync, dontClean) {
@@ -18,13 +26,17 @@ export default class DataBoard {
     this.key = key;
     this.initData(Conf[this.key]);
     $.sync(this.key, this.onSync);
-    if (!dontClean) { this.clean(); }
-    if (!sync) { return; }
+    if (!dontClean) {
+      this.clean();
+    }
+    if (!sync) {
+      return;
+    }
     // Chrome also fires the onChanged callback on the current tab,
     // so we only start syncing when we're ready.
     var init = () => {
       $.off(document, '4chanXInitFinished', init);
-      return this.sync = sync;
+      return (this.sync = sync);
     };
     $.on(document, '4chanXInitFinished', init);
   }
@@ -45,27 +57,36 @@ export default class DataBoard {
   save(change, cb) {
     change();
     DataBoard.changes.push(change);
-    return $.get(this.key, { boards: dict() }, items => {
-      if (!DataBoard.changes.length) { return; }
-      const needSync = ((items[this.key].version || 0) > (this.data.version || 0));
+    return $.get(this.key, { boards: dict() }, (items) => {
+      if (!DataBoard.changes.length) {
+        return;
+      }
+      const needSync =
+        (items[this.key].version || 0) > (this.data.version || 0);
       if (needSync) {
         this.initData(items[this.key]);
-        for (change of DataBoard.changes) { change(); }
+        for (change of DataBoard.changes) {
+          change();
+        }
       }
       DataBoard.changes = [];
       this.data.version = (this.data.version || 0) + 1;
       return $.set(this.key, this.data, () => {
-        if (needSync) { this.sync?.(); }
+        if (needSync) {
+          this.sync?.();
+        }
         return cb?.();
       });
     });
   }
 
   forceSync(cb) {
-    return $.get(this.key, { boards: dict() }, items => {
+    return $.get(this.key, { boards: dict() }, (items) => {
       if ((items[this.key].version || 0) > (this.data.version || 0)) {
         this.initData(items[this.key]);
-        for (var change of DataBoard.changes) { change(); }
+        for (var change of DataBoard.changes) {
+          change();
+        }
         this.sync?.();
       }
       return cb?.();
@@ -73,15 +94,23 @@ export default class DataBoard {
   }
 
   delete({ siteID, boardID, threadID, postID }, cb) {
-    if (!siteID) { siteID = g.SITE.ID; }
-    if (!this.data[siteID]) { return; }
+    if (!siteID) {
+      siteID = g.SITE.ID;
+    }
+    if (!this.data[siteID]) {
+      return;
+    }
     return this.save(() => {
       if (postID) {
-        if (!this.data[siteID].boards[boardID]?.[threadID]) { return; }
+        if (!this.data[siteID].boards[boardID]?.[threadID]) {
+          return;
+        }
         delete this.data[siteID].boards[boardID][threadID][postID];
         return this.deleteIfEmpty({ siteID, boardID, threadID });
       } else if (threadID) {
-        if (!this.data[siteID].boards[boardID]) { return; }
+        if (!this.data[siteID].boards[boardID]) {
+          return;
+        }
         delete this.data[siteID].boards[boardID][threadID];
         return this.deleteIfEmpty({ siteID, boardID });
       } else {
@@ -91,7 +120,9 @@ export default class DataBoard {
   }
 
   deleteIfEmpty({ siteID, boardID, threadID }) {
-    if (!this.data[siteID]) { return; }
+    if (!this.data[siteID]) {
+      return;
+    }
     if (threadID) {
       if (!Object.keys(this.data[siteID].boards[boardID][threadID]).length) {
         delete this.data[siteID].boards[boardID][threadID];
@@ -109,21 +140,35 @@ export default class DataBoard {
   }
 
   setUnsafe({ siteID, boardID, threadID, postID, val }) {
-    if (!siteID) { siteID = g.SITE.ID; }
-    if (!this.data[siteID]) { this.data[siteID] = { boards: dict() }; }
+    if (!siteID) {
+      siteID = g.SITE.ID;
+    }
+    if (!this.data[siteID]) {
+      this.data[siteID] = { boards: dict() };
+    }
     if (postID !== undefined) {
       let base;
-      return (((base = this.data[siteID].boards[boardID] || (this.data[siteID].boards[boardID] = dict())))[threadID] || (base[threadID] = dict()))[postID] = val;
+      return (((base =
+        this.data[siteID].boards[boardID] ||
+        (this.data[siteID].boards[boardID] = dict()))[threadID] ||
+        (base[threadID] = dict()))[postID] = val);
     } else if (threadID !== undefined) {
-      return (this.data[siteID].boards[boardID] || (this.data[siteID].boards[boardID] = dict()))[threadID] = val;
+      return ((this.data[siteID].boards[boardID] ||
+        (this.data[siteID].boards[boardID] = dict()))[threadID] = val);
     } else {
-      return this.data[siteID].boards[boardID] = val;
+      return (this.data[siteID].boards[boardID] = val);
     }
   }
 
   extend({ siteID, boardID, threadID, postID, val }, cb) {
     return this.save(() => {
-      const oldVal = this.get({ siteID, boardID, threadID, postID, defaultValue: dict() });
+      const oldVal = this.get({
+        siteID,
+        boardID,
+        threadID,
+        postID,
+        defaultValue: dict(),
+      });
       for (var key in val) {
         var subVal = val[key];
         if (typeof subVal === 'undefined') {
@@ -133,20 +178,21 @@ export default class DataBoard {
         }
       }
       return this.setUnsafe({ siteID, boardID, threadID, postID, val: oldVal });
-    }
-      , cb);
+    }, cb);
   }
 
   setLastChecked(key = 'lastChecked') {
     return this.save(() => {
-      return this.data[key] = Date.now();
+      return (this.data[key] = Date.now());
     });
   }
 
   get({ siteID, boardID, threadID, postID, defaultValue }) {
     let board, val;
-    if (!siteID) { siteID = g.SITE.ID; }
-    if (board = this.data[siteID]?.boards[boardID]) {
+    if (!siteID) {
+      siteID = g.SITE.ID;
+    }
+    if ((board = this.data[siteID]?.boards[boardID])) {
       let thread;
       if (threadID == null) {
         if (postID != null) {
@@ -160,8 +206,8 @@ export default class DataBoard {
         } else {
           val = board;
         }
-      } else if (thread = board[threadID]) {
-        val = (postID != null) ? thread[postID] : thread;
+      } else if ((thread = board[threadID])) {
+        val = postID != null ? thread[postID] : thread;
       }
     }
     return val || defaultValue;
@@ -175,7 +221,10 @@ export default class DataBoard {
       this.deleteIfEmpty({ siteID, boardID });
     }
     const now = Date.now();
-    if (now - (2 * HOUR) >= ((middle = this.data[siteID].lastChecked || 0)) || middle > now) {
+    if (
+      now - 2 * HOUR >= (middle = this.data[siteID].lastChecked || 0) ||
+      middle > now
+    ) {
       this.data[siteID].lastChecked = now;
       for (boardID in this.data[siteID].boards) {
         this.ajaxClean(boardID);
@@ -187,14 +236,25 @@ export default class DataBoard {
     const that = this;
     const siteID = g.SITE.ID;
     const threadsList = g.SITE.urls.threadsListJSON?.({ siteID, boardID });
-    if (!threadsList) { return; }
+    if (!threadsList) {
+      return;
+    }
     return $.cache(threadsList, function () {
-      if (this.status !== 200) { return; }
+      if (this.status !== 200) {
+        return;
+      }
       const archiveList = g.SITE.urls.archiveListJSON?.({ siteID, boardID });
-      if (!archiveList) { return that.ajaxCleanParse(boardID, this.response); }
+      if (!archiveList) {
+        return that.ajaxCleanParse(boardID, this.response);
+      }
       const response1 = this.response;
       return $.cache(archiveList, function () {
-        if ((this.status !== 200) && (!!g.SITE.archivedBoardsKnown || (this.status !== 404))) { return; }
+        if (
+          this.status !== 200 &&
+          (!!g.SITE.archivedBoardsKnown || this.status !== 404)
+        ) {
+          return;
+        }
         return that.ajaxCleanParse(boardID, response1, this.response);
       });
     });
@@ -203,19 +263,25 @@ export default class DataBoard {
   ajaxCleanParse(boardID, response1, response2) {
     let board, ID;
     const siteID = g.SITE.ID;
-    if (!(board = this.data[siteID].boards[boardID])) { return; }
+    if (!(board = this.data[siteID].boards[boardID])) {
+      return;
+    }
     const threads = dict();
     if (response1) {
       for (var page of response1) {
         for (var thread of page.threads) {
           ID = thread.no;
-          if (ID in board) { threads[ID] = board[ID]; }
+          if (ID in board) {
+            threads[ID] = board[ID];
+          }
         }
       }
     }
     if (response2) {
       for (ID of response2) {
-        if (ID in board) { threads[ID] = board[ID]; }
+        if (ID in board) {
+          threads[ID] = board[ID];
+        }
       }
     }
     this.data[siteID].boards[boardID] = threads;
@@ -224,7 +290,9 @@ export default class DataBoard {
   }
 
   onSync(data) {
-    if ((data.version || 0) <= (this.data.version || 0)) { return; }
+    if ((data.version || 0) <= (this.data.version || 0)) {
+      return;
+    }
     this.initData(data);
     return this.sync?.();
   }

@@ -1,11 +1,11 @@
-import Callbacks from "../classes/Callbacks";
-import Header from "../General/Header";
-import UI from "../General/UI";
-import { g, Conf } from "../globals/globals";
-import $ from "../platform/$";
-import { SECOND } from "../platform/helpers";
-import ImageCommon from "./ImageCommon";
-import Volume from "./Volume";
+import Callbacks from '../classes/Callbacks';
+import Header from '../General/Header';
+import UI from '../General/UI';
+import { g, Conf } from '../globals/globals';
+import $ from '../platform/$';
+import { SECOND } from '../platform/helpers';
+import ImageCommon from './ImageCommon';
+import Volume from './Volume';
 
 /*
  * decaffeinate suggestions:
@@ -14,44 +14,65 @@ import Volume from "./Volume";
  */
 const ImageHover = {
   init() {
-    if (!['index', 'thread'].includes(g.VIEW)) { return; }
+    if (!['index', 'thread'].includes(g.VIEW)) {
+      return;
+    }
     if (Conf['Image Hover']) {
       Callbacks.Post.push({
         name: 'Image Hover',
-        cb: this.node
+        cb: this.node,
       });
     }
     if (Conf['Image Hover in Catalog']) {
       return Callbacks.CatalogThread.push({
         name: 'Image Hover',
-        cb: this.catalogNode
+        cb: this.catalogNode,
       });
     }
   },
 
   node() {
-    return this.files.filter((file) => (file.isImage || file.isVideo) && file.thumb).map((file) =>
-      $.on(file.thumb, 'mouseover', ImageHover.mouseover(this, file)));
+    return this.files
+      .filter((file) => (file.isImage || file.isVideo) && file.thumb)
+      .map((file) =>
+        $.on(file.thumb, 'mouseover', ImageHover.mouseover(this, file))
+      );
   },
 
   catalogNode() {
     const file = this.thread.OP.files[0];
-    if (!file || (!file.isImage && !file.isVideo)) { return; }
-    return $.on(this.nodes.thumb, 'mouseover', ImageHover.mouseover(this.thread.OP, file));
+    if (!file || (!file.isImage && !file.isVideo)) {
+      return;
+    }
+    return $.on(
+      this.nodes.thumb,
+      'mouseover',
+      ImageHover.mouseover(this.thread.OP, file)
+    );
   },
 
   mouseover(post, file) {
     return function (e) {
       let el, height, width;
-      if (!document.documentElement.contains(this)) { return; }
+      if (!document.documentElement.contains(this)) {
+        return;
+      }
       const { isVideo } = file;
-      if (file.isExpanding || file.isExpanded || g.SITE.isThumbExpanded?.(file)) { return; }
+      if (
+        file.isExpanding ||
+        file.isExpanded ||
+        g.SITE.isThumbExpanded?.(file)
+      ) {
+        return;
+      }
       const error = ImageHover.error(post, file);
-      if (ImageCommon.cache?.dataset.fileID === `${post.fullID}.${file.index}`) {
+      if (
+        ImageCommon.cache?.dataset.fileID === `${post.fullID}.${file.index}`
+      ) {
         el = ImageCommon.popCache();
         $.on(el, 'error', error);
       } else {
-        el = $.el((isVideo ? 'video' : 'img'));
+        el = $.el(isVideo ? 'video' : 'img');
         el.dataset.fileID = `${post.fullID}.${file.index}`;
         $.on(el, 'error', error);
         el.src = file.url;
@@ -69,13 +90,16 @@ const ImageHover = {
         Volume.setup(el);
         if (Conf['Autoplay']) {
           el.play();
-          if (this.nodeName === 'VIDEO') { this.currentTime = el.currentTime; }
+          if (this.nodeName === 'VIDEO') {
+            this.currentTime = el.currentTime;
+          }
         }
       }
       if (file.dimensions) {
-        [width, height] = (file.dimensions.split('x').map((x) => +x));
+        [width, height] = file.dimensions.split('x').map((x) => +x);
         const maxWidth = document.documentElement.clientWidth;
-        const maxHeight = document.documentElement.clientHeight - UI.hover.padding;
+        const maxHeight =
+          document.documentElement.clientHeight - UI.hover.padding;
         const scale = Math.min(1, maxWidth / width, maxHeight / height);
         width *= scale;
         height *= scale;
@@ -96,22 +120,24 @@ const ImageHover = {
           ImageCommon.pause(el);
           $.rm(el);
           return el.removeAttribute('style');
-        }
+        },
       });
     };
   },
 
   error(post, file) {
     return function () {
-      if (ImageCommon.decodeError(this, file)) { return; }
-      return ImageCommon.error(this, post, file, 3 * SECOND, URL => {
+      if (ImageCommon.decodeError(this, file)) {
+        return;
+      }
+      return ImageCommon.error(this, post, file, 3 * SECOND, (URL) => {
         if (URL) {
-          return this.src = URL + (this.src === URL ? '?' + Date.now() : '');
+          return (this.src = URL + (this.src === URL ? '?' + Date.now() : ''));
         } else {
           return $.rm(this);
         }
       });
     };
-  }
+  },
 };
 export default ImageHover;

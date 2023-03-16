@@ -1,8 +1,8 @@
-import { Conf, g } from "../globals/globals";
-import Main from "../main/Main";
-import $ from "../platform/$";
-import { dict } from "../platform/helpers";
-import SW from "./SW";
+import { Conf, g } from '../globals/globals';
+import Main from '../main/Main';
+import $ from '../platform/$';
+import { dict } from '../platform/helpers';
+import SW from './SW';
 
 /*
  * decaffeinate suggestions:
@@ -16,7 +16,7 @@ const Site = {
     '4cdn.org': { canonical: '4chan.org' },
     'notso.smuglo.li': { canonical: 'smuglo.li' },
     'smugloli.net': { canonical: 'smuglo.li' },
-    'smug.nepu.moe': { canonical: 'smuglo.li' }
+    'smug.nepu.moe': { canonical: 'smuglo.li' },
   },
 
   init(cb) {
@@ -29,10 +29,12 @@ const Site = {
     return $.onExists(document.documentElement, 'body', () => {
       for (var software in SW) {
         var changes;
-        if (changes = SW[software].detect?.()) {
+        if ((changes = SW[software].detect?.())) {
           changes.software = software;
           hostname = location.hostname.replace(/^www\./, '');
-          var properties = (Conf['siteProperties'][hostname] || (Conf['siteProperties'][hostname] = dict()));
+          var properties =
+            Conf['siteProperties'][hostname] ||
+            (Conf['siteProperties'][hostname] = dict());
           var changed = 0;
           for (var key in changes) {
             if (properties[key] !== changes[key]) {
@@ -60,7 +62,9 @@ const Site = {
     }
     if (hostname) {
       let canonical;
-      if (canonical = Conf['siteProperties'][hostname].canonical) { hostname = canonical; }
+      if ((canonical = Conf['siteProperties'][hostname].canonical)) {
+        hostname = canonical;
+      }
     }
     return hostname;
   },
@@ -74,15 +78,17 @@ const Site = {
     for (var ID in Conf['siteProperties']) {
       var site;
       var properties = Conf['siteProperties'][ID];
-      if (properties.canonical) { continue; }
-      var {
-        software
-      } = properties;
-      if (!software || !$.hasOwn(SW, software)) { continue; }
-      g.sites[ID] = (site = Object.create(SW[software]));
+      if (properties.canonical) {
+        continue;
+      }
+      var { software } = properties;
+      if (!software || !$.hasOwn(SW, software)) {
+        continue;
+      }
+      g.sites[ID] = site = Object.create(SW[software]);
       $.extend(site, { ID, siteID: ID, properties, software });
     }
-    return g.SITE = g.sites[hostname];
-  }
+    return (g.SITE = g.sites[hostname]);
+  },
 };
 export default Site;

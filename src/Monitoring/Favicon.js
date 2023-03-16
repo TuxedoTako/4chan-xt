@@ -48,7 +48,12 @@ import { Conf } from '../globals/globals';
 
 const Favicon = {
   init() {
-    return $.asap((() => document.head && (Favicon.el = $('link[rel="shortcut icon"]', document.head))), Favicon.initAsap);
+    return $.asap(
+      () =>
+        document.head &&
+        (Favicon.el = $('link[rel="shortcut icon"]', document.head)),
+      Favicon.initAsap
+    );
   },
 
   set(status) {
@@ -113,14 +118,14 @@ const Favicon = {
         Original_unreadNSFW,
         Original_unreadNSFWY,
       ],
-      'Metro': [
+      Metro: [
         Metro_unreadDead,
         Metro_unreadDeadY,
         Metro_unreadSFW,
         Metro_unreadSFWY,
         Metro_unreadNSFW,
         Metro_unreadNSFWY,
-      ]
+      ],
     };
     items = $.getOwn(items, Conf['favicon']);
 
@@ -131,17 +136,24 @@ const Favicon = {
       items[i] = t + items[i++];
     }
 
-    [f.unreadDead, f.unreadDeadY, f.unreadSFW, f.unreadSFWY, f.unreadNSFW, f.unreadNSFWY] = items;
+    [
+      f.unreadDead,
+      f.unreadDeadY,
+      f.unreadSFW,
+      f.unreadSFWY,
+      f.unreadNSFW,
+      f.unreadNSFWY,
+    ] = items;
     return f.update();
   },
 
   update() {
     if (this.isSFW) {
       this.unread = this.unreadSFW;
-      return this.unreadY = this.unreadSFWY;
+      return (this.unreadY = this.unreadSFWY);
     } else {
       this.unread = this.unreadNSFW;
-      return this.unreadY = this.unreadNSFWY;
+      return (this.unreadY = this.unreadNSFWY);
     }
   },
 

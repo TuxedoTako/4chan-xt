@@ -1,6 +1,6 @@
-import Callbacks from "../classes/Callbacks";
-import { g, Conf } from "../globals/globals";
-import $ from "../platform/$";
+import Callbacks from '../classes/Callbacks';
+import { g, Conf } from '../globals/globals';
+import $ from '../platform/$';
 
 /*
  * decaffeinate suggestions:
@@ -10,10 +10,16 @@ import $ from "../platform/$";
  */
 const MarkNewIPs = {
   init() {
-    if ((g.SITE.software !== 'yotsuba') || (g.VIEW !== 'thread') || !Conf['Mark New IPs']) { return; }
+    if (
+      g.SITE.software !== 'yotsuba' ||
+      g.VIEW !== 'thread' ||
+      !Conf['Mark New IPs']
+    ) {
+      return;
+    }
     return Callbacks.Thread.push({
       name: 'Mark New IPs',
-      cb: this.node
+      cb: this.node,
     });
   },
 
@@ -26,10 +32,12 @@ const MarkNewIPs = {
   onUpdate(e) {
     let fullID;
     const { ipCount, postCount, newPosts, deletedPosts } = e.detail;
-    if (ipCount == null) { return; }
+    if (ipCount == null) {
+      return;
+    }
 
     switch (ipCount - MarkNewIPs.ipCount) {
-      case (postCount - MarkNewIPs.postCount) + deletedPosts.length:
+      case postCount - MarkNewIPs.postCount + deletedPosts.length:
         var i = MarkNewIPs.ipCount;
         for (fullID of newPosts) {
           MarkNewIPs.markNew(g.posts.get(fullID), ++i);
@@ -42,19 +50,18 @@ const MarkNewIPs = {
         break;
     }
     MarkNewIPs.ipCount = ipCount;
-    return MarkNewIPs.postCount = postCount;
+    return (MarkNewIPs.postCount = postCount);
   },
 
   markNew(post, ipCount) {
-    const suffix = ((Math.floor(ipCount / 10)) % 10) === 1 ?
-      'th'
-      :
-      ['st', 'nd', 'rd'][(ipCount % 10) - 1] || 'th'; // fuck switches
+    const suffix =
+      Math.floor(ipCount / 10) % 10 === 1
+        ? 'th'
+        : ['st', 'nd', 'rd'][(ipCount % 10) - 1] || 'th'; // fuck switches
     const counter = $.el('span', {
       className: 'ip-counter',
-      textContent: `(${ipCount})`
-    }
-    );
+      textContent: `(${ipCount})`,
+    });
     post.nodes.nameBlock.title = `This is the ${ipCount}${suffix} IP in the thread.`;
     $.add(post.nodes.nameBlock, [$.tn(' '), counter]);
     return $.addClass(post.nodes.root, 'new-ip');
@@ -63,6 +70,6 @@ const MarkNewIPs = {
   markOld(post) {
     post.nodes.nameBlock.title = 'Not the first post from this IP.';
     return $.addClass(post.nodes.root, 'old-ip');
-  }
+  },
 };
 export default MarkNewIPs;

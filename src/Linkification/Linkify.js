@@ -1,11 +1,11 @@
-import Callbacks from "../classes/Callbacks";
+import Callbacks from '../classes/Callbacks';
 // import Test from "../General/Test";
-import { g, Conf } from "../globals/globals";
-import ImageHost from "../Images/ImageHost";
-import ExpandComment from "../Miscellaneous/ExpandComment";
-import $ from "../platform/$";
-import $$ from "../platform/$$";
-import Embedding from "./Embedding";
+import { g, Conf } from '../globals/globals';
+import ImageHost from '../Images/ImageHost';
+import ExpandComment from '../Miscellaneous/ExpandComment';
+import $ from '../platform/$';
+import $$ from '../platform/$$';
+import Embedding from './Embedding';
 
 /*
  * decaffeinate suggestions:
@@ -14,7 +14,9 @@ import Embedding from "./Embedding";
  */
 const Linkify = {
   init() {
-    if (!['index', 'thread', 'archive'].includes(g.VIEW) || !Conf['Linkify']) { return; }
+    if (!['index', 'thread', 'archive'].includes(g.VIEW) || !Conf['Linkify']) {
+      return;
+    }
 
     if (Conf['Comment Expansion']) {
       ExpandComment.callbacks.push(this.node);
@@ -22,7 +24,7 @@ const Linkify = {
 
     Callbacks.Post.push({
       name: 'Linkify',
-      cb: this.node
+      cb: this.node,
     });
 
     return Embedding.init();
@@ -30,18 +32,28 @@ const Linkify = {
 
   node() {
     let link;
-    if (this.isClone) { return Embedding.events(this); }
-    if (!Linkify.regString.test(this.info.comment)) { return; }
+    if (this.isClone) {
+      return Embedding.events(this);
+    }
+    if (!Linkify.regString.test(this.info.comment)) {
+      return;
+    }
     for (link of $$('a', this.nodes.comment)) {
       if (g.SITE.isLinkified?.(link)) {
         $.addClass(link, 'linkify');
-        if (ImageHost.useFaster) { ImageHost.fixLinks([link]); }
+        if (ImageHost.useFaster) {
+          ImageHost.fixLinks([link]);
+        }
         Embedding.process(link, this);
       }
     }
     const links = Linkify.process(this.nodes.comment);
-    if (ImageHost.useFaster) { ImageHost.fixLinks(links); }
-    for (link of links) { Embedding.process(link, this); }
+    if (ImageHost.useFaster) {
+      ImageHost.fixLinks(links);
+    }
+    for (link of links) {
+      Embedding.process(link, this);
+    }
   },
 
   process(node) {
@@ -54,7 +66,9 @@ const Linkify = {
     while ((node = snapshot.snapshotItem(i++))) {
       var result;
       var { data } = node;
-      if (!data || (node.parentElement.nodeName === "A")) { continue; }
+      if (!data || node.parentElement.nodeName === 'A') {
+        continue;
+      }
 
       while ((result = test.exec(data))) {
         var { index } = result;
@@ -65,15 +79,22 @@ const Linkify = {
           var saved;
           test.lastIndex = 0;
 
-          while (saved = snapshot.snapshotItem(i++)) {
+          while ((saved = snapshot.snapshotItem(i++))) {
             var end;
-            if ((saved.nodeName === 'BR') || ((saved.parentElement.nodeName === 'P') && !saved.previousSibling)) {
+            if (
+              saved.nodeName === 'BR' ||
+              (saved.parentElement.nodeName === 'P' && !saved.previousSibling)
+            ) {
               var part1, part2;
               if (
                 // link deliberately split
-                (part1 = word.match(/(https?:\/\/)?([a-z\d-]+\.)*[a-z\d-]+$/i)) &&
-                (part2 = snapshot.snapshotItem(i)?.data?.match(/^(\.[a-z\d-]+)*\//i)) &&
-                ((part1[0] + part2[0]).search(Linkify.regString) === 0)
+                (part1 = word.match(
+                  /(https?:\/\/)?([a-z\d-]+\.)*[a-z\d-]+$/i
+                )) &&
+                (part2 = snapshot
+                  .snapshotItem(i)
+                  ?.data?.match(/^(\.[a-z\d-]+)*\//i)) &&
+                (part1[0] + part2[0]).search(Linkify.regString) === 0
               ) {
                 continue;
               } else {
@@ -81,17 +102,20 @@ const Linkify = {
               }
             }
 
-            if ((saved.parentElement.nodeName === "A") && !Linkify.regString.test(word)) {
+            if (
+              saved.parentElement.nodeName === 'A' &&
+              !Linkify.regString.test(word)
+            ) {
               break;
             }
 
             endNode = saved;
             ({ data } = saved);
 
-            if (end = space.exec(data)) {
+            if ((end = space.exec(data))) {
               // Set our snapshot and regex to start on this node at this position when the loop resumes
               word += data.slice(0, end.index);
-              test.lastIndex = (length = end.index);
+              test.lastIndex = length = end.index;
               i--;
               break;
             } else {
@@ -111,7 +135,9 @@ const Linkify = {
           // <% } %>
         }
 
-        if (!test.lastIndex || (node !== endNode)) { break; }
+        if (!test.lastIndex || node !== endNode) {
+          break;
+        }
       }
     }
 
@@ -122,7 +148,8 @@ const Linkify = {
     return links;
   },
 
-  regString: new RegExp(`(\
+  regString: new RegExp(
+    `(\
 \
 (https?|mailto|git|magnet|ftp|irc):(\
 [a-z\\d%/?]\
@@ -135,7 +162,9 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
 [\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\
 |\
 [-\\w\\d.@]+@[a-z\\d.-]+\\.[a-z\\d]\
-)`, 'i'),
+)`,
+    'i'
+  ),
 
   makeRange(startNode, endNode, startOffset, endOffset) {
     const range = document.createRange();
@@ -154,21 +183,29 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
 
     if (i > 0) {
       text = text.slice(i);
-      while ((range.startOffset + i) >= range.startContainer.data.length) { i--; }
+      while (range.startOffset + i >= range.startContainer.data.length) {
+        i--;
+      }
 
-      if (i) { range.setStart(range.startContainer, range.startOffset + i); }
+      if (i) {
+        range.setStart(range.startContainer, range.startOffset + i);
+      }
     }
 
     // Clean end of range
     i = 0;
-    while (/[)\]}>.,]/.test(t = text.charAt(text.length - (1 + i)))) {
-      if (!/[.,]/.test(t) && !((text.match(/[()\[\]{}<>]/g)).length % 2)) { break; }
+    while (/[)\]}>.,]/.test((t = text.charAt(text.length - (1 + i))))) {
+      if (!/[.,]/.test(t) && !(text.match(/[()\[\]{}<>]/g).length % 2)) {
+        break;
+      }
       i++;
     }
 
     if (i) {
       text = text.slice(0, -i);
-      while ((range.endOffset - i) < 0) { i--; }
+      while (range.endOffset - i < 0) {
+        i--;
+      }
 
       if (i) {
         range.setEnd(range.endContainer, range.endOffset - i);
@@ -177,34 +214,33 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
 
     // Make our link 'valid' if it is formatted incorrectly.
     if (!/((mailto|magnet):|.+:\/\/)/.test(text)) {
-      text = (
-        /@/.test(text) ?
-          'mailto:'
-          :
-          'http://'
-      ) + text;
+      text = (/@/.test(text) ? 'mailto:' : 'http://') + text;
     }
 
     // Decode percent-encoded characters in domain so that they behave consistently across browsers.
-    if (encodedDomain = text.match(/^(https?:\/\/[^/]*%[0-9a-f]{2})(.*)$/i)) {
-      text = encodedDomain[1].replace(/%([0-9a-f]{2})/ig, function (x, y) {
-        if (y === '25') { return x; } else { return String.fromCharCode(parseInt(y, 16)); }
-      }) + encodedDomain[2];
+    if ((encodedDomain = text.match(/^(https?:\/\/[^/]*%[0-9a-f]{2})(.*)$/i))) {
+      text =
+        encodedDomain[1].replace(/%([0-9a-f]{2})/gi, function (x, y) {
+          if (y === '25') {
+            return x;
+          } else {
+            return String.fromCharCode(parseInt(y, 16));
+          }
+        }) + encodedDomain[2];
     }
 
     const a = $.el('a', {
       className: 'linkify',
       rel: 'noreferrer noopener',
       target: '_blank',
-      href: text
-    }
-    );
+      href: text,
+    });
 
     // Insert the range into the anchor, the anchor into the range's DOM location, and destroy the range.
     $.add(a, range.extractContents());
     range.insertNode(a);
 
     return a;
-  }
+  },
 };
 export default Linkify;

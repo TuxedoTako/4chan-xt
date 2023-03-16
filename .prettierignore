@@ -1,0 +1,18 @@
+# Ignore files and directories
+node_modules/
+build/
+dist/
+coverage/
+public/
+
+# Ignore specific files
+*.log
+*.md
+*.txt
+*.html
+*.css
+
+# Ignore files in specific directories
+src/**/*.json
+src/**/*.md
+src/**/*.txt

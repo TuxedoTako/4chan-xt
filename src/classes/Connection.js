@@ -1,5 +1,5 @@
-import $ from "../platform/$";
-import { g } from "../globals/globals";
+import $ from '../platform/$';
+import { g } from '../globals/globals';
 
 export default class Connection {
   constructor(target, origin, cb = {}) {
@@ -20,14 +20,21 @@ export default class Connection {
   }
 
   send(data) {
-    return this.targetWindow().postMessage(`${g.NAMESPACE}${JSON.stringify(data)}`, this.origin);
+    return this.targetWindow().postMessage(
+      `${g.NAMESPACE}${JSON.stringify(data)}`,
+      this.origin
+    );
   }
 
   onMessage(e) {
-    if ((e.source !== this.targetWindow()) ||
-      (e.origin !== this.origin) ||
-      (typeof e.data !== 'string') ||
-      (e.data.slice(0, g.NAMESPACE.length) !== g.NAMESPACE)) { return; }
+    if (
+      e.source !== this.targetWindow() ||
+      e.origin !== this.origin ||
+      typeof e.data !== 'string' ||
+      e.data.slice(0, g.NAMESPACE.length) !== g.NAMESPACE
+    ) {
+      return;
+    }
     const data = JSON.parse(e.data.slice(g.NAMESPACE.length));
     for (var type in data) {
       var value = data[type];

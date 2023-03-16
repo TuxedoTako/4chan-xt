@@ -1,12 +1,13 @@
-import { createFilter } from "@rollup/pluginutils";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
+import { createFilter } from '@rollup/pluginutils';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default async function setupFileInliner(packageJson) {
   /** @param {string} string */
-  const escape = (string) => string.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\\${');
+  const escape = (string) =>
+    string.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 
   /**
    * @param {{
@@ -19,7 +20,7 @@ export default async function setupFileInliner(packageJson) {
    */
   return function inlineFile(opts) {
     if (!opts.include) {
-      throw Error("include option should be specified");
+      throw Error('include option should be specified');
     }
 
     if (opts.transformer && typeof opts.transformer !== 'function') {
@@ -31,7 +32,7 @@ export default async function setupFileInliner(packageJson) {
     const filter = createFilter(opts.include, opts.exclude);
 
     return {
-      name: "inlineFile",
+      name: 'inlineFile',
 
       async transform(code, id) {
         if (filter(id)) {
@@ -46,7 +47,7 @@ export default async function setupFileInliner(packageJson) {
           });
           return `export default \`${code}\`;`;
         }
-      }
+      },
     };
   };
 }

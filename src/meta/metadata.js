@@ -1,7 +1,7 @@
 // this file is needed in the build script, keep it .js
 
-import { readFile } from "fs/promises";
-import { dirname, resolve } from "path";
+import { readFile } from 'fs/promises';
+import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,7 +15,11 @@ export default async function generateMetadata(packageJson, channel) {
   const iconFile = await readFile(resolve(__dirname, './icon48.png'));
   const icon = Buffer.from(iconFile).toString('base64');
 
-  const archives = JSON.parse(await readFile(resolve(__dirname, '../Archive/archives.json'), { encoding: 'utf-8' }));
+  const archives = JSON.parse(
+    await readFile(resolve(__dirname, '../Archive/archives.json'), {
+      encoding: 'utf-8',
+    })
+  );
 
   let output = `// ==UserScript==
 // @name         ${meta.name}${channel === '-beta' ? ' beta' : ''}
@@ -44,14 +48,18 @@ export default async function generateMetadata(packageJson, channel) {
     function expandMatches(matches) {
       return expand(matches, /^\*/, ['http', 'https']);
     }
-    return [].concat(
-      expandMatches(meta.includes_only.concat(meta.matches, meta.matches_extra)).map(function (match) {
-        return '// @include      ' + match;
-      }),
-      expandMatches(meta.exclude_matches).map(function (match) {
-        return '// @exclude      ' + match;
-      })
-    ).join('\n');
+    return []
+      .concat(
+        expandMatches(
+          meta.includes_only.concat(meta.matches, meta.matches_extra)
+        ).map(function (match) {
+          return '// @include      ' + match;
+        }),
+        expandMatches(meta.exclude_matches).map(function (match) {
+          return '// @exclude      ' + match;
+        })
+      )
+      .join('\n');
   })();
 
   output += `
@@ -60,9 +68,11 @@ export default async function generateMetadata(packageJson, channel) {
 // @connect      4cdn.org
 // @connect      4chenz.github.io
 `;
-  output += archives.map(function (archive) {
-    return '// @connect      ' + archive.domain;
-  }).join('\n');
+  output += archives
+    .map(function (archive) {
+      return '// @connect      ' + archive.domain;
+    })
+    .join('\n');
 
   output += `
 // @connect      api.clyp.it
@@ -74,14 +84,17 @@ export default async function generateMetadata(packageJson, channel) {
 // @connect      www.youtube.com
 // @connect      *
 `;
-  output += meta.grants.map(function (grant) {
-    return '// @grant        ' + grant;
-  }).join('\n');
+  output += meta.grants
+    .map(function (grant) {
+      return '// @grant        ' + grant;
+    })
+    .join('\n');
 
   output += '\n// @run-at       document-start';
 
   if (channel === '-noupdate') {
-    output += '\n// @updateURL    https://noupdate.invalid/\n// @downloadURL  https://noupdate.invalid/';
+    output +=
+      '\n// @updateURL    https://noupdate.invalid/\n// @downloadURL  https://noupdate.invalid/';
   } else {
     output += `
 // @updateURL    ${meta.downloads}${packageJson.name}${channel}.meta.js
