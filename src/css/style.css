@@ -878,11 +878,8 @@ div[data-checked="false"] > .suboption-list {
   vertical-align: text-top;
   padding-left: 2px;
 }
-.catalog-stats > .menu-button {
-  font-weight: normal;
-}
-.catalog-stats > .menu-button > i::before {
-  line-height: 11px;
+.catalog-stats > .menu-button > svg.icon {
+  height: 10px;
 }
 .catalog-stats {
   font-size: 10px;
@@ -2008,11 +2005,8 @@ a:only-of-type > .remove {
   margin: 2px;
   vertical-align: middle;
 }
-.postInfo > .menu-button,
-#thread-watcher .menu-button {
-  width: 18px;
-  height: 15px;
-  text-align: center;
+.postInfo > .menu-button {
+  margin: 0 5px;
 }
 #menu {
   position: fixed;

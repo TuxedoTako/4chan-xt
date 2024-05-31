@@ -45,13 +45,16 @@ var ThreadWatcher = {
     this.db     = new DataBoard('watchedThreads', this.refresh, true);
     this.dbLM   = new DataBoard('watcherLastModified', null, true);
     this.dialog = UI.dialog('thread-watcher', { innerHTML: ThreadWatcherPage });
-    Icon.set(this.dialog.firstElementChild.firstElementChild, 'refresh');
     this.status = $('#watcher-status', this.dialog);
     this.list   = this.dialog.lastElementChild;
     this.refreshButton = $('.refresh', this.dialog);
+    this.menuButton = $('.menu-button', this.dialog);
     this.closeButton = $('.move > .close', this.dialog);
     this.unreaddb = Unread.db || UnreadIndex.db || new DataBoard('lastReadPosts');
     this.unreadEnabled = Conf['Remember Last Read Post'];
+
+    Icon.set(this.refreshButton, 'refresh');
+    Icon.set(this.menuButton, 'caretDown');
 
     $.on(d, 'QRPostSuccessful',   this.cb.post);
     $.on(sc, 'click', this.toggleWatcher);

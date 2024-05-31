@@ -2,6 +2,7 @@ import Callbacks from "../classes/Callbacks";
 import UI from "../General/UI";
 import { g, Conf } from "../globals/globals";
 import $ from "../platform/$";
+import Iocn from "../Icons/icon";
 
 /*
  * decaffeinate suggestions:
@@ -18,7 +19,7 @@ var Menu = {
     }
     );
 
-    $.extend(this.button, {textContent: "🞃"});
+    Icon.set(this.button, 'caretDown');
 
     this.menu = new UI.Menu('post');
     Callbacks.Post.push({
