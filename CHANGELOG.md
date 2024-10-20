@@ -3,6 +3,11 @@
 4chan XT uses a different user script namespace than 4chan X, so to migrate you need to export settings from 4chan X,
 and import them in XT.
 
+### 2.15.4 (2024-10-19)
+
+- Do not run on the home page, to fix the cloudflare error. [#113](https://github.com/TuxedoTako/4chan-xt/pull/113)
+- Fixed crash on sauce urls using `%hMD5`. [#115](https://github.com/TuxedoTako/4chan-xt/issues/115)
+
 ### 2.15.3 (2024-10-12)
 
 - Fixed parsing of filter entries where options are used before the regex.

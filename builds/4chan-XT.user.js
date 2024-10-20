@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan XT
-// @version      2.15.3
+// @version      2.15.4
 // @minGMVer     1.14
 // @minFFVer     74
 // @namespace    4chan-XT
@@ -40,6 +40,7 @@
 // @exclude      https://www.4chan.org/advertise?*
 // @exclude      https://www.4chan.org/donate
 // @exclude      https://www.4chan.org/donate?*
+// @exclude      https://www.4chan.org/
 // @connect      4chan.org
 // @connect      4channel.org
 // @connect      4cdn.org
@@ -168,8 +169,8 @@
   'use strict';
 
   var version = {
-    "version": "2.15.3",
-    "date": "2024-10-12T14:55:00Z"
+    "version": "2.15.4",
+    "date": "2024-10-19T14:40:00Z"
   };
 
   var meta = {
@@ -14059,7 +14060,11 @@ svg.icon {
       IMG(post, file, ext) { if (['gif', 'jpg', 'jpeg', 'png'].includes(ext)) { return file.url; } else { return file.thumbURL; } },
       MD5(post, file) { return file.MD5; },
       sMD5(post, file) { return file.MD5?.replace(/[+/=]/g, c => ({'+': '-', '/': '_', '=': ''})[c]); },
-      hMD5(post, file) { if (file.MD5) { return (atob(file.MD5).map((c) => `0${c.charCodeAt(0).toString(16)}`.slice(-2))).join(''); } },
+      hMD5(post, file) {
+        if (file.MD5) {
+          return Array.from(atob(file.MD5), c => c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
+        }
+      },
       board(post) { return post.board.ID; },
       name(post, file) { return file.name; },
       '%'() { return '%'; },
@@ -25426,6 +25431,8 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
   var Main = {
     init() {
+      // Return if the url is exactly https://www.4chan.org, this is only the home page which has a cloudflare checking system which breaks this script
+      if (window.location.hostname == 'www.4chan.org') { return; }
       // XXX dwb userscripts extension reloads scripts run at document-start when replaceState/pushState is called.
       // XXX Firefox reinjects WebExtension content scripts when extension is updated / reloaded.
       let key;

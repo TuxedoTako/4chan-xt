@@ -1,6 +1,6 @@
 {
   "name": "4chan XT",
-  "version": "2.15.3",
+  "version": "2.15.4",
   "manifest_version": 2,
   "description": "4chan XT is a script that adds various features to anonymous imageboards.",
   "icons": {
@@ -45,7 +45,8 @@
         "https://www.4chan.org/advertise",
         "https://www.4chan.org/advertise?*",
         "https://www.4chan.org/donate",
-        "https://www.4chan.org/donate?*"
+        "https://www.4chan.org/donate?*",
+        "https://www.4chan.org/"
       ],
       "all_frames": true,
       "run_at": "document_start"

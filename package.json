@@ -64,7 +64,8 @@
       "https://www.4chan.org/advertise",
       "https://www.4chan.org/advertise?*",
       "https://www.4chan.org/donate",
-      "https://www.4chan.org/donate?*"
+      "https://www.4chan.org/donate?*",
+      "https://www.4chan.org/"
     ],
     "grants": [
       "GM_getValue",

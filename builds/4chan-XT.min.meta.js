@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         4chan XT
-// @version      2.15.3
+// @version      2.15.4
 // @minGMVer     1.14
 // @minFFVer     74
 // @namespace    4chan-XT
@@ -40,6 +40,7 @@
 // @exclude      https://www.4chan.org/advertise?*
 // @exclude      https://www.4chan.org/donate
 // @exclude      https://www.4chan.org/donate?*
+// @exclude      https://www.4chan.org/
 // @connect      4chan.org
 // @connect      4channel.org
 // @connect      4cdn.org

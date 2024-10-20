@@ -168,7 +168,11 @@ var Sauce = {
     IMG(post, file, ext) { if (['gif', 'jpg', 'jpeg', 'png'].includes(ext)) { return file.url; } else { return file.thumbURL; } },
     MD5(post, file) { return file.MD5; },
     sMD5(post, file) { return file.MD5?.replace(/[+/=]/g, c => ({'+': '-', '/': '_', '=': ''})[c]); },
-    hMD5(post, file) { if (file.MD5) { return (atob(file.MD5).map((c) => `0${c.charCodeAt(0).toString(16)}`.slice(-2))).join(''); } },
+    hMD5(post, file) {
+      if (file.MD5) {
+        return Array.from(atob(file.MD5), c => c.charCodeAt(0).toString(16).padStart(2,'0')).join('');
+      }
+    },
     board(post) { return post.board.ID; },
     name(post, file) { return file.name; },
     '%'() { return '%'; },
