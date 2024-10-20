@@ -57,7 +57,9 @@
       "https://www.sportschan.org/*",
       "https://sushigirl.us/*",
       "https://www.sushigirl.us/*",
-      "https://tvch.moe/*"
+      "https://tvch.moe/*",
+      "https://8chan.se/*",
+      "https://lynx.farted.net/*"
     ],
     "matches_extra": [],
     "exclude_matches": [

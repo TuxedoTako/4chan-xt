@@ -397,8 +397,12 @@ var Filter = {
       return;
     }
     for (var page of this.response) {
-      for (var item of page.threads) {
-        Filter.catalogData[item.no] = item;
+      if (Array.isArray(page.threads)) {
+        for (var item of page.threads) {
+          Filter.catalogData[item.no] = item;
+        }
+      } else {
+        Filter.catalogData[page.threadId] = page;
       }
     }
     g.BOARD.threads.forEach(function(thread) {
