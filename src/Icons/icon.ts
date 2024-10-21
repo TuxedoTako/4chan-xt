@@ -18,6 +18,7 @@ import { svgPathData as bookOpenSvg, width as bookOpenW, height as bookOpenH } f
 import { svgPathData as shrinkSvg, width as shrinkW, height as shrinkH } from "@fas/faDownLeftAndUpRightToCenter";
 import { svgPathData as heartSvg, width as heartW, height as heartH } from "@fas/faHeart";
 import { svgPathData as caretDownSvg, width as caretDownW, height as caretDownH } from "@fas/faCaretDown";
+import { svgPathData as scissorsSvg, width as scissorsW, height as scissorsH } from "@fas/faScissors";
 
 
 const toSvg = (svgPathData: string, width: string | number, height: string | number) => {
@@ -43,7 +44,8 @@ const icons = {
    bookOpen:  toSvg(bookOpenSvg, bookOpenW, bookOpenH),
    shrink:    toSvg(shrinkSvg, shrinkW, shrinkH),
    heart:     toSvg(heartSvg, heartW, heartH),
-   caretDown: toSvg(caretDownSvg, caretDownW, caretDownH)
+   caretDown: toSvg(caretDownSvg, caretDownW, caretDownH),
+   scissors:  toSvg(scissorsSvg, scissorsW, scissorsH)
 } as const;
 
 var Icon = {
