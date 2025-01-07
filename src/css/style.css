@@ -1786,6 +1786,7 @@ input#qr-filename {
 #qr:not(.has-spoiler) #qr-spoiler-label,
 #file-n-submit:not(.has-file) #qr-spoiler-label,
 #file-n-submit:not(.has-file) #qr-randomize,
+#file-n-submit:not(.has-image) #qr-checksum,
 #file-n-submit:not(.has-image) #qr-jpg,
 #file-n-submit:not(.has-image):not(.has-video) #qr-view,
 #file-n-submit:not(.has-file) #qr-restore-name,

@@ -75,6 +75,7 @@ var QR = {
     oekakiButton: HTMLAnchorElement,
     randomizeButton: HTMLAnchorElement,
     compress: HTMLAnchorElement,
+    changeChecksum: HTMLAnchorElement,
     view: HTMLAnchorElement,
     restoreNameButton: HTMLAnchorElement,
     fileRM: HTMLAnchorElement,
@@ -778,6 +779,7 @@ var QR = {
     setNode('oekaki',         '.oekaki');
     setNode('drawButton',     '#qr-draw-button');
     setNode('randomizeButton','#qr-randomize');
+    setNode('changeChecksum','#qr-checksum');
     setNode('compress',       '#qr-jpg');
     setNode('view',           '#qr-view');
     setNode('restoreNameButton','#qr-restore-name');
@@ -828,6 +830,7 @@ var QR = {
     $.on(nodes.fileButton,     'click',     QR.openFileInput);
     $.on(nodes.noFile,         'click',     QR.openFileInput);
     $.on(nodes.randomizeButton,'click',     () => { QR.selected.randomizeName(); });
+    $.on(nodes.changeChecksum, 'click',     async () => { QR.selected.randomizeChecksum(true); await this.setFile(this.file);});
     $.on(nodes.compress,       'click',     async () => { QR.handleFiles([await QR.convert(QR.selected.file)]); });
     $.on(nodes.view,           'click',     QR.preview);
     $.on(nodes.restoreNameButton,'click',   () => { QR.selected.restoreName(); });
@@ -893,6 +896,7 @@ var QR = {
     Icon.set(nodes.pasteArea, 'clipboard');
     Icon.set(nodes.customCooldown, 'clock');
     Icon.set(nodes.randomizeButton, 'shuffle');
+    Icon.set(nodes.changeChecksum, 'image');
     Icon.set(nodes.compress, 'shrink');
     Icon.set(nodes.view, 'eye');
     Icon.set(nodes.restoreNameButton, 'undo');
@@ -2138,7 +2142,10 @@ class post {
       this.file = file;
       this.filename = file.name;
       this.originalName = file.name;
-
+      // Validate after changing checksum in case size changes
+      if (Conf['Randomize Checksum'] && this.file.type.startsWith('image/') && this.file.type !== 'image/gif') {
+        await this.randomizeChecksum(false);
+      }
       this.file = await this.validateFile(file);
       this.originalName = file.name;
       if (Conf['Randomize Filename'] && (g.BOARD.ID !== 'f') && (!this.file.name.toLowerCase().includes('[sound='))) {
@@ -2181,6 +2188,42 @@ class post {
 
   restoreName() {
     QR.nodes.filename.value = this.filename = this.originalName;
+  }
+
+  //Checksum randomization method inspired by KurobaEX
+  async randomizeChecksum(setThumbnail = true) {
+    const img = await createImageBitmap(this.file);
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    // Pick one random pixel
+    const randomX = Math.floor(Math.random() * canvas.width);
+    const randomY = Math.floor(Math.random() * canvas.height);
+    const i = (randomY * canvas.width + randomX) * 4;
+    
+    // Modify it by a large enough amount to survive JPEG compression
+    const PIXEL_DIFF = 5;
+    for (let channel = 0; channel < 3; channel++) {
+      data[i + channel] = data[i + channel] >= 128 ? 
+        data[i + channel] - PIXEL_DIFF : 
+        data[i + channel] + PIXEL_DIFF;
+    }
+    
+    ctx.putImageData(imageData, 0, 0);
+    
+    const blob = await new Promise(resolve => 
+      canvas.toBlob(resolve, this.file.type, 1.0)
+    );
+    
+    this.file = new File([blob], this.file.name, { type: this.file.type });
+
+    if (setThumbnail) this.readFile();
   }
 
   readFile() {
