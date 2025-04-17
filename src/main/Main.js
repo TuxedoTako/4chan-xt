@@ -17,7 +17,6 @@ import Index from "../General/Index";
 import Settings from "../General/Settings";
 import FappeTyme from "../Images/FappeTyme";
 import Gallery from "../Images/Gallery";
-import ImageCommon from "../Images/ImageCommon";
 import ImageExpand from "../Images/ImageExpand";
 import ImageHost from "../Images/ImageHost";
 import ImageHover from "../Images/ImageHover";
@@ -90,6 +89,7 @@ import CaptchaReplace from "../Posting/Captcha.replace";
 import Get from "../General/Get";
 import { dict, platform } from "../platform/helpers";
 import RestoreDeletedFromArchive from "../Archive/RestoreDeletedFromArchive";
+import ScrollMarkers from "../Miscellaneous/ScrollMarkers";
 // #region tests_enabled
 import Test from "../General/Test";
 // #endregion
@@ -104,11 +104,12 @@ import Test from "../General/Test";
  */
 var Main = {
   init() {
-    // Return if the url is exactly https://www.4chan.org, this is only the home page which has a cloudflare checking system which breaks this script
-    if (window.location.hostname == 'www.4chan.org') { return; }
+    // Return if the url is exactly https://www.4chan.org, this is only the home page which has a cloudflare checking
+    // system which breaks this script. Keep it in the includes so it can be found on greasy fork.
+    // __cf is also a cloudflare check page
+    if (location.hostname === 'www.4chan.org' || location.search.includes("__cf")) return;
     // XXX dwb userscripts extension reloads scripts run at document-start when replaceState/pushState is called.
     // XXX Firefox reinjects WebExtension content scripts when extension is updated / reloaded.
-    let key;
     try {
       let w = window;
       if (platform === 'crx') { w = (w.wrappedJSObject || w); }
@@ -125,7 +126,10 @@ var Main = {
     if (doc && $.hasClass(doc, 'fourchan-x')) { return; }
     $.asap(docSet, function() {
       $.addClass(doc, 'fourchan-xt', 'fourchan-x', 'seaweedchan');
-      if ($.engine) { return $.addClass(doc, `ua-${$.engine}`); }
+      if ($.engine) $.addClass(doc, `ua-${$.engine}`);
+      BoardConfig.ready(() => {
+        if (g.BOARD?.config.ws_board != null) $.addClass(doc, g.BOARD.config.ws_board ? 'ws' : 'nws');
+      });
     });
     try {
       $.global(
@@ -161,8 +165,7 @@ var Main = {
         Conf[parent] = dict.clone(obj[0]);
       } else if (typeof obj === 'object') {
         for (var key in obj) {
-          var val = obj[key];
-          flatten(key, val);
+          flatten(key, obj[key]);
         }
       } else { // string or number
         Conf[parent] = obj;
@@ -209,15 +212,18 @@ var Main = {
       !SW.yotsuba.regexp.captcha.test(location.href) &&
       !$$('script:not([src])', d).filter(s => /this\[/.test(s.textContent)).length
     ) {
-      ($.getSync || $.get)({'jsWhitelist': Conf['jsWhitelist']}, ({jsWhitelist}) => $.addCSP(`script-src ${jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim()}`));
+      ($.getSync || $.get)({'jsWhitelist': Conf['jsWhitelist']}, ({jsWhitelist}) => {
+        const parsedList = jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim();
+        if (/\S/.test(parsedList)) $.addCSP(`script-src ${parsedList}`);
+      });
     }
 
     // Get saved values as items
     const items = dict();
-    for (key in Conf) { items[key] = undefined; }
+    for (const key in Conf) items[key] = undefined;
     items['previousversion'] = undefined;
-    return ($.getSync || $.get)(items, function(items) {
-      return $.asap(docSet, function() {
+    ($.getSync || $.get)(items, function(items) {
+      $.asap(docSet, function() {
 
         // Don't hide the local storage warning behind a settings panel.
         if ($.cantSet) {
@@ -237,12 +243,11 @@ var Main = {
         }
 
         // Combine default values with saved values
-        for (key in Conf) {
-          var val = Conf[key];
-          Conf[key] = items[key] ?? val;
+        for (const key in Conf) {
+          Conf[key] = items[key] ?? Conf[key];
         }
 
-        return Site.init(Main.initFeatures);
+        Site.init(Main.initFeatures);
       });
     });
   },
@@ -372,11 +377,6 @@ var Main = {
     $.addStyle(CSS.sub(CSS.boards), 'fourchanx-css');
     Main.bgColorStyle = $.el('style', {id: 'fourchanx-bgcolor-css'});
 
-    let keyboard = false;
-    $.on(d, 'mousedown', () => keyboard = false);
-    $.on(d, 'keydown', function(e) { if (e.keyCode === 9) { return keyboard = true; } }); // tab
-    window.addEventListener('focus', (() => doc.classList.toggle('keyboard-focus', keyboard)), true);
-
     return Main.setClass();
   },
 
@@ -491,16 +491,16 @@ var Main = {
 
     // Parse HTML or skip it and start building from JSON.
     if (g.VIEW === 'catalog') {
-      return Main.initCatalog();
+      Main.initCatalog();
     } else if (!Index.enabled) {
       if (g.SITE.awaitBoard) {
-        return g.SITE.awaitBoard(Main.initThread);
+        g.SITE.awaitBoard(Main.initThread);
       } else {
-        return Main.initThread();
+        Main.initThread();
       }
     } else {
       Main.expectInitFinished = true;
-      return $.event('4chanXInitFinished');
+      $.event('4chanXInitFinished');
     }
   },
 
@@ -531,16 +531,18 @@ var Main = {
         g.SITE.parseThreadMetadata?.(threads[0]);
       }
 
-      Main.callbackNodes('Thread', threads);
-      return Main.callbackNodesDB('Post', posts, function() {
-        for (var post of posts) { QuoteThreading.insert(post); }
-        Main.expectInitFinished = true;
-        return $.event('4chanXInitFinished');
-      });
+      setTimeout(() => {
+        Main.callbackNodes('Thread', threads);
+        Main.callbackNodesDB('Post', posts, function() {
+          for (var post of posts) QuoteThreading.insert(post);
+          Main.expectInitFinished = true;
+          $.event('4chanXInitFinished');
+        });
+      }, 0);
 
     } else {
       Main.expectInitFinished = true;
-      return $.event('4chanXInitFinished');
+      $.event('4chanXInitFinished');
     }
   },
 
@@ -600,7 +602,7 @@ var Main = {
     Main.parseThreads(threadRoots, threads, posts, errors);
     if (errors.length) { Main.handleErrors(errors); }
     Main.callbackNodes('Thread', threads);
-    return Main.callbackNodesDB('Post', posts, () => $.event('PostsInserted', null, records[0].target));
+    Main.callbackNodesDB('Post', posts, () => $.event('PostsInserted', null, records[0].target));
   },
 
   addPosts(records) {
@@ -636,7 +638,7 @@ var Main = {
       }
     }
     if (errors.length) { Main.handleErrors(errors); }
-    return Main.callbackNodesDB('Post', posts, function() {
+    Main.callbackNodesDB('Post', posts, function() {
       for (thread of threads) {
         $.event('PostsInserted', null, thread.nodes.root);
       }
@@ -729,10 +731,10 @@ var Main = {
         if (cb) { cb(); }
         return;
       }
-      return setTimeout(softTask, 0);
+      setTimeout(softTask, 0);
     };
 
-    return softTask();
+    softTask();
   },
 
   handleErrors(errors) {
@@ -941,6 +943,7 @@ User agent: ${navigator.userAgent}\
     ['Reply Pruning',             ReplyPruning],
     ['Mod Contact Links',         ModContact],
     ['Restore deleted posts from archive', RestoreDeletedFromArchive],
+    ['Mark posts on scroll bar',  ScrollMarkers],
   ]
 };
 export default Main;

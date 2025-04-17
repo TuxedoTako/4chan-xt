@@ -88,7 +88,7 @@
   <div><input name="time" class="field" spellcheck="false">: <span class="time-preview"></span></div>
   <div>Supported <a href="http://man7.org/linux/man-pages/man1/date.1.html" target="_blank">format specifiers</a>:</div>
   <div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div>
-  <div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div>
+  <div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code>, <code>%n</code> (Not zero padded)</div>
   <div>Year: <code>%y</code>, <code>%Y</code></div>
   <div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div>
   <div>Minute: <code>%M</code></div>
@@ -187,7 +187,7 @@
   <legend>Javascript Whitelist</legend>
   <div>
     Sources from which Javascript is allowed to be loaded by <a href="http://content-security-policy.com/#source_list" target="_blank">Content Security Policy</a>.<br>
-    Lines starting with a <code>#</code> will be ignored.
+    Lines starting with a <code>#</code> will be ignored. Remove or comment out all lines to allow everything.
   </div>
   <textarea hidden name="jsWhitelist" class="field" spellcheck="false"></textarea>
 </fieldset>

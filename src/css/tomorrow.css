@@ -49,25 +49,7 @@
   border-color: var(--xt-border-field-focus) !important;
   background-color: rgb(30,32,36);
 }
-:root.tomorrow .persona button {
-  background: linear-gradient(to bottom, #2E3035, #222427) no-repeat;
-  color: rgb(197,200,198);
-  border-color: rgb(40, 41, 42);
-  outline: none;
-}
-:root.tomorrow .persona button::-moz-focus-inner {
-  border: none;
-}
-:root.tomorrow .persona button:focus {
-  border-color: rgb(129, 162, 190);
-}
-:root.tomorrow #qr.sjis-preview #sjis-toggle,
-:root.tomorrow #qr.tex-preview #tex-preview-button {
-  background: rgb(26, 27, 29);
-}
-:root.tomorrow #qr select,
-:root.tomorrow #file-n-submit > input,
-:root.tomorrow #qr-draw-button {
+:root.tomorrow #qr select {
   border-color: rgb(40, 41, 42);
   background: unset;
 }

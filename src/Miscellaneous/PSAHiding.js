@@ -1,6 +1,7 @@
 import Header from "../General/Header";
 import { Conf, doc, g } from "../globals/globals";
 import $ from "../platform/$";
+import Icon from "../Icons/icon";
 /*
  * decaffeinate suggestions:
  * DS102: Remove unnecessary code created because of implicit returns
@@ -45,6 +46,7 @@ var PSAHiding = {
       textContent: '➖︎',
     }
     ));
+    Icon.set(btn, 'squareMinus');
     $.on(btn, 'click', PSAHiding.toggle);
     if (psa.firstChild?.tagName === 'HR') {
       $.after(psa.firstChild, btn);

@@ -3,6 +3,118 @@
 4chan XT uses a different user script namespace than 4chan X, so to migrate you need to export settings from 4chan X,
 and import them in XT.
 
+### 2.24.0 (2025-04-06)
+
+- Mark your posts and replies on the scrollbar. [#162](https://github.com/TuxedoTako/4chan-xt/issues/162)
+  - This can be turned off with the "Scroll Markers" setting.
+  - This wasn't tested on a platform with auto-hiding scroll bars.
+- Fixed reply highlight in the Burichan style.
+- Changed reply highlight in the Futaba style to a visible color.
+- Restored --xt-fxt-bg.
+
+### 2.23.1 (2025-03-01)
+
+- Do not run on cloudflare pages.
+  [#158 \(comment\)](https://github.com/TuxedoTako/4chan-xt/issues/158#issuecomment-2691769200)
+- Added the "Avoid OffscreenCanvas" setting, which enables a workaround for
+  [#132](https://github.com/TuxedoTako/4chan-xt/issues/132).
+
+### 2.23.0 (2025-02-22)
+
+- Slight tweaks to positioning of floating embedding icons. [#154](https://github.com/TuxedoTako/4chan-xt/issues/154),
+  [67](https://github.com/TuxedoTako/4chan-xt/issues/67)
+- Updated archive list.
+- Fixed bug where adding an image on the quick reply would apply the image on the post selected when downloading the
+  images finishes, instead of the post where the download was started.
+  [#156](https://github.com/TuxedoTako/4chan-xt/issues/156)
+- Fixed ghost threads created when going from the catalog view to the index view and then unhiding a thread.
+  [#142](https://github.com/TuxedoTako/4chan-xt/issues/142)
+
+### 2.22.1 (2025-01-27)
+
+- Fix submit keybind. [#153](https://github.com/TuxedoTako/4chan-xt/issues/153)
+
+### 2.22.0 (2025-01-26)
+
+- Convert a few more things into icons. [#150](https://github.com/TuxedoTako/4chan-xt/issues/150)
+- Implement FxTwitter improvements based on
+  [saxamaphone69's comment](https://github.com/TuxedoTako/4chan-xt/issues/60#issuecomment-2600724308).
+  - Replies now load, so the setting for the number of replies to load isn't useless anymore.
+  - Community notes are shown.
+- Added button in the keybind settings to reset them to the defaults.
+  [#151](https://github.com/TuxedoTako/4chan-xt/issues/151)
+- Allow multiple actions for one keybind.
+  [Requested on Greasy Fork](https://greasyfork.org/nl/scripts/489508-4chan-xt/discussions/274093)
+
+### 2.21.2 (2025-01-15)
+
+- Fix notification padding. [#146](https://github.com/TuxedoTako/4chan-xt/issues/146),
+  [#147](https://github.com/TuxedoTako/4chan-xt/pull/147)
+- Fix shortcuts getting squished in the non-4chan-XT catalog. [#148](https://github.com/TuxedoTako/4chan-xt/issues/148),
+  [#149](https://github.com/TuxedoTako/4chan-xt/pull/149)
+- Fix not being able to clear keybinds with backspace.
+  [Greasy Fork comment](https://greasyfork.org/en/scripts/489508-4chan-xt/discussions/274072)
+
+### 2.21.1 (2025-01-12)
+
+- Reverted change from the `icon` to `xt-icon` CSS class to fix the interaction the icons have with other user scripts
+  like StyleChan.
+
+### 2.21.0 (2025-01-11)
+
+- Convert various Unicode characters to SVG icons. [#141](https://github.com/TuxedoTako/4chan-xt/pull/141)
+  by [@saxamaphone69](https://github.com/saxamaphone69)
+
+### 2.20.0 (2025-01-04)
+
+- Made soundpost detection case-insensitive. [#135](https://github.com/TuxedoTako/4chan-xt/pull/135)
+- Removed `keyboard-focus` related code. [#137](https://github.com/TuxedoTako/4chan-xt/pull/137)
+- Made the "MD5 filtered." notification auto hide after 10 seconds.
+  [#133](https://github.com/TuxedoTako/4chan-xt/issues/133)
+- Changed the init script to allow for a reflow between the loading of the custom style among others, and parsing the
+  thread. This should lessen the flash on page load.
+- Added a new option in the date format for a month number without zero padding: `%n`.
+
+### 2.19.0 (2024-12-22)
+
+- Removed the css for the header for widths above 1300px, because it was preventing long custom navigation lists from
+  wrapping. [#120](https://github.com/TuxedoTako/4chan-xt/issues/120) I don't know what the purpose was of the different
+  style, the commit where that was added isn't really descriptive: c396db49b9d8fe1becad2fd9c8b29e88ead7b587? So let me
+  know if I broke something.
+- Limit subject input to 100 characters. [#128](https://github.com/TuxedoTako/4chan-xt/issues/128)
+- Added ws and nsw classes for work safe and not work safe boards.
+  [#129](https://github.com/TuxedoTako/4chan-xt/issues/129)
+- Using shift click to hide a post no longer selects half the page.
+  [#131](https://github.com/TuxedoTako/4chan-xt/issues/131)
+- The file select dialog for the settings import will only show json files.
+- Upstream came back, so I had to port those new features.
+  - Fix for unwanted sorting of catalog under certain settings. [ccd0#3212](https://github.com/ccd0/4chan-x/issues/3212),
+    7dfba22042d01fde1e762af68e92109d80d0164d
+  - Turn JS Whitelist functionality off by default. 419e90c38eddc65a5a32e4a17a8211b3157ae61e
+    - Better way of turning off JS Whitelist. 7df2750fadffe0b5cc441b21034563c95c8500bd
+    - Update documentation. 62e4ccf1e869ab4757fa2b9107d1a52b1890a1fc
+  - Fallback when XPCNativeWrapper is unavailable [ccd0#3430](https://github.com/ccd0/4chan-x/pull/3430)
+  - Add ability to clear whole thread watcher [ccd0#2926](https://github.com/ccd0/4chan-x/pull/2926)
+
+### 2.18.0 (2024-11-20)
+
+- The quick reply now supports mp4. [#124](https://github.com/TuxedoTako/4chan-xt/pull/124)
+- Updated the build to rollup 4, which removed the `$1` that was added for some variables, so the diff with the previous
+  version is bigger than necessary. Now there are no more `npm audit` vulnerabilities.
+
+### 2.17.0 (2024-11-10)
+
+- Tweak stub-icon CSS to undo increased padding. [#117](https://github.com/TuxedoTako/4chan-xt/pull/117)
+- Update x.com embed regex to include FxTwitter, VxTwitter, and nitter links.
+  [#123](https://github.com/TuxedoTako/4chan-xt/pull/123)
+- Thread Watcher: Prune Read Dead Threads and Open Unread Dead Threads.
+  [#122](https://github.com/TuxedoTako/4chan-xt/issues/122)
+
+### 2.16.0 (2024-10-26)
+
+- Split post functionality in the quick reply, thanks to [@paradox460](https://github.com/paradox460).
+  [#116](https://github.com/TuxedoTako/4chan-xt/pull/116)
+
 ### 2.15.4 (2024-10-19)
 
 - Do not run on the home page, to fix the cloudflare error. [#113](https://github.com/TuxedoTako/4chan-xt/pull/113)

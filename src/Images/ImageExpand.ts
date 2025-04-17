@@ -275,7 +275,7 @@ var ImageExpand = {
     }
 
     if (Conf['Enable sound posts'] && Conf['Allow Sound']) {
-      const soundUrlMatch = file.name.match(/\[sound=([^\]]+)]/);
+      const soundUrlMatch = file.name.match(/\[sound=([^\]]+)]/i);
       if (soundUrlMatch) {
         let src = decodeURIComponent(soundUrlMatch[1]);
         if (!src.startsWith('http')) src = `https://${src}`;

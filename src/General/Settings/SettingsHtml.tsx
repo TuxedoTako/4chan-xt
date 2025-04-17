@@ -10,10 +10,10 @@ const settingsHtml = <div id="fourchanx-settings" class="dialog">
     <div class="sections-list"></div>
     <p class="imp-exp-result warning"></p>
     <div class="credits">
-      <a class="export">Export</a>{separator}
-      <a class="import">Import</a>{separator}
-      <a class="reset">Reset Settings</a>{separator}
-      <input type="file" hidden />
+      <a href="javascript:;" class="export">Export</a>{separator}
+      <a href="javascript:;" class="import">Import</a>{separator}
+      <a href="javascript:;" class="reset">Reset Settings</a>{separator}
+      <input type="file" hidden accept=".json,application/json" />
       <a href={meta.page} target="_blank">{meta.name}</a>{separator}
       <a href={meta.changelog} target="_blank">{g.VERSION}</a>{separator}
       <a href={meta.issues} target="_blank">Issues</a>{separator}

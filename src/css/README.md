@@ -28,6 +28,7 @@ customize, you can overwrite these css variables:
 | `--xt-watched-border` | Border color of watched threads |
 | `--xt-qphl` | Quote highlight border color |
 | `--xt-highlight-side-arrow` | Own posts highlight arrow color |
+| `--xt-scroll-maker-you` | Scroll marker for posts quoting you |
 
 ## FxTwitter
 

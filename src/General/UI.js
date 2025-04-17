@@ -3,6 +3,7 @@ import Main from "../main/Main";
 import $ from "../platform/$";
 import $$ from "../platform/$$";
 import Header from "./Header";
+import Icon from "../Icons/icon";
 
 /*
  * decaffeinate suggestions:
@@ -275,6 +276,11 @@ var Menu = (function() {
       for (var subEntry of subEntries) {
         this.parseEntry(subEntry);
       }
+      const span = $.el('span',
+        {className: 'menu-indicator'}
+      );
+      Icon.set(span, 'caretRight');
+      $.add(el, span);
     }
   };
   Menu.initClass();

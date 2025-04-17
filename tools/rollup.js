@@ -28,6 +28,11 @@ if (platform !== undefined && platform !== 'crx' && platform !== 'userscript') {
 }
 const buildForTest = process.argv.includes('-test');
 
+// https://github.com/rollup/plugins/discussions/1777
+const tsPlugin = typescript({
+  compilerOptions: { outDir: buildDir, },
+});
+
 (async () => {
   const packageJson = JSON.parse(await readFile(resolve(__dirname, '../package.json'), 'utf-8'));
 
@@ -49,7 +54,6 @@ const buildForTest = process.argv.includes('-test');
     maxEmptyLines: 1,
     sourcemap: minify,
   });
-
 
   const bundle = await rollup({
     input: resolve(__dirname, '../src/main/Main.js'),
@@ -76,7 +80,7 @@ const buildForTest = process.argv.includes('-test');
       noFormat || minify ? undefined : removeDecaffeinateComments({
         include: ["**/*.js", "**/*.ts", "**/*.tsx"],
       }),
-      typescript(),
+      tsPlugin,
       alias({
         entries: [
           {
@@ -190,7 +194,7 @@ const buildForTest = process.argv.includes('-test');
     const eventPage = await rollup({
       input: resolve(__dirname, '../src/meta/eventPage.js'),
       plugins: [
-        typescript(),
+        tsPlugin,
         noFormat ? undefined : fixTsOutputFormat({ include: ["**/*.ts", "**/*.tsx"] }),
         cleanupPlugin,
       ].filter(Boolean),

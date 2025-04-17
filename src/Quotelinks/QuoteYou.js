@@ -6,6 +6,7 @@ import Header from "../General/Header";
 import { Conf, d, doc, g } from "../globals/globals";
 import Menu from "../Menu/Menu";
 import ExpandComment from "../Miscellaneous/ExpandComment";
+import ScrollMarkers from "../Miscellaneous/ScrollMarkers";
 import $ from "../platform/$";
 import $$ from "../platform/$$";
 import PostRedirect from "../Posting/PostRedirect";
@@ -55,7 +56,7 @@ var QuoteYou = {
       cb:   this.node
     });
 
-    return QuoteYou.menu.init();
+    QuoteYou.menu.init();
   },
 
   isYou(post) {
@@ -71,6 +72,7 @@ var QuoteYou = {
 
     if (QuoteYou.isYou(this)) {
       $.addClass(this.nodes.root, 'yourPost');
+      ScrollMarkers.markScroll();
     }
 
     // Stop there if there's no quotes in that post.
@@ -93,7 +95,7 @@ var QuoteYou = {
         {innerHTML: '<input type="checkbox"> You'});
       const input = $('input', label);
       $.on(input, 'change', QuoteYou.menu.toggle);
-      return Menu.menu?.addEntry({
+      Menu.menu?.addEntry({
         el: label,
         order: 80,
         open(post) {
@@ -127,6 +129,7 @@ var QuoteYou = {
           quoter.classList.toggle('quotesYou', !!$('.quotelink.you', quoter));
         }
       }
+      ScrollMarkers.markScroll();
     }
   },
 

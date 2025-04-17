@@ -10,11 +10,11 @@
 </div>
 <form>
   <div class="persona">
-    <button type="button" id="sjis-toggle" title="Toggle Mona font">∀</button>
-    <button type="button" id="tex-preview-button" title="Preview TeX">T<sub>E</sub>X</button>
+    <button type="button" id="sjis-toggle" class="qr-button" title="Toggle Mona font">∀</button>
+    <button type="button" id="tex-preview-button" class="qr-button" title="Preview TeX">T<sub>E</sub>X</button>
     <input name="name" data-name="name" list="list-name" placeholder="Name" class="field" size="1">
     <input name="email" data-name="email" list="list-email" placeholder="Options" class="field" size="1">
-    <input name="sub" data-name="sub" list="list-sub" placeholder="Subject" class="field" size="1">
+    <input name="sub" data-name="sub" list="list-sub" placeholder="Subject" class="field" size="1" maxlength="100">
   </div>
   <div class="textarea">
     <textarea data-name="com" placeholder="Comment" class="field"></textarea>
@@ -26,14 +26,14 @@
     <a id="add-post" href="javascript:;" title="Add a post">+</a>
   </div>
   <div class="oekaki" hidden>
-    <input type="button" id="qr-draw-button" value="Draw">
+    <input type="button" id="qr-draw-button" class="qr-button" value="Draw">
     <label><span>Width:</span><input name="oekaki-width" value="400" type="number" class="field" size="1"></label>
     <label><span>Height:</span><input name="oekaki-height" value="400" type="number" class="field" size="1"></label>
     <span class="oekaki-bg" title="Background Color"><input name="oekaki-bg" type="checkbox" checked><input name="oekaki-bgcolor" type="color" value="#ffffff"></span>
   </div>
   <div id="file-n-submit">
-    <span class="row">
-      <input type="button" id="qr-file-button" value="Files">
+    <span id="qr-file" class="row">
+      <input type="button" id="qr-file-button" class="qr-button" value="Files">
       <span id="qr-filename-container" class="field">
         <span id="qr-no-file">No selected file</span>
         <input id="qr-filename" data-name="filename" spellcheck="false">
@@ -43,20 +43,21 @@
         </label>
       </span>
     </span>
-    <span class="row space">
-      <span class="row">
-        <a href="javascript:;" id="qr-oekaki-button" title="Edit in Tegaki">✎︎</a>
-        <a href="javascript:;" id="qr-jpg" title="Compress to jpg">C</a>
-        <a href="javascript:;" id="qr-view" title="Preview">V</a>
-        <a href="javascript:;" id="qr-randomize" title="Randomize filename">R</a>
-        <a href="javascript:;" id="qr-restore-name" title="Reset filename">U</a>
-        <a href="javascript:;" id="qr-filerm" title="Remove file">✕</a>
-        <a href="javascript:;" id="url-button" title="Post from URL">🔗︎</a>
-        <a href="javascript:;" hidden id="paste-area" title="Select to paste images" tabindex="-1" contentEditable="true">📋︎</a>
-        <a href="javascript:;" id="custom-cooldown-button" title="Toggle custom cooldown" class="disabled">🕒︎</a>
-        <a href="javascript:;" id="dump-button" title="Dump list">➕︎</a>
+    <span id="qr-actions-container" class="row space">
+      <span id="qr-actions" class="row">
+        <a href="javascript:;" id="qr-oekaki-button" class="qr-action-button" title="Edit in Tegaki">✎︎</a>
+        <a href="javascript:;" id="qr-jpg" class="qr-action-button" title="Compress to jpg">C</a>
+        <a href="javascript:;" id="qr-view" class="qr-action-button" title="Preview">V</a>
+        <a href="javascript:;" id="qr-randomize" class="qr-action-button" title="Randomize filename">R</a>
+        <a href="javascript:;" id="qr-restore-name" class="qr-action-button" title="Reset filename">U</a>
+        <a href="javascript:;" id="qr-filerm" class="qr-action-button" title="Remove file">✕</a>
+        <a href="javascript:;" id="url-button" class="qr-action-button" title="Post from URL">🔗︎</a>
+        <a href="javascript:;" hidden id="paste-area" class="qr-action-button" title="Select to paste images" tabindex="-1" contentEditable="true">📋︎</a>
+        <a href="javascript:;" id="custom-cooldown-button" class="qr-action-button" title="Toggle custom cooldown" class="disabled">🕒︎</a>
+        <a href="javascript:;" id="split-post" class="qr-action-button" title="Split into multiple posts" hidden>✂️</a>
+        <a href="javascript:;" id="dump-button" class="qr-action-button" title="Dump list">➕︎</a>
       </span>
-      <input type="submit">
+      <input class="qr-button" type="submit">
     </span>
   </div>
   <select data-default="4" name="filetag">

@@ -1,27 +1,22 @@
 /* Icons */
 svg.icon {
-  height: 14px;
-
-  /* resolve conflict with catalog css */
-  position: static;
-  width: auto;
+  height: 1em;
+  width: 1em;
+  display: inline-flex;
+  vertical-align: -.125em;
 }
-:root.shortcut-icons #shortcuts .shortcut {
-  padding-top: 0;
-  padding-bottom: 0;
-  display: flex;
-  height: 14px;
-  min-width: 16px;
+/* Override catalog.css */
+:root.catalog svg.icon {
+  position: static;
 }
 :root.shortcut-icons #shortcuts .icon--alt-text,
-:root:not(.shortcut-icons) .shortcut svg {
+:root:not(.shortcut-icons) .shortcut .icon {
   display: none;
 }
 :root.shortcut-icons .shortcut.brackets-wrap::before,
-:root.shortcut-icons .shortcut.brackets-wrap::after{
+:root.shortcut-icons .shortcut.brackets-wrap::after {
   display: none;
 }
 @keyframes spin {
-  0% {transform:rotate(0deg);}
-  100% {transform:rotate(359deg);}
+  100% {transform:rotate(1turn)}
 }

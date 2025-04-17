@@ -26,9 +26,9 @@ $.ready = function(fc) {
   }
   var cb = function() {
     $.off(d, 'DOMContentLoaded', cb);
-    return fc();
+    fc();
   };
-  return $.on(d, 'DOMContentLoaded', cb);
+  $.on(d, 'DOMContentLoaded', cb);
 };
 
 $.formData = function(form) {
@@ -63,11 +63,11 @@ $.getOwn = function(obj, key) {
 };
 
 $.ajax = (function() {
-  let pageXHR;
+  let pageXHR = XMLHttpRequest;
   if (window.wrappedJSObject && !XMLHttpRequest.wrappedJSObject) {
-    pageXHR = XPCNativeWrapper(window.wrappedJSObject.XMLHttpRequest);
-  } else {
-    pageXHR = XMLHttpRequest;
+    try {
+      pageXHR = XPCNativeWrapper(window.wrappedJSObject.XMLHttpRequest);
+    } catch (e) {}
   }
 
   return function (url, options={}) {
@@ -183,15 +183,16 @@ $.asap = function(test, cb) {
 $.onExists = function(root, selector, cb) {
   let el;
   if (el = $(selector, root)) {
-    return cb(el);
+    cb(el);
+    return;
   }
   var observer = new MutationObserver(function() {
     if (el = $(selector, root)) {
       observer.disconnect();
-      return cb(el);
+      cb(el);
     }
   });
-  return observer.observe(root, {childList: true, subtree: true});
+  observer.observe(root, {childList: true, subtree: true});
 };
 
 $.addStyle = function(css, id, test='head') {
@@ -271,10 +272,14 @@ $.before = (root, el) => root.parentNode.insertBefore($.nodes(el), root);
 
 $.replace = (root, el) => root.parentNode.replaceChild($.nodes(el), root);
 
-$.el = function (tag: string, properties?: Record<string, any>, properties2?: Record<string, any>) {
+$.el = function <K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  properties?: Record<string, any>,
+  properties2?: Record<string, any>
+): HTMLElementTagNameMap[K] {
   const el = d.createElement(tag);
-  if (properties) { $.extend(el, properties); }
-  if (properties2) { $.extend(el, properties2); }
+  if (properties) $.extend(el, properties);
+  if (properties2) $.extend(el, properties2);
   return el;
 };
 
@@ -496,7 +501,10 @@ $.oneItemSugar = fn => (function(key, val, cb) {
   } else {
     return fn(key, val);
   }
-}) as ((key: string, value: any, callback?: (() => void)) => void) | ((key: any, value: any) => void);
+}) as (
+  ((key: string, value: any, callback?: (() => void)) => void) &
+  ((values: Record<string, any>, callback?: (() => void)) => void)
+);
 
 $.syncing = dict();
 

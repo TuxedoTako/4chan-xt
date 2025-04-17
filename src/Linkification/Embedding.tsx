@@ -10,6 +10,7 @@ import CrossOrigin from '../platform/CrossOrigin';
 import { dict } from '../platform/helpers';
 import EmbeddingPage from './Embedding/Embed.html';
 import EmbedFxTwitter from './Embedding/FxTwitter';
+import Icon from '../Icons/icon';
 
 /*
  * decaffeinate suggestions:
@@ -127,11 +128,15 @@ var Embedding = {
   ready() {
     if (!Main.isThisPageLegit()) { return; }
     $.addClass(Embedding.dialog, 'empty');
-    $.on($('.close', Embedding.dialog), 'click',     Embedding.closeFloat);
+    const close = $('.close', Embedding.dialog);
+    const jump = $('.jump', Embedding.dialog)
+    $.on(close, 'click',     Embedding.closeFloat);
     $.on($('.move',  Embedding.dialog), 'mousedown', Embedding.dragEmbed);
-    $.on($('.jump',  Embedding.dialog), 'click', function() {
-      if (doc.contains(Embedding.lastEmbed)) { return Header.scrollTo(Embedding.lastEmbed); }
+    $.on(jump, 'click', function() {
+      if (doc.contains(Embedding.lastEmbed)) return Header.scrollTo(Embedding.lastEmbed);
     });
+    Icon.set(jump, 'arrowRightLong');
+    Icon.set(close, 'xmark');
     return $.add(d.body, Embedding.dialog);
   },
 
@@ -588,7 +593,8 @@ var Embedding = {
     }
     , {
       key: 'Twitter',
-      regExp: /^\w+:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/(\w+\/status\/\d+)/,
+      regExp:
+        /^\w+:\/\/(?:www\.|mobile\.)?(?:(?:(?:fx|vx)?twitter|(?:fixup|fixv)?x|twittpr|xcancel)\.com|nitter\.\w+.\w+)\/(\w+\/status\/\d+)/,
       style: 'border: none; width: 550px; height: 250px; overflow: hidden; resize: both;',
       el(a) {
         if (Conf.XEmbedder === 'tf') {

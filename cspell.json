@@ -16,6 +16,7 @@
     "linkify",
     "Liveleak",
     "Mathjax",
+    "nitter",
     "Pastebin",
     "Peertube",
     "reposts",
@@ -33,6 +34,7 @@
     "deadlink",
     "endregion",
     "fappe",
+    "fourchan",
     "grecaptcha",
     "noti",
     "quotelink",
@@ -40,7 +42,8 @@
     "recursives",
     "Tyme",
     "userscript",
-    "werk"
+    "werk",
+    "xmark",
   ],
   "flagWords": [
     "hte:the",

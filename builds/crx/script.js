@@ -85,8 +85,8 @@
   'use strict';
 
   var version = {
-    "version": "2.15.4",
-    "date": "2024-10-19T14:40:00Z"
+    "version": "2.24.0",
+    "date": "2025-04-06T17:30:00Z"
   };
 
   var meta = {
@@ -111,7 +111,7 @@
    "recaptchaKey": "6Ldp2bsSAAAAAAJ5uyx_lx34lJeEpTLVkP5k04qc",
    "min": {
     "chrome": "90",
-    "firefox": "74",
+    "firefox": "78",
     "greasemonkey": "1.14"
    }
   };
@@ -191,7 +191,7 @@
         }
       }
 
-      if (errors) { return Main$1.handleErrors(errors); }
+      if (errors) { return Main.handleErrors(errors); }
     }
   }
   Callbacks.initClass();
@@ -356,6 +356,11 @@ div.boardTitle {
         'Ask to Export History': [
           true,
           'Ask if history should be exported when settings are exported.'
+        ],
+        'Scroll Markers': [
+          true,
+          'Mark your posts and replies to them on the scroll bar. Relies on the "Highlight Posts Quoting You" and ' +
+            '"Highlight Own Posts" settings'
         ],
       },
 
@@ -768,6 +773,12 @@ div.boardTitle {
           'Submit the post immediately when the captcha is completed.',
           1
         ],
+        'Avoid OffscreenCanvas': [
+          false,
+          'Do not use OffscreenCanvas when converting images, workaround for ' +
+            '<a href="https://github.com/TuxedoTako/4chan-xt/issues/132">this LibreWolf bug</a>',
+          1
+        ],
         'Force Noscript Captcha': [
           false,
           'Use the non-Javascript fallback captcha even if Javascript is enabled.'
@@ -1109,21 +1120,7 @@ current-archive-text:"Archive"]
       sjisPreview: false
     },
 
-    jsWhitelist: `\
-http://s.4cdn.org
-https://s.4cdn.org
-http://www.google.com
-https://www.google.com
-https://www.gstatic.com
-http://cdn.mathjax.org
-https://cdn.mathjax.org
-https://cdnjs.cloudflare.com
-https://hcaptcha.com
-https://*.hcaptcha.com
-'self'
-'unsafe-inline'
-'unsafe-eval'\
-`,
+    jsWhitelist: '',
 
     captchaLanguage: '',
 
@@ -1450,7 +1447,12 @@ https://*.hcaptcha.com
 
   // This file was created because these functions on $ were sometimes not initialized yet because of circular
   // dependencies, so try to keep this file without dependencies, so these functions don't have to wait for something else
-  const debounce = (wait, fn) => {
+  /**
+   * @param wait Time to wait in milliseconds.
+   * @param fn The function to execute
+   * @param leading Wether to run immediately, otherwise it waits for timeout even if there is no older call.
+   */
+  const debounce = (wait, fn, leading = true) => {
     let lastCall = 0;
     let timeout = null;
     let that = null;
@@ -1462,13 +1464,15 @@ https://*.hcaptcha.com
     return function () {
       args = arguments;
       that = this;
-      if (lastCall < (Date.now() - wait)) {
-        return exec();
+      if (leading && lastCall < (Date.now() - wait)) {
+        exec();
+        return;
       }
       // stop current reset
-      clearTimeout(timeout);
+      if (timeout !== null)
+        clearTimeout(timeout);
       // after wait, let next invocation execute immediately
-      return timeout = setTimeout(exec, wait);
+      timeout = setTimeout(exec, wait);
     };
   };
   const dict = () => Object.create(null);
@@ -1726,6 +1730,7 @@ https://*.hcaptcha.com
   };
 
   // loosely follows the jquery api:
+  // http://api.jquery.com/
   // not chainable
   const $ = (selector, root = document.body) => root.querySelector(selector);
   $.id = id => d.getElementById(id);
@@ -1736,9 +1741,9 @@ https://*.hcaptcha.com
     }
     var cb = function () {
       $.off(d, 'DOMContentLoaded', cb);
-      return fc();
+      fc();
     };
-    return $.on(d, 'DOMContentLoaded', cb);
+    $.on(d, 'DOMContentLoaded', cb);
   };
   $.formData = function (form) {
     if (form instanceof HTMLFormElement) {
@@ -1772,11 +1777,11 @@ https://*.hcaptcha.com
     }
   };
   $.ajax = (function () {
-    let pageXHR;
+    let pageXHR = XMLHttpRequest;
     if (window.wrappedJSObject && !XMLHttpRequest.wrappedJSObject) {
-      pageXHR = XPCNativeWrapper(window.wrappedJSObject.XMLHttpRequest);
-    } else {
-      pageXHR = XMLHttpRequest;
+      try {
+        pageXHR = XPCNativeWrapper(window.wrappedJSObject.XMLHttpRequest);
+      } catch (e) { }
     }
     return function (url, options = {}) {
       if (options.responseType == null) {
@@ -1894,15 +1899,16 @@ https://*.hcaptcha.com
   $.onExists = function (root, selector, cb) {
     let el;
     if (el = $(selector, root)) {
-      return cb(el);
+      cb(el);
+      return;
     }
     var observer = new MutationObserver(function () {
       if (el = $(selector, root)) {
         observer.disconnect();
-        return cb(el);
+        cb(el);
       }
     });
-    return observer.observe(root, { childList: true, subtree: true });
+    observer.observe(root, { childList: true, subtree: true });
   };
   $.addStyle = function (css, id, test = 'head') {
     const style = $.el('style', { textContent: css });
@@ -1969,12 +1975,10 @@ https://*.hcaptcha.com
   $.replace = (root, el) => root.parentNode.replaceChild($.nodes(el), root);
   $.el = function (tag, properties, properties2) {
     const el = d.createElement(tag);
-    if (properties) {
+    if (properties)
       $.extend(el, properties);
-    }
-    if (properties2) {
+    if (properties2)
       $.extend(el, properties2);
-    }
     return el;
   };
   $.on = function (el, events, handler) {
@@ -2490,13 +2494,13 @@ https://*.hcaptcha.com
       h("div", { class: "sections-list" }),
       h("p", { class: "imp-exp-result warning" }),
       h("div", { class: "credits" },
-        h("a", { class: "export" }, "Export"),
+        h("a", { href: "javascript:;", class: "export" }, "Export"),
         separator,
-        h("a", { class: "import" }, "Import"),
+        h("a", { href: "javascript:;", class: "import" }, "Import"),
         separator,
-        h("a", { class: "reset" }, "Reset Settings"),
+        h("a", { href: "javascript:;", class: "reset" }, "Reset Settings"),
         separator,
-        h("input", { type: "file", hidden: true }),
+        h("input", { type: "file", hidden: true, accept: ".json,application/json" }),
         h("a", { href: meta.page, target: "_blank" }, meta.name),
         separator,
         h("a", { href: meta.changelog, target: "_blank" }, g.VERSION),
@@ -2681,7 +2685,7 @@ https://*.hcaptcha.com
   <div><input name="time" class="field" spellcheck="false">: <span class="time-preview"></span></div>
   <div>Supported <a href="http://man7.org/linux/man-pages/man1/date.1.html" target="_blank">format specifiers</a>:</div>
   <div>Day: <code>%a</code>, <code>%A</code>, <code>%d</code>, <code>%e</code></div>
-  <div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code></div>
+  <div>Month: <code>%m</code>, <code>%b</code>, <code>%B</code>, <code>%n</code> (Not zero padded)</div>
   <div>Year: <code>%y</code>, <code>%Y</code></div>
   <div>Hour: <code>%k</code>, <code>%H</code>, <code>%l</code>, <code>%I</code>, <code>%p</code>, <code>%P</code></div>
   <div>Minute: <code>%M</code></div>
@@ -2780,7 +2784,7 @@ https://*.hcaptcha.com
   <legend>Javascript Whitelist</legend>
   <div>
     Sources from which Javascript is allowed to be loaded by <a href="http://content-security-policy.com/#source_list" target="_blank">Content Security Policy</a>.<br>
-    Lines starting with a <code>#</code> will be ignored.
+    Lines starting with a <code>#</code> will be ignored. Remove or comment out all lines to allow everything.
   </div>
   <textarea hidden name="jsWhitelist" class="field" spellcheck="false"></textarea>
 </fieldset>
@@ -2828,7 +2832,8 @@ https://*.hcaptcha.com
 <div>Press <kbd>Backspace</kbd> to disable a keybind.</div>
 <table><tbody>
   <tr><th>Actions</th><th>Keybinds</th></tr>
-</tbody></table>`;
+</tbody></table>
+<button type="button" id="reset-keys">Reset keybinds</button>`;
 
   var FilterSelectPage = `<select name="filter">
   <option value="guide">Guide</option>
@@ -2911,7 +2916,7 @@ https://*.hcaptcha.com
   --xt-background: #D6DAF0;
   --xt-border: #B7C5D9;
   --xt-border-field-focus: #98E;
-  --xt-border-highlight: 3px dashed rgba(221, 0, 0, .8);
+  --xt-border-highlight: rgba(221, 0, 0, .8);
   --xt-header-dialog-bg: rgba(214, 218, 240, 0.98);
   --xt-notification-size: 11pt;
   --xt-header-dialog-fg: #89A;
@@ -2935,7 +2940,7 @@ https://*.hcaptcha.com
   --xt-background: #F0E0D6;
   --xt-border: #D9BFB7;
   --xt-border-field-focus: #EA8;
-  --xt-border-highlight: rgba(240, 224, 214, 0.98);
+  --xt-border-highlight: rgba(221, 0, 0, .8);
   --xt-notification-size: 11pt;
   --xt-header-dialog-fg: #B86;
   --xt-dead-link: #00E;
@@ -3147,18 +3152,16 @@ https://*.hcaptcha.com
   color-scheme: dark;
 }
 
-:root.tomorrow #file-n-submit>input,
-:root.tomorrow #qr-draw-buton,
-:root.spooky #file-n-submit>input,
-:root.spooky #qr-draw-buton {
-  background-image: none;
-}
-
 :root.tomorrow .field,
-:root.spooly .field {
+:root.spooky .field {
   background-color: unset;
   color: unset;
   border-color: unset;
+}
+
+:root.tomorrow input[type="button"],
+:root.spooky input[type="button"] {
+  filter: brightness(80%);
 }`;
 
   var photon = `:root.photon {
@@ -3257,25 +3260,7 @@ https://*.hcaptcha.com
   border-color: rgb(254, 150, 0) !important;
   background-color: rgb(30,32,36);
 }
-:root.spooky .persona button {
-  background: linear-gradient(to bottom, #2E3035, #222427) no-repeat;
-  color: rgb(197,200,198);
-  border-color: rgb(40, 41, 42);
-  outline: none;
-}
-:root.spooky .persona button::-moz-focus-inner {
-  border: none;
-}
-:root.spooky .persona button:focus {
-  border-color: rgb(254, 150, 0);
-}
-:root.spooky #qr.sjis-preview #sjis-toggle,
-:root.spooky #qr.tex-preview #tex-preview-button {
-  background: rgb(26, 27, 29);
-}
-:root.spooky #qr select,
-:root.spooky #file-n-submit > input,
-:root.spooky #qr-draw-button {
+:root.spooky #qr select {
   border-color: rgb(40, 41, 42);
   background: unset;
 }
@@ -3304,11 +3289,13 @@ https://*.hcaptcha.com
 }
 .field {
   background-color: #FFF;
+  padding: 2px 4px 3px;
   border: 1px solid #CCC;
   box-sizing: border-box;
   color: #333;
   font: 13px sans-serif;
   outline: none;
+  margin: 0px;
   transition: color .25s, border-color .25s;
 }
 .field::placeholder {
@@ -3346,9 +3333,6 @@ a[href="javascript:;"] {
 }
 body.hasDropDownNav{
   margin-top: 5px;
-}
-:root:not(.keyboard-focus) a {
-  outline: none;
 }
 .painted {
   border-radius: 3px;
@@ -3561,8 +3545,8 @@ audio.controls-added {
 .fixed #header-bar {
   right: 0;
   left: 0;
-  padding: 3px 4px 4px;
-  font-size: 12px;
+  padding: 4px;
+  font-size: 13px;
 }
 .fixed.top-header #header-bar {
   top: 0;
@@ -3585,13 +3569,6 @@ audio.controls-added {
 :root.centered-links #header-bar {
   text-align: center;
 }
-#custom-board-list {
-  font-size: 13px;
-  vertical-align: middle;
-}
-#full-board-list {
-  vertical-align: middle;
-}
 :root.centered-links #custom-board-list {
   position: relative;
   left: 150px;
@@ -3603,9 +3580,8 @@ audio.controls-added {
   box-shadow: 0 -1px 2px rgba(0, 0, 0, .15);
   border-top-width: 1px;
 }
-.fixed.bottom-header #header-bar .menu-button i {
-  border-top: none;
-  border-bottom: 6px solid;
+.fixed.bottom-header #header-bar .menu-button .icon {
+  transform: rotate(180deg) translateY(-.125em);
 }
 .fixed #header-bar.autohide:not(:hover) {
   box-shadow: none;
@@ -3639,7 +3615,7 @@ audio.controls-added {
 .fixed.bottom-header #header-bar #scroll-marker {
   bottom: 100%;
 }
-#board-list a, #shortcuts a:not(.entry) {
+#board-list a {
   text-decoration: none;
   padding: 1px;
 }
@@ -3653,22 +3629,22 @@ audio.controls-added {
 #shortcuts {
   float: right;
   display: flex;
+  gap: 4px;
+}
+#shortcuts .icon {
+  font-size: 14px;
 }
 :root.autohiding-scrollbar #shortcuts {
   margin-right: 12px;
-}
-.shortcut {
-  margin-left: 3px;
-  vertical-align: middle;
 }
 :root.shortcut-icons .native-settings {
   font-size: 0;
   color: transparent;
   display: inline-block;
   vertical-align: top;
-  height: 12px;
+  height: 14px;
   width: 14px;
-  background: url('//s.4cdn.org/image/favicon.ico') 0px -1px no-repeat;
+  background: url('//s.4cdn.org/image/favicon.ico') -1px -1px no-repeat;
 }
 #navbotright,
 #navtopright {
@@ -3680,57 +3656,6 @@ audio.controls-added {
 .current,
 :root.sw-yotsuba div#boardNavDesktopFoot a.current {
   font-weight: bold;
-}
-:root.shortcut-icons #header-bar .icon-shortcut {
-  font-size: 0;
-}
-:root.shortcut-icons #header-bar .icon-shortcut a::before {
-  content: var(--icon);
-  font-size: 16px;
-  line-height: 12px;
-}
-@media (min-width: 1300px) {
-  :root.sw-yotsuba.fixed:not(.centered-links) #header-bar {
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #board-list {
-    flex: auto;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #full-board-list {
-    display: flex;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) .hide-board-list-container {
-    flex: none;
-    margin-right: 5px;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #full-board-list > .boardList {
-    flex: auto;
-    display: flex;
-    width: 0px; /* XXX Fixes Edge not shrinking the board list below default size when needed */
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #full-board-list > .boardList > a,
-  :root.sw-yotsuba.fixed:not(.centered-links) #full-board-list > .boardList > span:not(.space):not(.spacer) {
-    flex: none;
-    padding: .17em;
-    margin: -.17em -.32em;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #full-board-list > .boardList > span {
-    pointer-events: none;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #full-board-list > .boardList > span.space {
-    flex: 0 .63 .63em;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #full-board-list > .boardList > span.spacer {
-    flex: 0 .38 .38em;
-  }
-  :root.sw-yotsuba.fixed:not(.centered-links) #shortcuts {
-    float: initial;
-    flex: none;
-    display: flex;
-    align-items: center;
-  }
 }
 /* 4chan X link brackets */
 .brackets-wrap::before {
@@ -3768,6 +3693,10 @@ audio.controls-added {
   max-width: 100%;
   position: relative;
   transition: all .25s ease-in-out;
+  padding: 6px 5px 6px 20px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
 }
 .notification.error {
   background-color: hsla(0, 100%, 38%, .9);
@@ -3785,15 +3714,12 @@ audio.controls-added {
   color: white;
 }
 .notification > .close {
-  font-size: 11px;
-  padding: 7px;
-  top: 0px;
-  right: 5px;
-  position: absolute;
+  order: 1;
 }
 .message {
+  overflow-wrap: break-word;
   box-sizing: border-box;
-  padding: 6px 20px;
+  padding: 0 5px;
   max-height: 200px;
   width: 100%;
   overflow: auto;
@@ -4039,10 +3965,8 @@ div[data-checked="false"] > .suboption-list {
 }
 #index-search-clear {
   color: gray;
-  display: inline-block;
   position: relative;
-  left: -1em;
-  width: 0;
+  left: -1.5em;
 }
 #index-search::-webkit-search-cancel-button {
   display: none;
@@ -4173,7 +4097,7 @@ div[data-checked="false"] > .suboption-list {
   vertical-align: text-top;
   padding-left: 2px;
 }
-.catalog-stats > .menu-button > svg.icon {
+.catalog-stats > .menu-button > .icon {
   height: 10px;
 }
 .catalog-stats {
@@ -4416,9 +4340,6 @@ textarea.copy-text-element {
   overflow-x: hidden;
   overflow-y: auto;
 }
-#thread-watcher .refresh {
-  padding: 0px 3px;
-}
 :root.fixed-watcher #thread-watcher {
   position: fixed;
 }
@@ -4431,6 +4352,9 @@ textarea.copy-text-element {
 }
 #thread-watcher > .move {
   padding-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 #watched-threads > div {
   padding-left: 3px;
@@ -4461,10 +4385,7 @@ textarea.copy-text-element {
   text-decoration: none;
 }
 #thread-watcher .move > .close {
-  position: absolute;
-  right: 0px;
-  top: 0px;
-  padding: 0px 4px;
+  margin-left: auto;
 }
 .watch-thread-link {
   width: 18px;
@@ -4527,8 +4448,7 @@ textarea.copy-text-element {
 }
 .quotelink.forwardlink,
 .backlink.forwardlink {
-  text-decoration: none;
-  border-bottom: 1px dashed;
+  text-decoration: underline dashed;
 }
 .filtered {
   text-decoration: underline line-through;
@@ -4718,7 +4638,6 @@ input[name="Default Volume"] {
 
 /* Index/Reply Navigation */
 #navlinks {
-  font-size: 16px;
   top: 25px;
   right: 10px;
 }
@@ -4778,7 +4697,7 @@ $site$infoRoot a.hide-reply-button {
 .stub input {
   display: inline-block;
 }
-.stub-icon,
+.stub .stub-icon,
 .stub-subject {
   margin-right: 1ch;
 }
@@ -4841,29 +4760,16 @@ $site$thread[hidden] + hr {
 }
 #qr > form {
   max-height: calc(100vh - 75px);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-#qrtab {
-  border-radius: 3px 3px 0 0;
-}
-#qrtab {
-  margin-bottom: 1px;
-}
-#qr .close {
-  float: right;
-  padding: 0 3px;
+  overflow: hidden auto;
 }
 .qr-link-container {
   text-align: center;
   margin: 16px 0;
 }
 .qr-link-container-bottom {
-  width: 200px;
   position: absolute;
-  left: -100px;
   margin-left: 50%;
-  text-align: center;
+  transform: translateX(-50%);
 }
 .qr-link {
   border-radius: 3px;
@@ -4888,8 +4794,7 @@ $site$thread[hidden] + hr {
   flex: 1;
   width: 0;
 }
-#qr.forced-anon input[data-name="name"]:not(.force-show),
-#qr.forced-anon input[data-name="sub"]:not(.force-show),
+#qr.forced-anon :is(input[data-name="name"]:not(.force-show), input[data-name="sub"]:not(.force-show)),
 #qr.reply-to-thread input[data-name="sub"]:not(.force-show),
 body:not(.board_f) #qr select[name="filetag"],
 #qr.reply-to-thread select[name="filetag"],
@@ -4898,17 +4803,6 @@ body:not(.board_f) #qr select[name="filetag"],
 #qr.tex-preview .textarea > :not(#tex-preview),
 #qr:not(.tex-preview) #tex-preview {
   display: none;
-}
-.persona button {
-  flex: 0 0 23px;
-  align-self: stretch;
-  border: 1px solid #BBB;
-  padding: 0;
-  background: linear-gradient(to bottom, #F8F8F8, #DCDCDC) no-repeat;
-  color: #000;
-}
-#qr.sjis-preview #sjis-toggle, #qr.tex-preview #tex-preview-button {
-  background: #DCDCDC;
 }
 #sjis-toggle, #qr.sjis-preview textarea.field {
   font-family: "IPAMonaPGothic","Mona","MS PGothic",monospace;
@@ -4921,29 +4815,47 @@ body:not(.board_f) #qr select[name="filetag"],
 #tex-preview {
   white-space: pre-line;
 }
+.textarea {
+  position: relative;
+  display: flex;
+}
 #qr textarea.field {
   height: 14.8em;
   min-height: 9em;
+  min-width: 300px;
+  resize: both;
 }
 #qr.has-captcha textarea.field {
   height: 9em;
+}
+#char-count {
+  color: #000;
+  background: hsla(0, 0%, 100%, .5);
+  font-size: 8pt;
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  pointer-events: none;
+}
+#char-count.warning {
+  color: red;
 }
 input.field.tripped:not(:hover):not(:focus) {
   color: transparent !important;
   text-shadow: none !important;
 }
-#qr textarea {
-  min-width: 300px;
-  resize: both;
+
+#qr > .move {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.field {
-  box-sizing: border-box;
-  margin: 0px;
-  padding: 2px 4px 3px;
+#qr > .move label {
+  display: inline-flex;
+  align-items: center;
 }
-#qr label input[type="checkbox"] {
-  position: relative;
-  top: 2px;
+#qr > .move .close {
+  order: 2;
 }
 
 /* Recaptcha v2 */
@@ -5005,7 +4917,7 @@ input.field.tripped:not(:hover):not(:focus) {
   overflow: auto;
   align-items: center;
 }
-#overlay.media-preview video, #overlay.media-preview img {
+#overlay.media-preview :is(img, video) {
   margin: auto;
 }
 #overlay.media-preview video {
@@ -5013,18 +4925,11 @@ input.field.tripped:not(:hover):not(:focus) {
   max-width: 100%;
 }
 
-
 /* File Input, Submit Button, Oekaki */
 #file-n-submit, #qr .oekaki {
   display: flex;
   align-items: stretch;
   margin-top: 1px;
-}
-#file-n-submit > input, #qr-draw-button {
-  background: linear-gradient(to bottom, #F8F8F8, #DCDCDC) no-repeat;
-  border: 1px solid #BBB;
-  border-radius: 2px;
-  height: 100%;
 }
 #qr-file-button, #qr-draw-button {
   width: 15%;
@@ -5064,9 +4969,6 @@ input#qr-filename {
   color: #AAA;
 }
 #qr .oekaki.has-file {
-  height: 25px;
-}
-#qr .oekaki.has-file {
   display: none;
 }
 #qr .oekaki > label {
@@ -5074,7 +4976,6 @@ input#qr-filename {
   width: 0;
   display: flex;
   align-items: center;
-  height: 100%;
 }
 #qr .oekaki > label > span {
   margin: 0 3px;
@@ -5082,12 +4983,10 @@ input#qr-filename {
 #qr .oekaki > label > input {
   flex: 1 1 auto;
   width: 0;
-  height: 100%;
 }
 #qr .oekaki-bg {
   position: relative;
   display: inline-block;
-  height: 100%;
   width: 10%;
   margin-left: 3px;
 }
@@ -5121,13 +5020,10 @@ input#qr-filename {
   margin-right: 3px;
 }
 #qr:not(.has-spoiler) #qr-spoiler-label,
-#file-n-submit:not(.has-file) #qr-spoiler-label,
-#file-n-submit:not(.has-file) #qr-randomize,
+#file-n-submit:not(.has-file) :is(#qr-spoiler-label, #qr-randomize, #qr-restore-name),
 #file-n-submit:not(.has-image) #qr-jpg,
 #file-n-submit:not(.has-image):not(.has-video) #qr-view,
-#file-n-submit:not(.has-file) #qr-restore-name,
-.has-file #paste-area,
-.has-file #url-button,
+#file-n-submit.has-file :is(#paste-area, #url-button),
 #file-n-submit:not(.custom-cooldown) #custom-cooldown-button {
   display: none;
 }
@@ -5151,7 +5047,7 @@ input[type="checkbox"]:checked ~ .checkbox-letter {
   opacity: 0;
   pointer-events: none;
 }
-.checkbox-letter, #paste-area, #url-button, #custom-cooldown-button, #dump-button {
+.checkbox-letter, #paste-area, #url-button, #custom-cooldown-button, #dump-button, #split-post {
   opacity: 0.6;
 }
 #paste-area {
@@ -5187,8 +5083,7 @@ input[type="checkbox"]:checked ~ .checkbox-letter {
   margin-top: 1px;
 }
 #dump-list {
-  overflow-x: auto;
-  overflow-y: auto;
+  overflow: auto;
   white-space: nowrap;
   width: 248px;
   max-height: 248px;
@@ -5197,9 +5092,6 @@ input[type="checkbox"]:checked ~ .checkbox-letter {
   min-width: 100%;
   display: flex;
   flex-wrap: wrap;
-}
-#dump-list:hover {
-  overflow-x: auto;
 }
 .qr-preview {
   box-sizing: border-box;
@@ -5251,7 +5143,7 @@ input[type="checkbox"]:checked ~ .checkbox-letter {
   color: #e00;
   padding: 1px;
 }
-a:only-of-type > .remove {
+.qr-preview:only-of-type > .remove {
   display: none;
 }
 .remove:hover::after {
@@ -5275,27 +5167,11 @@ a:only-of-type > .remove {
 }
 #add-post {
   cursor: pointer;
-  font-size: 2em;
+  font-size: 1.5em;
   position: absolute;
   bottom: 20px;
   right: 10px;
-  transform: translateY(-50%);
-}
-.textarea {
-  position: relative;
-  display: flex;
-}
-#char-count {
-  color: #000;
-  background: hsla(0, 0%, 100%, .5);
-  font-size: 8pt;
-  position: absolute;
-  bottom: 1px;
-  right: 1px;
-  pointer-events: none;
-}
-#char-count.warning {
-  color: red;
+  transform: translateY(calc(-50% - .75em));
 }
 #file-n-submit {
   display: flex;
@@ -5308,29 +5184,23 @@ a:only-of-type > .remove {
 #file-n-submit .row.space {
   justify-content: space-between;
 }
-#file-n-submit a {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 1px 3px 0 3px;
+#qr-actions {
+  align-items: center;
+  gap: 6px;
+  padding: 0 3px;
+}
+#qr-actions .qr-action-button {
+  display: inline-flex;
+  align-items: center;
 }
 
 /* Menu */
 .menu-button {
-  display: inline-block;
   position: relative;
   cursor: pointer;
 }
-#header-bar .menu-button i {
-  border-top:   6px solid;
-  border-right: 4px solid transparent;
-  border-left:  4px solid transparent;
-  display: inline-block;
-  margin: 2px;
-  vertical-align: middle;
-}
 .postInfo > .menu-button {
-  margin: 0 5px;
+  margin: 0 4px;
 }
 #menu {
   position: fixed;
@@ -5355,9 +5225,6 @@ a:only-of-type > .remove {
   text-shadow: none;
   font-size: 10pt;
 }
-.left>.entry.has-submenu {
-  padding-right: 17px !important;
-}
 .entry input[type="checkbox"],
 .entry input[type="radio"] {
   margin: 0px;
@@ -5367,7 +5234,8 @@ a:only-of-type > .remove {
 .entry input[type="number"] {
   width: 4.5em;
 }
-.entry.has-shortcut-text {
+.entry.has-shortcut-text,
+.entry.has-submenu {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -5377,19 +5245,13 @@ a:only-of-type > .remove {
   font-size: 70%;
   margin-left: 5px;
 }
-.has-submenu::after {
-  content: "";
-  border-left: .5em solid;
-  border-top: .3em solid transparent;
-  border-bottom: .3em solid transparent;
-  display: inline-block;
-  margin: .3em;
-  position: absolute;
-  right: 3px;
+.menu-indicator {
+  pointer-events: none;
+  position: relative;
+  right: -7px;
 }
-.left .has-submenu::after {
-  border-left: 0;
-  border-right: .5em solid;
+.left .menu-indicator > .icon {
+  transform: rotate(180deg);
 }
 .submenu {
   display: none;
@@ -5425,21 +5287,16 @@ a:only-of-type > .remove {
   display: none;
 }
 #embedding {
-  padding: 1px 4px 1px 4px;
+  padding: 1px 4px;
   position: fixed;
 }
 #embedding.empty {
   display: none;
 }
-#embedding > div:first-child {
+#embedding > .move {
   display: flex;
-}
-#embedding .move {
-  flex: 1;
-}
-#embedding .jump {
-  margin: -1px 4px;
-  text-decoration: none;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 /* Gallery */
@@ -5502,28 +5359,15 @@ a:only-of-type > .remove {
   cursor: pointer;
   opacity: 0.7;
   background-color: rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  color: #fff;
 }
 .gal-prev:hover,
 .gal-next:hover {
   opacity: 1;
-}
-.gal-prev::after,
-.gal-next::after {
-  position: absolute;
-  top: 48.6%;
-  transform: translateY(-50%);
-  display: inline-block;
-  border-top: 11px solid transparent;
-  border-bottom: 11px solid transparent;
-  content: "";
-}
-.gal-prev::after {
-  border-right: 12px solid #fff;
-  right: 5px;
-}
-.gal-next::after {
-  border-left: 12px solid #fff;
-  right: 3px;
 }
 .gal-image {
   flex: 1 0 auto;
@@ -5568,7 +5412,7 @@ a:only-of-type > .remove {
   height: 100%;
 }
 .gal-buttons {
-  font-size: 2em;
+  font-size: 1.5em;
   margin-right: 3px;
   padding-left: 7px;
   padding-right: 7px;
@@ -5583,31 +5427,9 @@ a:only-of-type > .remove {
   color: #ffffff;
   text-shadow: 0px 0px 1px #000000;
 }
-.gal-buttons i {
-  display: inline-block;
-  margin: 2px;
-  position: relative;
-}
-.gal-start i {
-  border-left:   10px solid;
-  border-top:    6px solid transparent;
-  border-bottom: 6px solid transparent;
-  bottom: 1px;
-}
-.gal-stop i {
-  border: 5px solid;
-  bottom: 2px;
-}
 .gal-buttons.gal-playing > .gal-start,
 .gal-buttons:not(.gal-playing) > .gal-stop {
   display: none;
-}
-.gal-buttons .menu-button i {
-  border-top:   10px solid;
-  border-right:  6px solid transparent;
-  border-left:   6px solid transparent;
-  bottom: 2px;
-  vertical-align: baseline;
 }
 .gal-labels {
   position: fixed;
@@ -5675,12 +5497,6 @@ a:only-of-type > .remove {
   font-size: 0;
 }
 
-/* PostJumper */
-.postJumper > .prev,
-.postJumper > .next {
-  font-size: 120%;
-}
-
 /* PSA */
 .fcx-announcement {
   text-align: center;
@@ -5689,13 +5505,8 @@ a:only-of-type > .remove {
   text-decoration: underline;
 }
 
-@keyframes spin {
-  0% {transform:rotate(0deg);}
-  100% {transform:rotate(359deg);}
-}
-
 .spin > .icon {
-  animation:spin 2s infinite linear;
+  animation: spin 2s infinite linear;
 }
 
 /* To not scroll posts behind the header */
@@ -5704,19 +5515,26 @@ div.post {
   scroll-margin-top: 30px;
 }
 
-.file svg.icon {
-  height: 12px;
-}`;
+/* (you) markers on the scrollbar */
+.post-scroll-marker {
+  border: none;
+  padding: 0;
+  position: fixed;
+  right: -5px;
+  background-color: var(--xt-scroll-maker-you, var(--xt-border-highlight));
+  border-radius: 3px;
+  width: 10px;
+  min-height: 5px;
+  top: calc(var(--top) * 1vh);
+  height: calc(var(--height) * 1vh);
+}
 
-  var supports = `/* XXX Moved to end of stylesheet to avoid breaking whole stylesheet in Maxthon. */
-@supports (text-decoration-style: dashed) or (-moz-text-decoration-style: dashed) {
-  .quotelink.forwardlink,
-  .backlink.forwardlink {
-    text-decoration: underline;
-    -moz-text-decoration-style: dashed;
-    text-decoration-style: dashed;
-    border-bottom: none;
-  }
+.post-scroll-marker.you-scroll-marker {
+  opacity: 50%;
+}
+
+.scroll-marker-container {
+  display: contents;
 }`;
 
   var tomorrow = `:root.tomorrow {
@@ -5770,25 +5588,7 @@ div.post {
   border-color: var(--xt-border-field-focus) !important;
   background-color: rgb(30,32,36);
 }
-:root.tomorrow .persona button {
-  background: linear-gradient(to bottom, #2E3035, #222427) no-repeat;
-  color: rgb(197,200,198);
-  border-color: rgb(40, 41, 42);
-  outline: none;
-}
-:root.tomorrow .persona button::-moz-focus-inner {
-  border: none;
-}
-:root.tomorrow .persona button:focus {
-  border-color: rgb(129, 162, 190);
-}
-:root.tomorrow #qr.sjis-preview #sjis-toggle,
-:root.tomorrow #qr.tex-preview #tex-preview-button {
-  background: rgb(26, 27, 29);
-}
-:root.tomorrow #qr select,
-:root.tomorrow #file-n-submit > input,
-:root.tomorrow #qr-draw-button {
+:root.tomorrow #qr select {
   border-color: rgb(40, 41, 42);
   background: unset;
 }
@@ -5857,30 +5657,25 @@ div.post {
 
   var iconCss = `/* Icons */
 svg.icon {
-  height: 14px;
-
-  /* resolve conflict with catalog css */
-  position: static;
-  width: auto;
+  height: 1em;
+  width: 1em;
+  display: inline-flex;
+  vertical-align: -.125em;
 }
-:root.shortcut-icons #shortcuts .shortcut {
-  padding-top: 0;
-  padding-bottom: 0;
-  display: flex;
-  height: 14px;
-  min-width: 16px;
+/* Override catalog.css */
+:root.catalog svg.icon {
+  position: static;
 }
 :root.shortcut-icons #shortcuts .icon--alt-text,
-:root:not(.shortcut-icons) .shortcut svg {
+:root:not(.shortcut-icons) .shortcut .icon {
   display: none;
 }
 :root.shortcut-icons .shortcut.brackets-wrap::before,
-:root.shortcut-icons .shortcut.brackets-wrap::after{
+:root.shortcut-icons .shortcut.brackets-wrap::after {
   display: none;
 }
 @keyframes spin {
-  0% {transform:rotate(0deg);}
-  100% {transform:rotate(359deg);}
+  100% {transform:rotate(1turn)}
 }`;
 
   var fxTwitterCss = `:root {
@@ -5890,38 +5685,47 @@ svg.icon {
 
 .fxt-card {
   color: var(--xt-fxt-fg, #000);
-  background-color: var(--xt-fxt-bg, #000);
+  background-color: var(--xt-fxt-bg, #D6DAF0);
   padding: 16px;
-  border: 1px solid var(--xt-fxt-border);
+  border: 1px solid var(--xt-fxt-border, #B7C5D9);
   border-radius: 12px;
-  width: 400px;
-  display: flex;
-  flex-direction: column;
   gap: 8px;
-
-  white-space: pre-line;
-  word-break: break-word;
+  width: 550px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: max-content max-content max-content;
+  grid-template-areas:
+    "meta meta"
+    "content content"
+    "stats stats"
 }
 .fxt-meta {
   display: flex;
   flex-direction: row;
   gap: 8px;
+  grid-area: meta;
 }
 .fxt-meta_profile {
   display: flex;
   flex-direction: row;
+  align-items: center;
   gap: 8px;
+}
+.fxt-meta_avatar {
+  display: flex;
+  align-items: center;
 }
 .fxt-meta_profile img {
   height: 48px;
   width: 48px;
   aspect-ratio: 1;
   border-radius: 100%;
-  overflow: hidden;
+  background-color: var(--xt-fxt-border, #B7C5D9);
 }
 .fxt-meta_author {
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
 }
 .fxt-meta_author_username {
   font-weight: bold;
@@ -5938,7 +5742,17 @@ svg.icon {
   align-items: center;
   gap: 4px;
 }
-
+.fxt-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  grid-area: content;
+}
+.fxt-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 .fxt-poll {
   display: flex;
   flex-direction: column;
@@ -5964,7 +5778,7 @@ svg.icon {
   margin-right: 6px;
   z-index: 1;
 }
-.fxt-choice .bar {
+.fxt-choice .fxt-bar {
   position: absolute;
   top: 0;
   left: 0;
@@ -5985,39 +5799,134 @@ svg.icon {
   border-radius: 4px;
   overflow: hidden;
 }
-.fxt-media :is(img, video) {
+.fxt-media_container {
+  --maxHeightMedia: 300px;
+}
+.fxt-media_container :is(img, video) {
   display: block;
-  max-width: 100%;
+  width: 100%;
   height: 100%;
+  max-height: var(--maxHeightMedia);
+  max-width: none;
   object-fit: contain;
   object-position: center;
 }
 .fxt-media_container {
   display: grid;
-  gap: 0;
-  grid-template-columns: 1fr;
-}
-.fxt-media_container.fxt-media-multiple {
   gap: 4px;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: auto;
+  grid-auto-flow: dense;
+  aspect-ratio: 16 / 9;
 }
-
-.fxt-quote {
-  border: 1px solid var(--xt-fxt-border);
-  border-radius: 12px;
-  overflow: hidden;
+.fxt-media_container .fxt-media:only-child {
+  grid-column: span 2 / auto;
+  grid-row: span 2 / auto;
 }
-.fxt-quote .fxt-meta_profile img {
+.fxt-media_contains_3 .fxt-media:first-child {
+  grid-row: span 2 / auto;
+}
+.fxt-media_contains_3 .fxt-media :is(img, video) {
+  max-height: calc(var(--maxHeightMedia) / 2);
+}
+.fxt-media_contains_3 .fxt-media:first-child :is(img, video) {
+  max-height: calc(var(--maxHeightMedia) + 4px);
+  /* weird spacing even though img/video has block... */
+}
+.fxt-media_video {
+  background-color: #000;
+}
+.fxt-tweet-quote {
+  width: fit-content;
+  padding: 8px;
+}
+.fxt-tweet-quote .fxt-meta_profile img {
   height: 24px;
   width: 24px;
 }
-
-.fxt-quote .fxt-meta {
+.fxt-tweet-quote .fxt-meta_author {
+  font-size: 80%;
+}
+.fxt-tweet-quote .fxt-meta {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 8px;
   padding: 4px;
+}
+.fxt-community_note {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--xt-fxt-border, #B7C5D9);
+  border-radius: .25rem;
+}
+.fxt-community_note-header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .25rem .5rem;
+  background-color: var(--xt-fxt-border, #B7C5D9);
+}
+.fxt-community_note-text {
+  padding: .5rem;
+  white-space: pre-wrap;
+}
+.fxt-tweet-reply {
+  grid-template-areas:
+    "meta meta"
+    "line content"
+    "line stats"
+}
+.fxt-tweet-reply::before {
+  grid-area: line;
+  content: '';
+  display: block;
+  background-color: var(--xt-fxt-border, #B7C5D9);
+  height: calc(100% + 18px);
+  width: 5px;
+  margin: auto;
+  position: relative;
+  top: -5px;
+}
+.fxt-stats {
+  grid-area: stats;
+}
+.fxt-reply_container>.fxt-tweet-reply,
+.fxt-reply_container+.fxt-tweet-original {
+  border: 0;
+  border-radius: 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.fxt-reply_container>.fxt-tweet-reply:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  border: 1px solid var(--xt-fxt-border, #B7C5D9);
+  border-bottom: 0;
+}
+.fxt-reply_container>.fxt-tweet-reply:not(:first-child) {
+  border: 1px solid var(--xt-fxt-border, #B7C5D9);
+  border-top: 0;
+  border-bottom: 0;
+}
+.fxt-reply_container+.fxt-tweet-original {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  border: 1px solid var(--xt-fxt-border, #B7C5D9);
+  border-top: 0;
+}
+.fxt-text_translated-label,
+.fxt-stats {
+  color: var(--xt-dead-link);
+}
+.fxt-card:is(.warning, .loading) {
+  display: flex;
+}
+.fxt-card_container {
+  max-block-size: 90dvh;
+  overflow: hidden auto;
+  scrollbar-width: thin;
+  width: fit-content;
 }`;
 
   // cSpell:ignore installGentoo, webfont
@@ -6046,7 +5955,7 @@ svg.icon {
     { name: "youtube", data: linkifyYoutube },
   ];
   const CSS = {
-    boards: mainCSS + icons$1(faIcons) + supports,
+    boards: mainCSS + icons$1(faIcons),
     report,
     www,
     sub: function (css) {
@@ -6093,101 +6002,131 @@ svg.icon {
     }
   };
 
-  // Image
-  var svgPathData$h = 'M448 80c8.8 0 16 7.2 16 16V415.8l-5-6.5-136-176c-4.5-5.9-11.6-9.3-19-9.3s-14.4 3.4-19 9.3L202 340.7l-30.5-42.7C167 291.7 159.8 288 152 288s-15 3.7-19.5 10.1l-80 112L48 416.3l0-.3V96c0-8.8 7.2-16 16-16H448zM64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm80 192a48 48 0 1 0 0-96 48 48 0 1 0 0 96z';
-  var width$h = 512;var height$h = 512;
+  const ImageSvg = 'M448 80c8.8 0 16 7.2 16 16V415.8l-5-6.5-136-176c-4.5-5.9-11.6-9.3-19-9.3s-14.4 3.4-19 9.3L202 340.7l-30.5-42.7C167 291.7 159.8 288 152 288s-15 3.7-19.5 10.1l-80 112L48 416.3l0-.3V96c0-8.8 7.2-16 16-16H448zM64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm80 192a48 48 0 1 0 0-96 48 48 0 1 0 0 96z';
+  const ImageW = 512, ImageH = 512;
 
-  // Eye
-  var svgPathData$g = 'M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.6 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.6-108.3C406.8 109.6 353.2 80 288 80zM95.4 112.6C142.5 68.8 207.2 32 288 32s145.5 36.8 192.6 80.6c46.8 43.5 78.1 95.4 93 131.1c3.3 7.9 3.3 16.7 0 24.6c-14.9 35.7-46.2 87.7-93 131.1C433.5 443.2 368.8 480 288 480s-145.5-36.8-192.6-80.6C48.6 356 17.3 304 2.5 268.3c-3.3-7.9-3.3-16.7 0-24.6C17.3 208 48.6 156 95.4 112.6zM288 336c44.2 0 80-35.8 80-80s-35.8-80-80-80c-.7 0-1.3 0-2 0c1.3 5.1 2 10.5 2 16c0 35.3-28.7 64-64 64c-5.5 0-10.9-.7-16-2c0 .7 0 1.3 0 2c0 44.2 35.8 80 80 80zm0-208a128 128 0 1 1 0 256 128 128 0 1 1 0-256z';
-  var width$g = 576;var height$g = 512;
+  const EyeSvg = 'M288 80c-65.2 0-118.8 29.6-159.9 67.7C89.6 183.5 63 226 49.4 256c13.6 30 40.2 72.5 78.6 108.3C169.2 402.4 222.8 432 288 432s118.8-29.6 159.9-67.7C486.4 328.5 513 286 526.6 256c-13.6-30-40.2-72.5-78.6-108.3C406.8 109.6 353.2 80 288 80zM95.4 112.6C142.5 68.8 207.2 32 288 32s145.5 36.8 192.6 80.6c46.8 43.5 78.1 95.4 93 131.1c3.3 7.9 3.3 16.7 0 24.6c-14.9 35.7-46.2 87.7-93 131.1C433.5 443.2 368.8 480 288 480s-145.5-36.8-192.6-80.6C48.6 356 17.3 304 2.5 268.3c-3.3-7.9-3.3-16.7 0-24.6C17.3 208 48.6 156 95.4 112.6zM288 336c44.2 0 80-35.8 80-80s-35.8-80-80-80c-.7 0-1.3 0-2 0c1.3 5.1 2 10.5 2 16c0 35.3-28.7 64-64 64c-5.5 0-10.9-.7-16-2c0 .7 0 1.3 0 2c0 44.2 35.8 80 80 80zm0-208a128 128 0 1 1 0 256 128 128 0 1 1 0-256z';
+  const EyeW = 576, EyeH = 512;
 
-  // UpRightAndDownLeftFromCenter
-  var svgPathData$f = 'M344 0H488c13.3 0 24 10.7 24 24V168c0 9.7-5.8 18.5-14.8 22.2s-19.3 1.7-26.2-5.2l-39-39-87 87c-9.4 9.4-24.6 9.4-33.9 0l-32-32c-9.4-9.4-9.4-24.6 0-33.9l87-87L327 41c-6.9-6.9-8.9-17.2-5.2-26.2S334.3 0 344 0zM168 512H24c-13.3 0-24-10.7-24-24V344c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2l39 39 87-87c9.4-9.4 24.6-9.4 33.9 0l32 32c9.4 9.4 9.4 24.6 0 33.9l-87 87 39 39c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8z';
-  var width$f = 512;var height$f = 512;
+  const UpRightAndDownLeftFromCenterSvg = 'M344 0H488c13.3 0 24 10.7 24 24V168c0 9.7-5.8 18.5-14.8 22.2s-19.3 1.7-26.2-5.2l-39-39-87 87c-9.4 9.4-24.6 9.4-33.9 0l-32-32c-9.4-9.4-9.4-24.6 0-33.9l87-87L327 41c-6.9-6.9-8.9-17.2-5.2-26.2S334.3 0 344 0zM168 512H24c-13.3 0-24-10.7-24-24V344c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2l39 39 87-87c9.4-9.4 24.6-9.4 33.9 0l32 32c9.4 9.4 9.4 24.6 0 33.9l-87 87 39 39c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8z';
+  const UpRightAndDownLeftFromCenterW = 512, UpRightAndDownLeftFromCenterH = 512;
 
-  // Comment
-  var svgPathData$e = 'M123.6 391.3c12.9-9.4 29.6-11.8 44.6-6.4c26.5 9.6 56.2 15.1 87.8 15.1c124.7 0 208-80.5 208-160s-83.3-160-208-160S48 160.5 48 240c0 32 12.4 62.8 35.7 89.2c8.6 9.7 12.8 22.5 11.8 35.5c-1.4 18.1-5.7 34.7-11.3 49.4c17-7.9 31.1-16.7 39.4-22.7zM21.2 431.9c1.8-2.7 3.5-5.4 5.1-8.1c10-16.6 19.5-38.4 21.4-62.9C17.7 326.8 0 285.1 0 240C0 125.1 114.6 32 256 32s256 93.1 256 208s-114.6 208-256 208c-37.1 0-72.3-6.4-104.1-17.9c-11.9 8.7-31.3 20.6-54.3 30.6c-15.1 6.6-32.3 12.6-50.1 16.1c-.8 .2-1.6 .3-2.4 .5c-4.4 .8-8.7 1.5-13.2 1.9c-.2 0-.5 .1-.7 .1c-5.1 .5-10.2 .8-15.3 .8c-6.5 0-12.3-3.9-14.8-9.9c-2.5-6-1.1-12.8 3.4-17.4c4.1-4.2 7.8-8.7 11.3-13.5c1.7-2.3 3.3-4.6 4.8-6.9c.1-.2 .2-.3 .3-.5z';
-  var width$e = 512;var height$e = 512;
+  const CommentSvg = 'M123.6 391.3c12.9-9.4 29.6-11.8 44.6-6.4c26.5 9.6 56.2 15.1 87.8 15.1c124.7 0 208-80.5 208-160s-83.3-160-208-160S48 160.5 48 240c0 32 12.4 62.8 35.7 89.2c8.6 9.7 12.8 22.5 11.8 35.5c-1.4 18.1-5.7 34.7-11.3 49.4c17-7.9 31.1-16.7 39.4-22.7zM21.2 431.9c1.8-2.7 3.5-5.4 5.1-8.1c10-16.6 19.5-38.4 21.4-62.9C17.7 326.8 0 285.1 0 240C0 125.1 114.6 32 256 32s256 93.1 256 208s-114.6 208-256 208c-37.1 0-72.3-6.4-104.1-17.9c-11.9 8.7-31.3 20.6-54.3 30.6c-15.1 6.6-32.3 12.6-50.1 16.1c-.8 .2-1.6 .3-2.4 .5c-4.4 .8-8.7 1.5-13.2 1.9c-.2 0-.5 .1-.7 .1c-5.1 .5-10.2 .8-15.3 .8c-6.5 0-12.3-3.9-14.8-9.9c-2.5-6-1.1-12.8 3.4-17.4c4.1-4.2 7.8-8.7 11.3-13.5c1.7-2.3 3.3-4.6 4.8-6.9c.1-.2 .2-.3 .3-.5z';
+  const CommentW = 512, CommentH = 512;
 
-  // Rotate
-  var svgPathData$d = 'M142.9 142.9c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5c0 0 0 0 0 0H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5c7.7-21.8 20.2-42.3 37.8-59.8zM16 312v7.6 .7V440c0 9.7 5.8 18.5 14.8 22.2s19.3 1.7 26.2-5.2l41.6-41.6c87.6 86.5 228.7 86.2 315.8-1c24.4-24.4 42.1-53.1 52.9-83.7c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.2 62.2-162.7 62.5-225.3 1L185 329c6.9-6.9 8.9-17.2 5.2-26.2s-12.5-14.8-22.2-14.8H48.4h-.7H40c-13.3 0-24 10.7-24 24z';
-  var width$d = 512;var height$d = 512;
+  const RotateSvg = 'M142.9 142.9c62.2-62.2 162.7-62.5 225.3-1L327 183c-6.9 6.9-8.9 17.2-5.2 26.2s12.5 14.8 22.2 14.8H463.5c0 0 0 0 0 0H472c13.3 0 24-10.7 24-24V72c0-9.7-5.8-18.5-14.8-22.2s-19.3-1.7-26.2 5.2L413.4 96.6c-87.6-86.5-228.7-86.2-315.8 1C73.2 122 55.6 150.7 44.8 181.4c-5.9 16.7 2.9 34.9 19.5 40.8s34.9-2.9 40.8-19.5c7.7-21.8 20.2-42.3 37.8-59.8zM16 312v7.6 .7V440c0 9.7 5.8 18.5 14.8 22.2s19.3 1.7 26.2-5.2l41.6-41.6c87.6 86.5 228.7 86.2 315.8-1c24.4-24.4 42.1-53.1 52.9-83.7c5.9-16.7-2.9-34.9-19.5-40.8s-34.9 2.9-40.8 19.5c-7.7 21.8-20.2 42.3-37.8 59.8c-62.2 62.2-162.7 62.5-225.3 1L185 329c6.9-6.9 8.9-17.2 5.2-26.2s-12.5-14.8-22.2-14.8H48.4h-.7H40c-13.3 0-24 10.7-24 24z';
+  const RotateW = 512, RotateH = 512;
 
-  // Wrench
-  var svgPathData$c = 'M352 320c88.4 0 160-71.6 160-160c0-15.3-2.2-30.1-6.2-44.2c-3.1-10.8-16.4-13.2-24.3-5.3l-76.8 76.8c-3 3-7.1 4.7-11.3 4.7H336c-8.8 0-16-7.2-16-16V118.6c0-4.2 1.7-8.3 4.7-11.3l76.8-76.8c7.9-7.9 5.4-21.2-5.3-24.3C382.1 2.2 367.3 0 352 0C263.6 0 192 71.6 192 160c0 19.1 3.4 37.5 9.5 54.5L19.9 396.1C7.2 408.8 0 426.1 0 444.1C0 481.6 30.4 512 67.9 512c18 0 35.3-7.2 48-19.9L297.5 310.5c17 6.2 35.4 9.5 54.5 9.5zM80 408a24 24 0 1 1 0 48 24 24 0 1 1 0-48z';
-  var width$c = 512;var height$c = 512;
+  const WrenchSvg = 'M352 320c88.4 0 160-71.6 160-160c0-15.3-2.2-30.1-6.2-44.2c-3.1-10.8-16.4-13.2-24.3-5.3l-76.8 76.8c-3 3-7.1 4.7-11.3 4.7H336c-8.8 0-16-7.2-16-16V118.6c0-4.2 1.7-8.3 4.7-11.3l76.8-76.8c7.9-7.9 5.4-21.2-5.3-24.3C382.1 2.2 367.3 0 352 0C263.6 0 192 71.6 192 160c0 19.1 3.4 37.5 9.5 54.5L19.9 396.1C7.2 408.8 0 426.1 0 444.1C0 481.6 30.4 512 67.9 512c18 0 35.3-7.2 48-19.9L297.5 310.5c17 6.2 35.4 9.5 54.5 9.5zM80 408a24 24 0 1 1 0 48 24 24 0 1 1 0-48z';
+  const WrenchW = 512, WrenchH = 512;
 
-  // Bolt
-  var svgPathData$b = 'M349.4 44.6c5.9-13.7 1.5-29.7-10.6-38.5s-28.6-8-39.9 1.8l-256 224c-10 8.8-13.6 22.9-8.9 35.3S50.7 288 64 288H175.5L98.6 467.4c-5.9 13.7-1.5 29.7 10.6 38.5s28.6 8 39.9-1.8l256-224c10-8.8 13.6-22.9 8.9-35.3s-16.6-20.7-30-20.7H272.5L349.4 44.6z';
-  var width$b = 448;var height$b = 512;
+  const BoltSvg = 'M349.4 44.6c5.9-13.7 1.5-29.7-10.6-38.5s-28.6-8-39.9 1.8l-256 224c-10 8.8-13.6 22.9-8.9 35.3S50.7 288 64 288H175.5L98.6 467.4c-5.9 13.7-1.5 29.7 10.6 38.5s28.6 8 39.9-1.8l256-224c10-8.8 13.6-22.9 8.9-35.3s-16.6-20.7-30-20.7H272.5L349.4 44.6z';
+  const BoltW = 448, BoltH = 512;
 
-  // Pencil
-  var svgPathData$a = 'M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z';
-  var width$a = 512;var height$a = 512;
+  const PencilSvg = 'M410.3 231l11.3-11.3-33.9-33.9-62.1-62.1L291.7 89.8l-11.3 11.3-22.6 22.6L58.6 322.9c-10.4 10.4-18 23.3-22.2 37.4L1 480.7c-2.5 8.4-.2 17.5 6.1 23.7s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L387.7 253.7 410.3 231zM160 399.4l-9.1 22.7c-4 3.1-8.5 5.4-13.3 6.9L59.4 452l23-78.1c1.4-4.9 3.8-9.4 6.9-13.3l22.7-9.1v32c0 8.8 7.2 16 16 16h32zM362.7 18.7L348.3 33.2 325.7 55.8 314.3 67.1l33.9 33.9 62.1 62.1 33.9 33.9 11.3-11.3 22.6-22.6 14.5-14.5c25-25 25-65.5 0-90.5L453.3 18.7c-25-25-65.5-25-90.5 0zm-47.4 168l-144 144c-6.2 6.2-16.4 6.2-22.6 0s-6.2-16.4 0-22.6l144-144c6.2-6.2 16.4-6.2 22.6 0s6.2 16.4 0 22.6z';
+  const PencilW = 512, PencilH = 512;
 
-  // Clipboard
-  var svgPathData$9 = 'M192 0c-41.8 0-77.4 26.7-90.5 64H64C28.7 64 0 92.7 0 128V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H282.5C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM112 192H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16z';
-  var width$9 = 384;var height$9 = 512;
+  const ClipboardSvg = 'M192 0c-41.8 0-77.4 26.7-90.5 64H64C28.7 64 0 92.7 0 128V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V128c0-35.3-28.7-64-64-64H282.5C269.4 26.7 233.8 0 192 0zm0 64a32 32 0 1 1 0 64 32 32 0 1 1 0-64zM112 192H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16z';
+  const ClipboardW = 384, ClipboardH = 512;
 
-  // Clock
-  var svgPathData$8 = 'M464 256A208 208 0 1 1 48 256a208 208 0 1 1 416 0zM0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z';
-  var width$8 = 512;var height$8 = 512;
+  const ClockSvg = 'M464 256A208 208 0 1 1 48 256a208 208 0 1 1 416 0zM0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM232 120V256c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2V120c0-13.3-10.7-24-24-24s-24 10.7-24 24z';
+  const ClockW = 512, ClockH = 512;
 
-  // Link
-  var svgPathData$7 = 'M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0c-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5L217.7 177.2c31.5-31.5 82.5-31.5 114 0c27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0L60.2 244.3z';
-  var width$7 = 640;var height$7 = 512;
+  const LinkSvg = 'M579.8 267.7c56.5-56.5 56.5-148 0-204.5c-50-50-128.8-56.5-186.3-15.4l-1.6 1.1c-14.4 10.3-17.7 30.3-7.4 44.6s30.3 17.7 44.6 7.4l1.6-1.1c32.1-22.9 76-19.3 103.8 8.6c31.5 31.5 31.5 82.5 0 114L422.3 334.8c-31.5 31.5-82.5 31.5-114 0c-27.9-27.9-31.5-71.8-8.6-103.8l1.1-1.6c10.3-14.4 6.9-34.4-7.4-44.6s-34.4-6.9-44.6 7.4l-1.1 1.6C206.5 251.2 213 330 263 380c56.5 56.5 148 56.5 204.5 0L579.8 267.7zM60.2 244.3c-56.5 56.5-56.5 148 0 204.5c50 50 128.8 56.5 186.3 15.4l1.6-1.1c14.4-10.3 17.7-30.3 7.4-44.6s-30.3-17.7-44.6-7.4l-1.6 1.1c-32.1 22.9-76 19.3-103.8-8.6C74 372 74 321 105.5 289.5L217.7 177.2c31.5-31.5 82.5-31.5 114 0c27.9 27.9 31.5 71.8 8.6 103.9l-1.1 1.6c-10.3 14.4-6.9 34.4 7.4 44.6s34.4 6.9 44.6-7.4l1.1-1.6C433.5 260.8 427 182 377 132c-56.5-56.5-148-56.5-204.5 0L60.2 244.3z';
+  const LinkW = 640, LinkH = 512;
 
-  // Shuffle
-  var svgPathData$6 = 'M403.8 34.4c12-5 25.7-2.2 34.9 6.9l64 64c6 6 9.4 14.1 9.4 22.6s-3.4 16.6-9.4 22.6l-64 64c-9.2 9.2-22.9 11.9-34.9 6.9s-19.8-16.6-19.8-29.6V160H352c-10.1 0-19.6 4.7-25.6 12.8L284 229.3 244 176l31.2-41.6C293.3 110.2 321.8 96 352 96h32V64c0-12.9 7.8-24.6 19.8-29.6zM164 282.7L204 336l-31.2 41.6C154.7 401.8 126.2 416 96 416H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H96c10.1 0 19.6-4.7 25.6-12.8L164 282.7zm274.6 188c-9.2 9.2-22.9 11.9-34.9 6.9s-19.8-16.6-19.8-29.6V416H352c-30.2 0-58.7-14.2-76.8-38.4L121.6 172.8c-6-8.1-15.5-12.8-25.6-12.8H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H96c30.2 0 58.7 14.2 76.8 38.4L326.4 339.2c6 8.1 15.5 12.8 25.6 12.8h32V320c0-12.9 7.8-24.6 19.8-29.6s25.7-2.2 34.9 6.9l64 64c6 6 9.4 14.1 9.4 22.6s-3.4 16.6-9.4 22.6l-64 64z';
-  var width$6 = 512;var height$6 = 512;
+  const ShuffleSvg = 'M403.8 34.4c12-5 25.7-2.2 34.9 6.9l64 64c6 6 9.4 14.1 9.4 22.6s-3.4 16.6-9.4 22.6l-64 64c-9.2 9.2-22.9 11.9-34.9 6.9s-19.8-16.6-19.8-29.6V160H352c-10.1 0-19.6 4.7-25.6 12.8L284 229.3 244 176l31.2-41.6C293.3 110.2 321.8 96 352 96h32V64c0-12.9 7.8-24.6 19.8-29.6zM164 282.7L204 336l-31.2 41.6C154.7 401.8 126.2 416 96 416H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H96c10.1 0 19.6-4.7 25.6-12.8L164 282.7zm274.6 188c-9.2 9.2-22.9 11.9-34.9 6.9s-19.8-16.6-19.8-29.6V416H352c-30.2 0-58.7-14.2-76.8-38.4L121.6 172.8c-6-8.1-15.5-12.8-25.6-12.8H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H96c30.2 0 58.7 14.2 76.8 38.4L326.4 339.2c6 8.1 15.5 12.8 25.6 12.8h32V320c0-12.9 7.8-24.6 19.8-29.6s25.7-2.2 34.9 6.9l64 64c6 6 9.4 14.1 9.4 22.6s-3.4 16.6-9.4 22.6l-64 64z';
+  const ShuffleW = 512, ShuffleH = 512;
 
-  // RotateLeft
-  var svgPathData$5 = 'M48.5 224H40c-13.3 0-24-10.7-24-24V72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2L98.6 96.6c87.6-86.5 228.7-86.2 315.8 1c87.5 87.5 87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3c-62.2-62.2-162.7-62.5-225.3-1L185 183c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8H48.5z';
-  var width$5 = 512;var height$5 = 512;
+  const RotateLeftSvg = 'M48.5 224H40c-13.3 0-24-10.7-24-24V72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2L98.6 96.6c87.6-86.5 228.7-86.2 315.8 1c87.5 87.5 87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3c-62.2-62.2-162.7-62.5-225.3-1L185 183c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8H48.5z';
+  const RotateLeftW = 512, RotateLeftH = 512;
 
-  // Download
-  var svgPathData$4 = 'M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V274.7l-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7V32zM64 352c-35.3 0-64 28.7-64 64v32c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V416c0-35.3-28.7-64-64-64H346.5l-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z';
-  var width$4 = 512;var height$4 = 512;
+  const DownloadSvg = 'M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V274.7l-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7V32zM64 352c-35.3 0-64 28.7-64 64v32c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V416c0-35.3-28.7-64-64-64H346.5l-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z';
+  const DownloadW = 512, DownloadH = 512;
 
-  // BookOpen
-  var svgPathData$3 = 'M249.6 471.5c10.8 3.8 22.4-4.1 22.4-15.5V78.6c0-4.2-1.6-8.4-5-11C247.4 52 202.4 32 144 32C93.5 32 46.3 45.3 18.1 56.1C6.8 60.5 0 71.7 0 83.8V454.1c0 11.9 12.8 20.2 24.1 16.5C55.6 460.1 105.5 448 144 448c33.9 0 79 14 105.6 23.5zm76.8 0C353 462 398.1 448 432 448c38.5 0 88.4 12.1 119.9 22.6c11.3 3.8 24.1-4.6 24.1-16.5V83.8c0-12.1-6.8-23.3-18.1-27.6C529.7 45.3 482.5 32 432 32c-58.4 0-103.4 20-123 35.6c-3.3 2.6-5 6.8-5 11V456c0 11.4 11.7 19.3 22.4 15.5z';
-  var width$3 = 576;var height$3 = 512;
+  const BookOpenSvg = 'M249.6 471.5c10.8 3.8 22.4-4.1 22.4-15.5V78.6c0-4.2-1.6-8.4-5-11C247.4 52 202.4 32 144 32C93.5 32 46.3 45.3 18.1 56.1C6.8 60.5 0 71.7 0 83.8V454.1c0 11.9 12.8 20.2 24.1 16.5C55.6 460.1 105.5 448 144 448c33.9 0 79 14 105.6 23.5zm76.8 0C353 462 398.1 448 432 448c38.5 0 88.4 12.1 119.9 22.6c11.3 3.8 24.1-4.6 24.1-16.5V83.8c0-12.1-6.8-23.3-18.1-27.6C529.7 45.3 482.5 32 432 32c-58.4 0-103.4 20-123 35.6c-3.3 2.6-5 6.8-5 11V456c0 11.4 11.7 19.3 22.4 15.5z';
+  const BookOpenW = 576, BookOpenH = 512;
 
-  // DownLeftAndUpRightToCenter
-  var svgPathData$2 = 'M439 7c9.4-9.4 24.6-9.4 33.9 0l32 32c9.4 9.4 9.4 24.6 0 33.9l-87 87 39 39c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8H296c-13.3 0-24-10.7-24-24V72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2l39 39L439 7zM72 272H216c13.3 0 24 10.7 24 24V440c0 9.7-5.8 18.5-14.8 22.2s-19.3 1.7-26.2-5.2l-39-39L73 505c-9.4 9.4-24.6 9.4-33.9 0L7 473c-9.4-9.4-9.4-24.6 0-33.9l87-87L55 313c-6.9-6.9-8.9-17.2-5.2-26.2s12.5-14.8 22.2-14.8z';
-  var width$2 = 512;var height$2 = 512;
+  const DownLeftAndUpRightToCenterSvg = 'M439 7c9.4-9.4 24.6-9.4 33.9 0l32 32c9.4 9.4 9.4 24.6 0 33.9l-87 87 39 39c6.9 6.9 8.9 17.2 5.2 26.2s-12.5 14.8-22.2 14.8H296c-13.3 0-24-10.7-24-24V72c0-9.7 5.8-18.5 14.8-22.2s19.3-1.7 26.2 5.2l39 39L439 7zM72 272H216c13.3 0 24 10.7 24 24V440c0 9.7-5.8 18.5-14.8 22.2s-19.3 1.7-26.2-5.2l-39-39L73 505c-9.4 9.4-24.6 9.4-33.9 0L7 473c-9.4-9.4-9.4-24.6 0-33.9l87-87L55 313c-6.9-6.9-8.9-17.2-5.2-26.2s12.5-14.8 22.2-14.8z';
+  const DownLeftAndUpRightToCenterW = 512, DownLeftAndUpRightToCenterH = 512;
 
-  // Heart
-  var svgPathData$1 = 'M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z';
-  var width$1 = 512;var height$1 = 512;
+  const HeartSvg = 'M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z';
+  const HeartW = 512, HeartH = 512;
 
-  // CaretDown
-  var svgPathData = 'M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z';
-  var width = 320;var height = 512;
+  const CaretRightSvg = 'M246.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-9.2-9.2-22.9-11.9-34.9-6.9s-19.8 16.6-19.8 29.6l0 256c0 12.9 7.8 24.6 19.8 29.6s25.7 2.2 34.9-6.9l128-128z';
+  const CaretRightW = 256, CaretRightH = 512;
+
+  const CaretLeftSvg = 'M9.4 278.6c-12.5-12.5-12.5-32.8 0-45.3l128-128c9.2-9.2 22.9-11.9 34.9-6.9s19.8 16.6 19.8 29.6l0 256c0 12.9-7.8 24.6-19.8 29.6s-25.7 2.2-34.9-6.9l-128-128z';
+  const CaretLeftW = 256, CaretLeftH = 512;
+
+  const CaretDownSvg = 'M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.8-29.6-19.8L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z';
+  const CaretDownW = 320, CaretDownH = 512;
+
+  const ScissorsSvg = 'M256 192l-39.5-39.5c4.9-12.6 7.5-26.2 7.5-40.5C224 50.1 173.9 0 112 0S0 50.1 0 112s50.1 112 112 112c14.3 0 27.9-2.7 40.5-7.5L192 256l-39.5 39.5c-12.6-4.9-26.2-7.5-40.5-7.5C50.1 288 0 338.1 0 400s50.1 112 112 112s112-50.1 112-112c0-14.3-2.7-27.9-7.5-40.5L499.2 76.8c7.1-7.1 7.1-18.5 0-25.6c-28.3-28.3-74.1-28.3-102.4 0L256 192zm22.6 150.6L396.8 460.8c28.3 28.3 74.1 28.3 102.4 0c7.1-7.1 7.1-18.5 0-25.6L342.6 278.6l-64 64zM64 112a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm48 240a48 48 0 1 1 0 96 48 48 0 1 1 0-96z';
+  const ScissorsW = 512, ScissorsH = 512;
+
+  const XmarkSvg = 'M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z';
+  const XmarkW = 384, XmarkH = 512;
+
+  const ArrowRightLongSvg = 'M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l370.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128z';
+  const ArrowRightLongW = 512, ArrowRightLongH = 512;
+
+  const PlusSvg = 'M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z';
+  const PlusW = 448, PlusH = 512;
+
+  const SquarePlusSvg = 'M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z';
+  const SquarePlusW = 448, SquarePlusH = 512;
+
+  const SquareMinusSvg = 'M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z';
+  const SquareMinusW = 448, SquareMinusH = 512;
+
+  const PlaySvg = 'M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z';
+  const PlayW = 384, PlayH = 512;
+
+  const StopSvg = 'M0 128C0 92.7 28.7 64 64 64H320c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z';
+  const StopW = 384, StopH = 512;
+
+  const ArrowUpLongSvg = 'M214.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-128 128c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L160 109.3V480c0 17.7 14.3 32 32 32s32-14.3 32-32V109.3l73.4 73.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-128-128z';
+  const ArrowUpLongW = 384, ArrowUpLongH = 512;
+
+  const ArrowDownLongSvg = 'M169.4 502.6c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 402.7 224 32c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 370.7L86.6 329.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128z';
+  const ArrowDownLongW = 384, ArrowDownLongH = 512;
 
   const toSvg = (svgPathData, width, height) => {
     return `<svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 ${width} ${height}">` +
       `<path d="${svgPathData}" fill="currentColor" /></svg>`;
   };
   const icons = {
-    image: toSvg(svgPathData$h, width$h, height$h),
-    eye: toSvg(svgPathData$g, width$g, height$g),
-    expand: toSvg(svgPathData$f, width$f, height$f),
-    comment: toSvg(svgPathData$e, width$e, height$e),
-    refresh: toSvg(svgPathData$d, width$d, height$d),
-    wrench: toSvg(svgPathData$c, width$c, height$c),
-    bolt: toSvg(svgPathData$b, width$b, height$b),
-    link: toSvg(svgPathData$7, width$7, height$7),
-    pencil: toSvg(svgPathData$a, width$a, height$a),
-    clipboard: toSvg(svgPathData$9, width$9, height$9),
-    clock: toSvg(svgPathData$8, width$8, height$8),
-    shuffle: toSvg(svgPathData$6, width$6, height$6),
-    undo: toSvg(svgPathData$5, width$5, height$5),
-    download: toSvg(svgPathData$4, width$4, height$4),
-    bookOpen: toSvg(svgPathData$3, width$3, height$3),
-    shrink: toSvg(svgPathData$2, width$2, height$2),
-    heart: toSvg(svgPathData$1, width$1, height$1),
-    caretDown: toSvg(svgPathData, width, height)
+    image: toSvg(ImageSvg, ImageW, ImageH),
+    eye: toSvg(EyeSvg, EyeW, EyeH),
+    expand: toSvg(UpRightAndDownLeftFromCenterSvg, UpRightAndDownLeftFromCenterW, UpRightAndDownLeftFromCenterH),
+    comment: toSvg(CommentSvg, CommentW, CommentH),
+    refresh: toSvg(RotateSvg, RotateW, RotateH),
+    wrench: toSvg(WrenchSvg, WrenchW, WrenchH),
+    bolt: toSvg(BoltSvg, BoltW, BoltH),
+    link: toSvg(LinkSvg, LinkW, LinkH),
+    pencil: toSvg(PencilSvg, PencilW, PencilH),
+    clipboard: toSvg(ClipboardSvg, ClipboardW, ClipboardH),
+    clock: toSvg(ClockSvg, ClockW, ClockH),
+    shuffle: toSvg(ShuffleSvg, ShuffleW, ShuffleH),
+    undo: toSvg(RotateLeftSvg, RotateLeftW, RotateLeftH),
+    download: toSvg(DownloadSvg, DownloadW, DownloadH),
+    bookOpen: toSvg(BookOpenSvg, BookOpenW, BookOpenH),
+    shrink: toSvg(DownLeftAndUpRightToCenterSvg, DownLeftAndUpRightToCenterW, DownLeftAndUpRightToCenterH),
+    heart: toSvg(HeartSvg, HeartW, HeartH),
+    caretRight: toSvg(CaretRightSvg, CaretRightW, CaretRightH),
+    caretLeft: toSvg(CaretLeftSvg, CaretLeftW, CaretLeftH),
+    caretDown: toSvg(CaretDownSvg, CaretDownW, CaretDownH),
+    scissors: toSvg(ScissorsSvg, ScissorsW, ScissorsH),
+    xmark: toSvg(XmarkSvg, XmarkW, XmarkH),
+    arrowRightLong: toSvg(ArrowRightLongSvg, ArrowRightLongW, ArrowRightLongH),
+    plus: toSvg(PlusSvg, PlusW, PlusH),
+    squarePlus: toSvg(SquarePlusSvg, SquarePlusW, SquarePlusH),
+    squareMinus: toSvg(SquareMinusSvg, SquareMinusW, SquareMinusH),
+    play: toSvg(PlaySvg, PlayW, PlayH),
+    stop: toSvg(StopSvg, StopW, StopH),
+    arrowUpLong: toSvg(ArrowUpLongSvg, ArrowUpLongW, ArrowUpLongH),
+    arrowDownLong: toSvg(ArrowDownLongSvg, ArrowDownLongW, ArrowDownLongH)
   };
   var Icon = {
     /** Sets an icon in an HTML element */
@@ -6223,11 +6162,11 @@ svg.icon {
 </div>
 <form>
   <div class="persona">
-    <button type="button" id="sjis-toggle" title="Toggle Mona font">∀</button>
-    <button type="button" id="tex-preview-button" title="Preview TeX">T<sub>E</sub>X</button>
+    <button type="button" id="sjis-toggle" class="qr-button" title="Toggle Mona font">∀</button>
+    <button type="button" id="tex-preview-button" class="qr-button" title="Preview TeX">T<sub>E</sub>X</button>
     <input name="name" data-name="name" list="list-name" placeholder="Name" class="field" size="1">
     <input name="email" data-name="email" list="list-email" placeholder="Options" class="field" size="1">
-    <input name="sub" data-name="sub" list="list-sub" placeholder="Subject" class="field" size="1">
+    <input name="sub" data-name="sub" list="list-sub" placeholder="Subject" class="field" size="1" maxlength="100">
   </div>
   <div class="textarea">
     <textarea data-name="com" placeholder="Comment" class="field"></textarea>
@@ -6239,14 +6178,14 @@ svg.icon {
     <a id="add-post" href="javascript:;" title="Add a post">+</a>
   </div>
   <div class="oekaki" hidden>
-    <input type="button" id="qr-draw-button" value="Draw">
+    <input type="button" id="qr-draw-button" class="qr-button" value="Draw">
     <label><span>Width:</span><input name="oekaki-width" value="400" type="number" class="field" size="1"></label>
     <label><span>Height:</span><input name="oekaki-height" value="400" type="number" class="field" size="1"></label>
     <span class="oekaki-bg" title="Background Color"><input name="oekaki-bg" type="checkbox" checked><input name="oekaki-bgcolor" type="color" value="#ffffff"></span>
   </div>
   <div id="file-n-submit">
-    <span class="row">
-      <input type="button" id="qr-file-button" value="Files">
+    <span id="qr-file" class="row">
+      <input type="button" id="qr-file-button" class="qr-button" value="Files">
       <span id="qr-filename-container" class="field">
         <span id="qr-no-file">No selected file</span>
         <input id="qr-filename" data-name="filename" spellcheck="false">
@@ -6256,20 +6195,21 @@ svg.icon {
         </label>
       </span>
     </span>
-    <span class="row space">
-      <span class="row">
-        <a href="javascript:;" id="qr-oekaki-button" title="Edit in Tegaki">✎︎</a>
-        <a href="javascript:;" id="qr-jpg" title="Compress to jpg">C</a>
-        <a href="javascript:;" id="qr-view" title="Preview">V</a>
-        <a href="javascript:;" id="qr-randomize" title="Randomize filename">R</a>
-        <a href="javascript:;" id="qr-restore-name" title="Reset filename">U</a>
-        <a href="javascript:;" id="qr-filerm" title="Remove file">✕</a>
-        <a href="javascript:;" id="url-button" title="Post from URL">🔗︎</a>
-        <a href="javascript:;" hidden id="paste-area" title="Select to paste images" tabindex="-1" contentEditable="true">📋︎</a>
-        <a href="javascript:;" id="custom-cooldown-button" title="Toggle custom cooldown" class="disabled">🕒︎</a>
-        <a href="javascript:;" id="dump-button" title="Dump list">➕︎</a>
+    <span id="qr-actions-container" class="row space">
+      <span id="qr-actions" class="row">
+        <a href="javascript:;" id="qr-oekaki-button" class="qr-action-button" title="Edit in Tegaki">✎︎</a>
+        <a href="javascript:;" id="qr-jpg" class="qr-action-button" title="Compress to jpg">C</a>
+        <a href="javascript:;" id="qr-view" class="qr-action-button" title="Preview">V</a>
+        <a href="javascript:;" id="qr-randomize" class="qr-action-button" title="Randomize filename">R</a>
+        <a href="javascript:;" id="qr-restore-name" class="qr-action-button" title="Reset filename">U</a>
+        <a href="javascript:;" id="qr-filerm" class="qr-action-button" title="Remove file">✕</a>
+        <a href="javascript:;" id="url-button" class="qr-action-button" title="Post from URL">🔗︎</a>
+        <a href="javascript:;" hidden id="paste-area" class="qr-action-button" title="Select to paste images" tabindex="-1" contentEditable="true">📋︎</a>
+        <a href="javascript:;" id="custom-cooldown-button" class="qr-action-button" title="Toggle custom cooldown" class="disabled">🕒︎</a>
+        <a href="javascript:;" id="split-post" class="qr-action-button" title="Split into multiple posts" hidden>✂️</a>
+        <a href="javascript:;" id="dump-button" class="qr-action-button" title="Dump list">➕︎</a>
       </span>
-      <input type="submit">
+      <input class="qr-button" type="submit">
     </span>
   </div>
   <select data-default="4" name="filetag">
@@ -6472,7 +6412,7 @@ svg.icon {
     init() {
       if ((g.SITE.software !== 'yotsuba') || (d.cookie.indexOf('pass_enabled=1') >= 0)) { return; }
 
-      if (Conf['Force Noscript Captcha'] && Main$1.jsEnabled) {
+      if (Conf['Force Noscript Captcha'] && Main.jsEnabled) {
         $.ready(this.noscript);
         return;
       }
@@ -7173,7 +7113,7 @@ svg.icon {
           try {
             if (!entry.open(data)) { return; }
           } catch (err) {
-            Main$1.handleErrors({
+            Main.handleErrors({
               message: `Error in building the ${this.type} menu.`,
               error: err
             });
@@ -7311,6 +7251,11 @@ svg.icon {
         for (var subEntry of subEntries) {
           this.parseEntry(subEntry);
         }
+        const span = $.el('span',
+          {className: 'menu-indicator'}
+        );
+        Icon.set(span, 'caretRight');
+        $.add(el, span);
       }
     };
     Menu$1.initClass();
@@ -7345,9 +7290,9 @@ svg.icon {
     [o.topBorder, o.bottomBorder] = Conf['Header auto-hide'] || !Conf['Fixed Header'] ?
       [0, 0]
     : Conf['Bottom Header'] ?
-      [0, Header$1.bar.getBoundingClientRect().height]
+      [0, Header.bar.getBoundingClientRect().height]
     :
-      [Header$1.bar.getBoundingClientRect().height, 0];
+      [Header.bar.getBoundingClientRect().height, 0];
 
     if (isTouching) {
       o.identifier = e.identifier;
@@ -7544,14 +7489,19 @@ svg.icon {
         {id: 'navlinks'});
       const prev = $.el('a', {
         textContent: '▲',
+        className: 'navlinks-navlink navlink-prev',
         href: 'javascript:;'
       }
       );
       const next = $.el('a', {
         textContent: '▼',
+        className: 'navlinks-navlink navlink-next',
         href: 'javascript:;'
       }
       );
+
+      Icon.set(prev, 'arrowUpLong');
+      Icon.set(next, 'arrowDownLong');
 
       $.on(prev, 'click', this.prev);
       $.on(next, 'click', this.next);
@@ -7586,7 +7536,7 @@ svg.icon {
       for (var threadRoot of $$(g.SITE.selectors.thread)) {
         var thread = Get.threadFromRoot(threadRoot);
         if (thread.isHidden && !thread.stub) { continue; }
-        if (Header$1.getTopOf(threadRoot) >= -threadRoot.getBoundingClientRect().height) { // not scrolled past
+        if (Header.getTopOf(threadRoot) >= -threadRoot.getBoundingClientRect().height) { // not scrolled past
           return threadRoot;
         }
       }
@@ -7605,14 +7555,14 @@ svg.icon {
         // Unless we're not at the beginning of the current thread,
         // and thus wanting to move to beginning,
         // or we're above the first thread and don't want to skip it.
-        const top = Header$1.getTopOf(thread);
+        const top = Header.getTopOf(thread);
         if (((delta === +1) && (top < 5)) || ((delta === -1) && (top > -5))) { thread = next; }
       }
       // Add extra space to the end of the page if necessary so that all threads can be selected by keybinds.
-      const extra = (Header$1.getTopOf(thread) + doc.clientHeight) - d.body.getBoundingClientRect().bottom;
+      const extra = (Header.getTopOf(thread) + doc.clientHeight) - d.body.getBoundingClientRect().bottom;
       if (extra > 0) { d.body.style.marginBottom = `${extra}px`; }
 
-      Header$1.scrollTo(thread);
+      Header.scrollTo(thread);
 
       if ((extra > 0) && !Nav.haveExtra) {
         Nav.haveExtra = true;
@@ -7679,8 +7629,8 @@ svg.icon {
       $.on(this.inputs.unmute, 'change', $.cb.checked);
       $.on(this.inputs.volume, 'change', $.cb.value);
 
-      Header$1.menu.addEntry({el: unmuteEntry, order: 200});
-      return Header$1.menu.addEntry({el: volumeEntry, order: 201});
+      Header.menu.addEntry({el: unmuteEntry, order: 200});
+      return Header.menu.addEntry({el: volumeEntry, order: 201});
     },
 
     setup(video) {
@@ -7713,7 +7663,7 @@ svg.icon {
       if (g.SITE.noAudio?.(this.board)) { return; }
       for (var file of this.files) {
         if (file.isVideo) {
-          if (file.thumb) { $.on(file.thumb, 'wheel', Volume.wheel.bind(Header$1.hover)); }
+          if (file.thumb) { $.on(file.thumb, 'wheel', Volume.wheel.bind(Header.hover)); }
           $.on(($('.file-info', file.text) || file.link), 'wheel', Volume.wheel.bind(file.thumbLink));
         }
       }
@@ -7722,7 +7672,7 @@ svg.icon {
     catalogNode() {
       const file = this.thread.OP.files[0];
       if (!file?.isVideo) { return; }
-      return $.on(this.nodes.thumb, 'wheel', Volume.wheel.bind(Header$1.hover));
+      return $.on(this.nodes.thumb, 'wheel', Volume.wheel.bind(Header.hover));
     },
 
     wheel(e) {
@@ -7782,7 +7732,7 @@ svg.icon {
       });
       Icon.set(this.EAI, 'expand', 'Expand All Images');
       $.on(this.EAI, 'click', this.cb.toggleAll);
-      Header$1.addShortcut('expand-all', this.EAI, 520);
+      Header.addShortcut('expand-all', this.EAI, 520);
       $.on(d, 'scroll visibilitychange', this.cb.playVideos);
       this.videoControls = $.el('span', { className: 'video-controls' });
       $.extend(this.videoControls, { innerHTML: " <a href=\"javascript:;\" title=\"You can also contract the video by dragging it to the left.\">contract</a>" });
@@ -7842,7 +7792,7 @@ svg.icon {
           if (ImageExpand.on &&
             ((!Conf['Expand spoilers'] && file.isSpoiler) ||
               (!Conf['Expand videos'] && file.isVideo) ||
-              (Conf['Expand from here'] && (Header$1.getTopOf(file.thumb) < 0)) ||
+              (Conf['Expand from here'] && (Header.getTopOf(file.thumb) < 0)) ||
               (Conf['Expand thread only'] && (g.VIEW === 'index') && !threadRoot?.contains(file.thumb)))) {
             return;
           }
@@ -7873,7 +7823,7 @@ svg.icon {
               continue;
             }
             var video = file.fullImage;
-            var visible = ($.hasAudio(video) && !video.muted) || Header$1.isNodeVisible(video);
+            var visible = ($.hasAudio(video) && !video.muted) || Header.isNodeVisible(video);
             if (visible && file.wasPlaying) {
               delete file.wasPlaying;
               video.play();
@@ -7903,7 +7853,7 @@ svg.icon {
           }
         }
         if (next) {
-          return Header$1.scrollTo(next);
+          return Header.scrollTo(next);
         }
       }
     },
@@ -7911,7 +7861,7 @@ svg.icon {
       let bottom, el, oldHeight, scrollY;
       const { file } = post;
       if (el = file.fullImage) {
-        const top = Header$1.getTopOf(el);
+        const top = Header.getTopOf(el);
         bottom = top + el.getBoundingClientRect().height;
         oldHeight = d.body.clientHeight;
         ({ scrollY } = window);
@@ -7933,7 +7883,7 @@ svg.icon {
           window.scrollBy(0, ((scrollY - window.scrollY) + d.body.clientHeight) - oldHeight);
         } else {
           // For images not above us that would be moved above us, scroll to the thumbnail.
-          Header$1.scrollToIfNeeded(post.nodes.root);
+          Header.scrollToIfNeeded(post.nodes.root);
         }
         if (window.scrollX > 0) {
           // If we have scrolled right viewing an expanded image, return to the left.
@@ -8021,7 +7971,7 @@ svg.icon {
         $.on(el, 'loadedmetadata', () => ImageExpand.completeExpand(post));
       }
       if (Conf['Enable sound posts'] && Conf['Allow Sound']) {
-        const soundUrlMatch = file.name.match(/\[sound=([^\]]+)]/);
+        const soundUrlMatch = file.name.match(/\[sound=([^\]]+)]/i);
         if (soundUrlMatch) {
           let src = decodeURIComponent(soundUrlMatch[1]);
           if (!src.startsWith('http'))
@@ -8045,7 +7995,7 @@ svg.icon {
       if (!file.isExpanding) {
         return;
       } // contracted before the image loaded
-      const bottom = Header$1.getTopOf(file.thumb) + file.thumb.getBoundingClientRect().height;
+      const bottom = Header.getTopOf(file.thumb) + file.thumb.getBoundingClientRect().height;
       const oldHeight = d.body.clientHeight;
       const { scrollY } = window;
       $.addClass(post.nodes.root, 'expanded-image');
@@ -8059,9 +8009,9 @@ svg.icon {
       // Scroll to display full image.
       if (file.scrollIntoView) {
         delete file.scrollIntoView;
-        const imageBottom = Math.min(doc.clientHeight - file.fullImage.getBoundingClientRect().bottom - 25, Header$1.getBottomOf(file.fullImage));
+        const imageBottom = Math.min(doc.clientHeight - file.fullImage.getBoundingClientRect().bottom - 25, Header.getBottomOf(file.fullImage));
         if (imageBottom < 0) {
-          window.scrollBy(0, Math.min(-imageBottom, Header$1.getTopOf(file.fullImage)));
+          window.scrollBy(0, Math.min(-imageBottom, Header.getTopOf(file.fullImage)));
         }
       }
       if (file.isVideo) {
@@ -8077,7 +8027,7 @@ svg.icon {
       }
       fullImage.controls = false;
       $.asap((() => doc.contains(fullImage)), function () {
-        if (!d.hidden && Header$1.isNodeVisible(fullImage)) {
+        if (!d.hidden && Header.isNodeVisible(fullImage)) {
           fullImage.play();
         } else {
           post.file.wasPlaying = true;
@@ -8152,7 +8102,7 @@ svg.icon {
           var conf = Config.imageExpansion[name];
           subEntries.push(createSubEntry(name, conf[1]));
         }
-        return Header$1.menu.addEntry({
+        return Header.menu.addEntry({
           el,
           order: 105,
           subEntries
@@ -9042,12 +8992,12 @@ svg.icon {
     makeButton(post, type) {
       const span = $.el('span', {
         className: 'stub-icon',
-        textContent: type === 'hide' ? '➖︎' : '➕︎',
       });
       const a = $.el('a', {
-        className: `${type}-reply-button`,
+        className: `${type}-post-button ${type}-reply-button`,
         href: 'javascript:;'
       });
+      Icon.set(span, type === 'hide' ? 'squareMinus' : 'squarePlus');
       $.add(a, span);
       $.on(a, 'click', PostHiding.toggle);
       return a;
@@ -9060,7 +9010,7 @@ svg.icon {
       };
       if (isHiding) {
         data.val = {
-          thisPost: thisPost !== false,
+          thisPost: thisPost !== false, // undefined -> true
           makeStub,
           hideRecursively,
           byId
@@ -9134,7 +9084,7 @@ svg.icon {
     init() {
       if ((['index', 'thread', 'archive'].includes(g.VIEW) &&
         ['Show', 'Both', 'BothRelativeFirst'].includes(Conf.RelativeTime)) ||
-        Index$1.enabled) {
+        Index.enabled) {
         this.flush();
         $.on(d, 'visibilitychange PostsInserted', this.flush);
       }
@@ -9459,6 +9409,74 @@ svg.icon {
     }
   };
 
+  const ScrollMarkers = {
+    init() {
+      ScrollMarkers.container = $.el('div', { classList: 'scroll-marker-container' });
+      doc.insertAdjacentElement('afterbegin', ScrollMarkers.container);
+      $.on(ScrollMarkers.container, 'click', (e) => {
+        const { postId } = e.target.dataset;
+        if (postId)
+          Header.scrollTo(g.posts[postId].nodes.root);
+      });
+      new ResizeObserver(ScrollMarkers.markScroll).observe(doc);
+    },
+    container: undefined,
+    // Keep instead of redoing so renewing doesn't lose keyboard focus
+    markers: undefined,
+    markScroll: debounce(100, () => {
+      if (!Conf['Scroll Markers']) {
+        ScrollMarkers.container.innerText = '';
+        ScrollMarkers.markers = undefined;
+        return;
+      }
+      const newMarkers = new Map();
+      g.posts?.forEach((post) => {
+        const postEl = post.nodes.root;
+        let isReply = false;
+        if ($.hasClass(postEl, 'quotesYou')) {
+          isReply = true;
+        } else if (!$.hasClass(postEl, 'yourPost')) {
+          return;
+        }
+        const postPosition = postEl.getBoundingClientRect();
+        newMarkers.set(`${post.boardID}.${post.ID}`, {
+          classList: `post-scroll-marker ${isReply ? 'reply' : 'you'}-scroll-marker`,
+          ariaLabel: `Jump to ${isReply ? 'reply to ' : ''} my post`,
+          top: (((postPosition.top + window.scrollY) / doc.scrollHeight) * 100).toFixed(1),
+          height: Math.max(1, (postPosition.height / doc.scrollHeight) * 100).toFixed(1),
+        });
+      });
+      let previousEl;
+      for (const [key, marker] of newMarkers) {
+        const existing = ScrollMarkers.markers?.get(key);
+        let el = existing?.el;
+        if (!el) {
+          el = $.el('button', { type: 'button' });
+          if (previousEl) {
+            previousEl.insertAdjacentElement('afterend', el);
+          } else {
+            $.add(ScrollMarkers.container, el);
+          }
+        }
+        el.classList = marker.classList;
+        el.style.setProperty('--top', marker.top);
+        el.style.setProperty('--height', marker.height);
+        el.dataset.postId = key;
+        marker.el = el;
+        previousEl = el;
+        document.createElement('button');
+      }
+      // Remove those that don't exist anymore
+      if (ScrollMarkers.markers) {
+        for (const [key, { el }] of ScrollMarkers.markers) {
+          if (!newMarkers.has(key))
+            el.remove();
+        }
+      }
+      ScrollMarkers.markers = newMarkers;
+    }, false),
+  };
+
   var QuoteYou = {
     init() {
       if (!Conf['Remember Your Posts']) { return; }
@@ -9499,7 +9517,7 @@ svg.icon {
         cb:   this.node
       });
 
-      return QuoteYou.menu.init();
+      QuoteYou.menu.init();
     },
 
     isYou(post) {
@@ -9515,6 +9533,7 @@ svg.icon {
 
       if (QuoteYou.isYou(this)) {
         $.addClass(this.nodes.root, 'yourPost');
+        ScrollMarkers.markScroll();
       }
 
       // Stop there if there's no quotes in that post.
@@ -9537,7 +9556,7 @@ svg.icon {
           {innerHTML: '<input type="checkbox"> You'});
         const input = $('input', label);
         $.on(input, 'change', QuoteYou.menu.toggle);
-        return Menu.menu?.addEntry({
+        Menu.menu?.addEntry({
           el: label,
           order: 80,
           open(post) {
@@ -9571,6 +9590,7 @@ svg.icon {
             quoter.classList.toggle('quotesYou', !!$('.quotelink.you', quoter));
           }
         }
+        ScrollMarkers.markScroll();
       }
     },
 
@@ -9608,7 +9628,7 @@ svg.icon {
         } else {
           QuoteYou.lastRead = root;
           location.href = Get.url('post', post);
-          Header$1.scrollTo(post.nodes.post);
+          Header.scrollTo(post.nodes.post);
           if (post.isReply) {
             const sel = `${g.SITE.selectors.postContainer}${g.SITE.selectors.highlightable.reply}`;
             let node = post.nodes.root;
@@ -9785,7 +9805,7 @@ svg.icon {
       }
       );
       $.on(resetLink, 'click', Unread.reset);
-      return Header$1.menu.addEntry({
+      return Header.menu.addEntry({
         el: resetLink,
         order: 70
       });
@@ -9816,7 +9836,7 @@ svg.icon {
           // Don't try to scroll to posts with display: none
           position = position.prev;
         } else {
-          Header$1.scrollToIfNeeded(bottom, true);
+          Header.scrollToIfNeeded(bottom, true);
           break;
         }
       }
@@ -9893,14 +9913,14 @@ svg.icon {
     },
 
     openNotification(post, predicate=' replied to you') {
-      if (!Header$1.areNotificationsEnabled) { return; }
+      if (!Header.areNotificationsEnabled) { return; }
       const notif = new Notification(`${post.info.nameBlock}${predicate}`, {
         body: post.commentDisplay(),
         icon: Favicon.logo
       }
       );
       notif.onclick = function() {
-        Header$1.scrollToIfNeeded(post.nodes.bottom, true);
+        Header.scrollToIfNeeded(post.nodes.bottom, true);
         return window.focus();
       };
       return notif.onshow = () => setTimeout(() => notif.close()
@@ -9938,7 +9958,7 @@ svg.icon {
         var {ID, data} = Unread.position;
         var {bottom} = data.nodes;
         if (!!bottom.getBoundingClientRect().height && // post has been hidden
-          (Header$1.getBottomOf(bottom) <= -1)) { break; }                      // post is completely read
+          (Header.getBottomOf(bottom) <= -1)) { break; }                      // post is completely read
         count++;
         Unread.posts.delete(ID);
         Unread.postsQuotingYou.delete(ID);
@@ -10042,7 +10062,7 @@ svg.icon {
             }
           }
         }
-        return ThreadWatcher$1.update(g.SITE.ID, Unread.thread.board.ID, Unread.thread.ID, {
+        return ThreadWatcher.update(g.SITE.ID, Unread.thread.board.ID, Unread.thread.ID, {
           last: Unread.thread.lastPost,
           isDead: Unread.thread.isDead,
           isArchived: Unread.thread.isArchived,
@@ -10159,7 +10179,7 @@ svg.icon {
         if ('file' in Get.postFromRoot(reply)) { filesCount++; }
         $.rm(reply);
       }
-      if (Index$1.enabled) { // otherwise handled by Main.addPosts
+      if (Index.enabled) { // otherwise handled by Main.addPosts
         $.event('PostsRemoved', null, a.parentNode);
       }
       a.textContent = g.SITE.Build.summaryText('+', postsCount, filesCount);
@@ -10193,7 +10213,7 @@ svg.icon {
         posts.push(post);
         postsRoot.push(root);
       }
-      Main$1.callbackNodes('Post', posts);
+      Main.callbackNodes('Post', posts);
       $.after(a, postsRoot);
       $.event('PostsInserted', null, a.parentNode);
 
@@ -10234,7 +10254,7 @@ svg.icon {
         boardID: this.board.ID,
         threadID: this.ID
       }) || 0;
-      if (!Index$1.enabled) { // let onIndexRefresh handle JSON Index
+      if (!Index.enabled) { // let onIndexRefresh handle JSON Index
         return UnreadIndex.update(this);
       }
     },
@@ -10252,13 +10272,13 @@ svg.icon {
     },
 
     onPostsInserted(e) {
-      if (e.target === Index$1.root) { return; } // onIndexRefresh handles this case
+      if (e.target === Index.root) { return; } // onIndexRefresh handles this case
       const thread = Get.threadFromNode(e.target);
       if (!thread || (thread.nodes.root !== e.target)) { return; }
       const wasVisible = !!UnreadIndex.hr[thread.fullID]?.parentNode;
       UnreadIndex.update(thread);
       if (Conf['Scroll to Last Read Post'] && (e.type === 'PostsInserted') && !wasVisible && !!UnreadIndex.hr[thread.fullID]?.parentNode) {
-        return Header$1.scrollToIfNeeded(UnreadIndex.hr[thread.fullID], true);
+        return Header.scrollToIfNeeded(UnreadIndex.hr[thread.fullID], true);
       }
     },
 
@@ -10307,7 +10327,7 @@ svg.icon {
 
       const hasUnread = repliesShown ?
         firstUnread || !repliesRead
-      : Index$1.enabled ?
+      : Index.enabled ?
         thread.lastPost > lastReadPost
       :
         thread.OP.ID > lastReadPost;
@@ -10340,7 +10360,7 @@ svg.icon {
       });
       $.rm(UnreadIndex.hr[thread.fullID]);
       thread.nodes.root.classList.remove('unread-thread');
-      return ThreadWatcher$1.update(g.SITE.ID, thread.board.ID, thread.ID, {
+      return ThreadWatcher.update(g.SITE.ID, thread.board.ID, thread.ID, {
         last: thread.lastPost,
         unread: 0,
         quotingYou: 0
@@ -10374,6 +10394,7 @@ svg.icon {
 
       Icon.set(this.refreshButton, 'refresh');
       Icon.set(this.menuButton, 'caretDown');
+      Icon.set(this.closeButton, 'xmark');
 
       $.on(d, 'QRPostSuccessful',   this.cb.post);
       $.on(sc, 'click', this.toggleWatcher);
@@ -10400,13 +10421,13 @@ svg.icon {
         this.dialog.hidden = true;
       }
 
-      Header$1.addShortcut('watcher', sc, 510,);
+      Header.addShortcut('watcher', sc, 510,);
 
       ThreadWatcher.initLastModified();
       ThreadWatcher.fetchAuto();
       $.on(window, 'visibilitychange focus', () => $.queueTask(ThreadWatcher.fetchAuto));
 
-      if (Conf['Menu'] && Index$1.enabled) {
+      if (Conf['Menu'] && Index.enabled) {
         Menu.menu.addEntry({
           el: $.el('a', {
             href:      'javascript:;',
@@ -10423,7 +10444,7 @@ svg.icon {
             if (this.cb) { $.off(this.el, 'click', this.cb); }
             this.cb = function() {
               $.event('CloseMenu');
-              return ThreadWatcher.toggle(thread);
+              return ThreadWatcher.toggle(thread, true);
             };
             $.on(this.el, 'click', this.cb);
             return true;
@@ -10486,14 +10507,14 @@ svg.icon {
     catalogNode() {
       if (ThreadWatcher.isWatched(this.thread)) { $.addClass(this.nodes.root, 'watched'); }
       return $.on(this.nodes.root, 'mousedown click', e => {
-        if ((e.button !== 0) || !e.altKey) { return; }
-        if (e.type === 'click') { ThreadWatcher.toggle(this.thread); }
+        if ((e.button !== 0) || !e.altKey) return;
+        if (e.type === 'click') ThreadWatcher.toggle(this.thread, true);
         return e.preventDefault();
       });
     }, // Also on mousedown to prevent highlighting thumbnail in Firefox.
 
     addDialog() {
-      if (!Main$1.isThisPageLegit()) { return; }
+      if (!Main.isThisPageLegit()) { return; }
       ThreadWatcher.build();
       return $.prepend(d.body, ThreadWatcher.dialog);
     },
@@ -10505,35 +10526,55 @@ svg.icon {
 
     cb: {
       openAll() {
-        if ($.hasClass(this, 'disabled')) { return; }
+        if ($.hasClass(this, 'disabled')) return;
         for (var a of $$('a.watcher-link', ThreadWatcher.list)) {
           $.open(a.href);
         }
-        return $.event('CloseMenu');
+        $.event('CloseMenu');
       },
       openUnread() {
-        if ($.hasClass(this, 'disabled')) { return; }
+        if ($.hasClass(this, 'disabled')) return;
         for (var a of $$('.replies-unread > a.watcher-link', ThreadWatcher.list)) {
           $.open(a.href);
         }
-        return $.event('CloseMenu');
+        $.event('CloseMenu');
       },
       openDeads() {
-        if ($.hasClass(this, 'disabled')) { return; }
-        for (var a of $$('.dead-thread > a.watcher-link', ThreadWatcher.list)) {
+        if ($.hasClass(this, 'disabled')) return;
+        for (var a of $$('.dead-thread.replies-unread > a.watcher-link', ThreadWatcher.list)) {
           $.open(a.href);
         }
-        return $.event('CloseMenu');
+        $.event('CloseMenu');
+      },
+      clear() {
+        if (!confirm("Delete ALL threads from watcher?")) return;
+        const ref = ThreadWatcher.getAll();
+        for (let i = 0, len = ref.length; i < len; i++) {
+          const { siteID, boardID, threadID } = ref[i];
+          ThreadWatcher.db.delete({ siteID, boardID, threadID });
+        }
+        ThreadWatcher.refresh(true);
+        $.event('CloseMenu');
       },
       pruneDeads() {
-        if ($.hasClass(this, 'disabled')) { return; }
+        if ($.hasClass(this, 'disabled')) return;
         for (var {siteID, boardID, threadID, data} of ThreadWatcher.getAll()) {
           if (data.isDead) {
             ThreadWatcher.db.delete({siteID, boardID, threadID});
           }
         }
-        ThreadWatcher.refresh();
-        return $.event('CloseMenu');
+        ThreadWatcher.refresh(true);
+        $.event('CloseMenu');
+      },
+      pruneReadDeads() {
+        if ($.hasClass(this, 'disabled')) return;
+        for (var { siteID, boardID, threadID, data } of ThreadWatcher.getAll()) {
+          if (data.isDead && !data.unread) {
+            ThreadWatcher.db.delete({ siteID, boardID, threadID });
+          }
+        }
+        ThreadWatcher.refresh(true);
+        $.event('CloseMenu');
       },
       dismiss() {
         for (var {siteID, boardID, threadID, data} of ThreadWatcher.getAll()) {
@@ -10541,26 +10582,28 @@ svg.icon {
             ThreadWatcher.update(siteID, boardID, threadID, {dismiss: data.quotingYou || 0});
           }
         }
-        return $.event('CloseMenu');
+        $.event('CloseMenu');
       },
       toggle() {
         const {thread} = Get.postFromNode(this);
-        return ThreadWatcher.toggle(thread);
+        ThreadWatcher.toggle(thread, true);
       },
       rm() {
         const {siteID} = this.parentNode.dataset;
         const [boardID, threadID] = this.parentNode.dataset.fullID.split('.');
-        return ThreadWatcher.rm(siteID, boardID, +threadID);
+        ThreadWatcher.rm(siteID, boardID, +threadID, undefined, true);
       },
       post(e) {
         const {boardID, threadID, postID} = e.detail;
         const cb = PostRedirect.delay();
         if (postID === threadID) {
           if (Conf['Auto Watch']) {
-            return ThreadWatcher.addRaw(boardID, threadID, {}, cb);
+            ThreadWatcher.addRaw(boardID, threadID, {}, cb, true);
           }
         } else if (Conf['Auto Watch Reply']) {
-          return ThreadWatcher.add((g.threads.get(boardID + '.' + threadID) || new Thread(threadID, g.boards[boardID] || new Board(boardID))), cb);
+          ThreadWatcher.add(
+            (g.threads.get(boardID + '.' + threadID) || new Thread(threadID, g.boards[boardID] || new Board(boardID))),
+            cb, true);
         }
       },
       onIndexUpdate(e) {
@@ -10610,7 +10653,7 @@ svg.icon {
         }
         return cb.apply(this, args);
       };
-      const ajax = siteID === g.SITE.ID ? $.ajax : CrossOrigin$1.ajax;
+      const ajax = siteID === g.SITE.ID ? $.ajax : CrossOrigin.ajax;
       if (force) {
         delete $.lastModified.ThreadWatcher?.[url];
       }
@@ -10895,8 +10938,8 @@ svg.icon {
       const x = $.el('a', {
         textContent: '✕',
         href: 'javascript:;'
-      }
-      );
+      });
+      Icon.set(x, 'xmark');
       $.on(x, 'click', ThreadWatcher.cb.rm);
 
       let {excerpt, isArchived} = data;
@@ -10907,15 +10950,13 @@ svg.icon {
         href: g.sites[siteID]?.urls.thread({siteID, boardID, threadID}, isArchived) || '',
         title: excerpt,
         className: 'watcher-link'
-      }
-      );
+      });
 
       if (Conf['Show Page'] && (data.page != null)) {
         page = $.el('span', {
           textContent: `[${data.page}]`,
           className: 'watcher-page'
-        }
-        );
+        });
         $.add(link, page);
       }
 
@@ -10923,16 +10964,14 @@ svg.icon {
         const count = $.el('span', {
           textContent: `(${data.unread})`,
           className: 'watcher-unread'
-        }
-        );
+        });
         $.add(link, count);
       }
 
       const title = $.el('span', {
         textContent: excerpt,
         className: 'watcher-title'
-      }
-      );
+      });
       $.add(link, title);
 
       const div = $.el('div');
@@ -10998,7 +11037,7 @@ svg.icon {
       return ThreadWatcher.refreshIcon();
     },
 
-    refresh() {
+    refresh(manual) {
       ThreadWatcher.build();
 
       g.threads.forEach(function(thread) {
@@ -11015,7 +11054,7 @@ svg.icon {
       });
 
       if (Conf['Pin Watched Threads']) {
-        return $.event('SortIndex', {deferred: Conf['Index Mode'] !== 'catalog'});
+        return $.event('SortIndex', {deferred: !(manual && Conf['Index Mode'] === 'catalog')});
       }
     },
 
@@ -11066,18 +11105,18 @@ svg.icon {
       return ThreadWatcher.db.extend({boardID, threadID, val: {isDead: true, isArchived: undefined, page: undefined, lastPage: undefined, unread: undefined, quotingYou: undefined}}, cb);
     },
 
-    toggle(thread) {
+    toggle(thread, manual) {
       const siteID   = g.SITE.ID;
       const boardID  = thread.board.ID;
       const threadID = thread.ID;
       if (ThreadWatcher.db.get({boardID, threadID})) {
-        return ThreadWatcher.rm(siteID, boardID, threadID);
+        return ThreadWatcher.rm(siteID, boardID, threadID, undefined, manual);
       } else {
-        return ThreadWatcher.add(thread);
+        return ThreadWatcher.add(thread, undefined, manual);
       }
     },
 
-    add(thread, cb) {
+    add(thread, cb, manual) {
       const data     = {};
       const siteID   = g.SITE.ID;
       const boardID  = thread.board.ID;
@@ -11090,16 +11129,16 @@ svg.icon {
         data.isDead = true;
       }
       if (thread.OP) { data.excerpt = Get.threadExcerpt(thread); }
-      return ThreadWatcher.addRaw(boardID, threadID, data, cb);
+      return ThreadWatcher.addRaw(boardID, threadID, data, cb, manual);
     },
 
-    addRaw(boardID, threadID, data, cb) {
+    addRaw(boardID, threadID, data, cb, manual) {
       const oldData = ThreadWatcher.db.get({ boardID, threadID, defaultValue: dict() });
       delete oldData.last;
       delete oldData.modified;
       $.extend(oldData, data);
       ThreadWatcher.db.set({boardID, threadID, val: oldData}, cb);
-      ThreadWatcher.refresh();
+      ThreadWatcher.refresh(manual);
       const thread = {siteID: g.SITE.ID, boardID, threadID, data, force: true};
       if (Conf['Show Page'] && !data.isDead) {
         return ThreadWatcher.fetchBoard([thread]);
@@ -11108,9 +11147,9 @@ svg.icon {
       }
     },
 
-    rm(siteID, boardID, threadID, cb) {
+    rm(siteID, boardID, threadID, cb, manual) {
       ThreadWatcher.db.delete({siteID, boardID, threadID}, cb);
-      return ThreadWatcher.refresh();
+      return ThreadWatcher.refresh(manual);
     },
 
     menu: {
@@ -11127,7 +11166,7 @@ svg.icon {
         if (g.VIEW !== 'thread') { return; }
         const entryEl = $.el('a',
           {href: 'javascript:;'});
-        Header$1.menu.addEntry({
+        Header.menu.addEntry({
           el: entryEl,
           order: 60,
           open() {
@@ -11141,70 +11180,78 @@ svg.icon {
             return true;
           }
         });
-        return $.on(entryEl, 'click', () => ThreadWatcher.toggle(g.threads.get(`${g.BOARD}.${g.THREADID}`)));
+        return $.on(entryEl, 'click', () => ThreadWatcher.toggle(g.threads.get(`${g.BOARD}.${g.THREADID}`), true));
       },
 
       addMenuEntries() {
-        const entries = [];
+        const toggleDisabledDead = function () {
+          this.el.classList.toggle('disabled', !$('.dead-thread', ThreadWatcher.list));
+          return true;
+        };
 
-        // `Open all` entry
-        entries.push({
-          text: 'Open all threads',
-          cb: ThreadWatcher.cb.openAll,
-          open() {
-            this.el.classList.toggle('disabled', !ThreadWatcher.list.firstElementChild);
-            return true;
-          }
-        });
-
-        // `Open Unread` entry
-        entries.push({
-          text: 'Open unread threads',
-          cb: ThreadWatcher.cb.openUnread,
-          open() {
-            this.el.classList.toggle('disabled', !$('.replies-unread', ThreadWatcher.list));
-            return true;
-          }
-        });
-
-        // `Open dead threads` entry
-        entries.push({
-          text: 'Open dead threads',
-          cb: ThreadWatcher.cb.openDeads,
-          open() {
-            this.el.classList.toggle('disabled', !$('.dead-thread', ThreadWatcher.list));
-            return true;
-          }
-        });
-
-        // `Prune dead threads` entry
-        entries.push({
-          text: 'Prune dead threads',
-          cb: ThreadWatcher.cb.pruneDeads,
-          open() {
-            this.el.classList.toggle('disabled', !$('.dead-thread', ThreadWatcher.list));
-            return true;
-          }
-        });
-
-        // `Dismiss posts quoting you` entry
-        entries.push({
-          text: 'Dismiss posts quoting you',
-          title: 'Unhighlight the thread watcher icon and threads until there are new replies quoting you.',
-          cb: ThreadWatcher.cb.dismiss,
-          open() {
-            this.el.classList.toggle('disabled', !$.hasClass(ThreadWatcher.shortcut, 'replies-quoting-you'));
-            return true;
-          }
-        });
+        const entries = [
+          // `Open all` entry
+          {
+            text: 'Open all threads',
+            cb: ThreadWatcher.cb.openAll,
+            open() {
+              this.el.classList.toggle('disabled', !ThreadWatcher.list.firstElementChild);
+              return true;
+            }
+          },
+          {
+            text: 'Clear all threads',
+            cb: ThreadWatcher.cb.clear,
+            open() {
+              this.el.classList.toggle('disabled', !ThreadWatcher.list.firstElementChild);
+              return true;
+            }
+          },
+          // `Open Unread` entry
+          {
+            text: 'Open unread threads',
+            cb: ThreadWatcher.cb.openUnread,
+            open() {
+              this.el.classList.toggle('disabled', !$('.replies-unread', ThreadWatcher.list));
+              return true;
+            }
+          },
+          // `Open unread dead threads` entry
+          {
+            text: 'Open unread dead threads',
+            cb: ThreadWatcher.cb.openDeads,
+            open: toggleDisabledDead,
+          },
+          // `Prune all dead threads` entry
+          {
+            text: 'Prune all dead threads',
+            cb: ThreadWatcher.cb.pruneDeads,
+            open: toggleDisabledDead,
+          },
+          // `Prune read dead threads` entry
+          {
+            text: 'Prune read dead threads',
+            cb: ThreadWatcher.cb.pruneReadDeads,
+            open: toggleDisabledDead,
+          },
+          // `Dismiss posts quoting you` entry
+          {
+            text: 'Dismiss posts quoting you',
+            title: 'Unhighlight the thread watcher icon and threads until there are new replies quoting you.',
+            cb: ThreadWatcher.cb.dismiss,
+            open() {
+              this.el.classList.toggle('disabled', !$.hasClass(ThreadWatcher.shortcut, 'replies-quoting-you'));
+              return true;
+            }
+          },
+        ];
 
         for (var {text, title, cb, open} of entries) {
           var entry = {
             el: $.el('a', {
               textContent: text,
               href: 'javascript:;'
-            }
-            )
+            })
           };
           if (title) { entry.el.title = title; }
           $.on(entry.el, 'click', cb);
@@ -11233,13 +11280,14 @@ svg.icon {
           entry.el.title += '\n[Remember Last Read Post is disabled.]';
         }
         $.on(input, 'change', $.cb.checked);
-        if (['Current Board', 'Show Page', 'Show Unread Count', 'Show Site Prefix'].includes(name)) { $.on(input, 'change', ThreadWatcher.refresh); }
-        if (['Show Page', 'Show Unread Count', 'Auto Update Thread Watcher'].includes(name)) { $.on(input, 'change', ThreadWatcher.fetchAuto); }
+        if (['Current Board', 'Show Page', 'Show Unread Count', 'Show Site Prefix'].includes(name))
+          $.on(input, 'change', () => ThreadWatcher.refresh());
+        if (['Show Page', 'Show Unread Count', 'Auto Update Thread Watcher'].includes(name))
+          $.on(input, 'change', ThreadWatcher.fetchAuto);
         return this.menu.addEntry(entry);
       }
     }
   };
-  var ThreadWatcher$1 = ThreadWatcher;
 
   const parseArchivePost = (data) => {
     // https://github.com/eksopl/asagi/blob/v0.4.0b74/src/main/java/net/easymodo/asagi/YotsubaAbstract.java#L82-L129
@@ -11305,11 +11353,11 @@ svg.icon {
       if (thumb_link?.[0] === '/') {
         thumb_link = url.split('/', 3).join('/') + thumb_link;
       }
-      if (!Redirect$1.securityCheck(thumb_link)) {
+      if (!Redirect.securityCheck(thumb_link)) {
         thumb_link = '';
       }
-      let media_link = Redirect$1.to('file', { boardID: o.boardID, filename: data.media.media_orig });
-      if (!Redirect$1.securityCheck(media_link)) {
+      let media_link = Redirect.to('file', { boardID: o.boardID, filename: data.media.media_orig });
+      if (!Redirect.securityCheck(media_link)) {
         media_link = '';
       }
       o.file = {
@@ -11346,7 +11394,7 @@ svg.icon {
     if (post.file) {
       post.file.thumbURL = o.file.thumbURL;
     }
-    Main$1.callbackNodes('Post', [post]);
+    Main.callbackNodes('Post', [post]);
     return post;
   };
 
@@ -11383,7 +11431,7 @@ svg.icon {
       $.on(this.inputs.enabled, 'change', this.setEnabled);
       $.on(this.inputs.replies, 'change', $.cb.value);
 
-      Header$1.menu.addEntry({
+      Header.menu.addEntry({
         el,
         order: 190
       });
@@ -11508,7 +11556,7 @@ svg.icon {
       ReplyPruning.summary.hidden = (ReplyPruning.total <= +Conf["Max Replies"]);
 
       // Maintain position in thread when posts are added/removed above
-      if ((hidden1 !== hidden2) && ((boardTop = Header$1.getTopOf($('.board'))) < 0)) {
+      if ((hidden1 !== hidden2) && ((boardTop = Header.getTopOf($('.board'))) < 0)) {
         return window.scrollBy(0, Math.max(d.body.clientHeight - oldPos, window.scrollY + boardTop) - window.scrollY);
       }
     }
@@ -11534,7 +11582,7 @@ svg.icon {
       $.on(this.input, 'change', this.rethread);
       $.on(this.threadNewLink.firstElementChild, 'click', this.rethread);
       $.on(d, '4chanXInitFinished', () => { this.ready = true; });
-      Header$1.menu.addEntry(this.entry = {
+      Header.menu.addEntry(this.entry = {
         el: this.controls,
         order: 99
       });
@@ -11715,14 +11763,14 @@ svg.icon {
 
   const RestoreDeletedFromArchive = {
     restore() {
-      const url = Redirect$1.to('threadJSON', { boardID: g.boardID, threadID: g.threadID });
+      const url = Redirect.to('threadJSON', { boardID: g.boardID, threadID: g.threadID });
       if (!url) {
         new Notice('warning', 'No archive found', 3);
         return;
       }
       const encryptionOK = url.startsWith('https://');
       if (encryptionOK || Conf['Exempt Archives from Encryption']) {
-        CrossOrigin$1.ajax(url, { onloadend() {
+        CrossOrigin.ajax(url, { onloadend() {
             if (this.status < 200 || this.status >= 400) {
               const domain = E(new URL(url).origin);
               new Notice('error', $.el('div', {
@@ -11762,9 +11810,9 @@ svg.icon {
       });
       $.on(menuEntry, 'click', () => {
         RestoreDeletedFromArchive.restore();
-        Header$1.menu.close();
+        Header.menu.close();
       });
-      Header$1.menu.addEntry({
+      Header.menu.addEntry({
         el: menuEntry,
         order: 10,
       });
@@ -11814,10 +11862,10 @@ svg.icon {
         return;
       }
       // 4chan X catalog data
-      if ((post = Index$1.replyData?.[`${this.boardID}.${this.postID}`]) && (thread = g.threads.get(`${this.boardID}.${this.threadID}`))) {
+      if ((post = Index.replyData?.[`${this.boardID}.${this.postID}`]) && (thread = g.threads.get(`${this.boardID}.${this.threadID}`))) {
         const board = g.boards[this.boardID];
         post = new Post(g.SITE.Build.postFromObject(post, this.boardID), thread, board, { isFetchedQuote: true });
-        Main$1.callbackNodes('Post', [post]);
+        Main.callbackNodes('Post', [post]);
         this.insert(post);
         return;
       }
@@ -11840,7 +11888,7 @@ svg.icon {
         this.quoter = post;
       }
       const clone = post.addClone(this.quoter.context, ($.hasClass(this.root, 'dialog')));
-      Main$1.callbackNodes('Post', [clone]);
+      Main.callbackNodes('Post', [clone]);
       // Get rid of the side arrows/stubs.
       const { nodes } = clone;
       $.rmAll(nodes.root);
@@ -11921,7 +11969,7 @@ svg.icon {
       const thread = g.threads.get(`${this.boardID}.${this.threadID}`) ||
         new Thread(this.threadID, board);
       post = new Post(g.SITE.Build.postFromObject(post, this.boardID), thread, board, { isFetchedQuote: true });
-      Main$1.callbackNodes('Post', [post]);
+      Main.callbackNodes('Post', [post]);
       return this.insert(post);
     }
     archivedPost() {
@@ -11929,14 +11977,14 @@ svg.icon {
       if (!Conf['Resurrect Quotes']) {
         return false;
       }
-      if (!(url = Redirect$1.to('post', { boardID: this.boardID, postID: this.postID }))) {
+      if (!(url = Redirect.to('post', { boardID: this.boardID, postID: this.postID }))) {
         return false;
       }
-      const archive = Redirect$1.data.post[this.boardID];
+      const archive = Redirect.data.post[this.boardID];
       const encryptionOK = /^https:\/\//.test(url) || (location.protocol === 'http:');
       if (encryptionOK || Conf['Exempt Archives from Encryption']) {
         const that = this;
-        CrossOrigin$1.cache(url, function () {
+        CrossOrigin.cache(url, function () {
           if (!encryptionOK && this.response?.media) {
             const { media } = this.response;
             for (var key in media) {
@@ -12042,7 +12090,7 @@ svg.icon {
       }
       );
 
-      $.add(Header$1.hover, qp);
+      $.add(Header.hover, qp);
       new Fetcher(boardID, threadID, postID, qp, Get.postFromNode(this));
 
       UI.hover({
@@ -12068,7 +12116,7 @@ svg.icon {
       let root;
       if (!(root = this.el.firstElementChild)) { return; }
 
-      $.event('PostsRemoved', null, Header$1.hover);
+      $.event('PostsRemoved', null, Header.hover);
 
       const clone = Get.postFromRoot(root);
       let post  = clone.origin;
@@ -12188,7 +12236,7 @@ svg.icon {
       });
       Icon.set(this.button, 'refresh', 'Refresh');
       $.on(this.button, 'click', () => Index.update());
-      Header$1.addShortcut('index-refresh', this.button, 590);
+      Header.addShortcut('index-refresh', this.button, 590);
 
       // Header "Index Navigation" submenu
       const entries = [];
@@ -12222,7 +12270,7 @@ svg.icon {
       $.on(sortEntry.firstChild, 'change', this.cb.perBoardSort);
       entries.splice(3, 0, {el: sortEntry});
 
-      Header$1.menu.addEntry({
+      Header.menu.addEntry({
         el: $.el('span',
           {textContent: 'Index Navigation'}),
         order: 100,
@@ -12241,6 +12289,7 @@ svg.icon {
       this.setupSearch();
       $.on(this.searchInput, 'input', this.onSearchInput);
       $.on($('#index-search-clear', this.navLinks), 'click', this.clearSearch);
+      Icon.set($('#index-search-clear', this.navLinks), 'xmark');
 
       // Hidden threads toggle
       this.hideLabel = $('#hidden-label', this.navLinks);
@@ -12329,7 +12378,7 @@ svg.icon {
         if (timeEl.dataset.utc) { return RelativeDates.update(timeEl); }
       });
 
-      return Main$1.ready(function() {
+      return Main.ready(function() {
         let pagelist;
         if (pagelist = $('.pagelist')) {
           $.replace(pagelist, Index.pagelist);
@@ -12395,18 +12444,17 @@ svg.icon {
     },
 
     catalogNode() {
-      return $.on(this.nodes.root, 'mousedown click', e => {
-        if ((e.button !== 0) || !e.shiftKey) { return; }
-        if (e.type === 'click') {
-          e.preventDefault();
-          if (Conf['MD5 Quick Filter in the Catalog'] && e.target.classList.contains('catalog-thumb')) {
-            Filter.quickFilterMD5.call(this.thread.OP);
-          } else {
-            Index.toggleHide(this.thread);
-          }
+      return $.on(this.nodes.root, 'click', e => {
+        if ((e.button !== 0) || !e.shiftKey) return;
+        e.preventDefault();
+        getSelection().removeAllRanges();
+        if (Conf['MD5 Quick Filter in the Catalog'] && e.target.classList.contains('catalog-thumb')) {
+          Filter.quickFilterMD5.call(this.thread.OP);
+        } else {
+          Index.toggleHide(this.thread);
         }
       });
-    }, // Also on mousedown to prevent highlighting text.
+    },
 
     toggleHide(thread) {
       if (Index.showHiddenThreads) {
@@ -12593,7 +12641,7 @@ svg.icon {
 
     scrollToIndex() {
       // Scroll to navlinks, or top of board if navlinks are hidden.
-      return Header$1.scrollToIfNeeded((Index.navLinks.getBoundingClientRect().height ? Index.navLinks : Index.root));
+      return Header.scrollToIfNeeded((Index.navLinks.getBoundingClientRect().height ? Index.navLinks : Index.root));
     },
 
     getCurrentPage() {
@@ -13042,14 +13090,14 @@ svg.icon {
           });
         }
       }
-      if (errors) { Main$1.handleErrors(errors); }
+      if (errors) { Main.handleErrors(errors); }
 
       if (withReplies) {
         newPosts = newPosts.concat(Index.buildReplies(threads));
       }
 
-      Main$1.callbackNodes('Thread', newThreads);
-      Main$1.callbackNodes('Post',   newPosts);
+      Main.callbackNodes('Thread', newThreads);
+      Main.callbackNodes('Post',   newPosts);
       Index.updateHideLabel();
       $.event('IndexRefreshInternal', {threadIDs: (threads.map((t) => t.fullID)), isCatalog});
 
@@ -13085,7 +13133,7 @@ svg.icon {
         $.add(thread.nodes.root, nodes);
       }
 
-      if (errors) { Main$1.handleErrors(errors); }
+      if (errors) { Main.handleErrors(errors); }
       return posts;
     },
 
@@ -13099,7 +13147,7 @@ svg.icon {
           catalogThreads.push(new CatalogThread(root, thread));
         }
       }
-      Main$1.callbackNodes('CatalogThread', catalogThreads);
+      Main.callbackNodes('CatalogThread', catalogThreads);
     },
 
     sizeCatalogViews(threads) {
@@ -13182,7 +13230,7 @@ svg.icon {
       // Sticky threads
       Index.sortOnTop(obj => obj.isSticky);
       // Highlighted threads
-      Index.sortOnTop(obj => obj.isOnTop || (Conf['Pin Watched Threads'] && ThreadWatcher$1.isWatchedRaw(obj.boardID, obj.threadID)));
+      Index.sortOnTop(obj => obj.isOnTop || (Conf['Pin Watched Threads'] && ThreadWatcher.isWatchedRaw(obj.boardID, obj.threadID)));
       // Non-hidden threads
       if (Conf['Anchor Hidden Threads']) { return Index.sortOnTop(obj => !Index.isHidden(obj.threadID)); }
     },
@@ -13211,7 +13259,7 @@ svg.icon {
       }
       delete Index.pageNum;
       $.rmAll(Index.root);
-      $.rmAll(Header$1.hover);
+      $.rmAll(Header.hover);
       if (Index.loaded && Index.root.parentNode) {
         $.event('PostsRemoved', null, Index.root);
       }
@@ -13334,7 +13382,6 @@ svg.icon {
       return true;
     }
   };
-  var Index$1 = Index;
 
   var ThreadHiding = {
     init() {
@@ -13365,7 +13412,7 @@ svg.icon {
     catalogWatch() {
       if (!$.hasStorage || (g.SITE.software !== 'yotsuba')) { return; }
       this.hiddenThreads = JSON.parse(localStorage.getItem(`4chan-hide-t-${g.BOARD}`)) || {};
-      return Main$1.ready(() => // 4chan's catalog sets the style to "display: none;" when hiding or unhiding a thread.
+      return Main.ready(() => // 4chan's catalog sets the style to "display: none;" when hiding or unhiding a thread.
       new MutationObserver(ThreadHiding.catalogSave).observe($.id('threads'), {
         attributes: true,
         subtree: true,
@@ -13516,11 +13563,15 @@ svg.icon {
     },
 
     makeButton(thread, type) {
+      const span = $.el('span', {
+        className: 'stub-icon',
+      });
       const a = $.el('a', {
-        className: `${type}-thread-button`,
+        className: `${type}-post-button ${type}-thread-button`,
         href:      'javascript:;'
       });
-      $.add(a, $.el('span', { className: 'stub-icon', textContent: type === 'hide' ? '➖︎' : '➕︎' }));
+      Icon.set(span, type === 'hide' ? 'squareMinus' : 'squarePlus');
+      $.add(a, span);
       a.dataset.fullID = thread.fullID;
       $.on(a, 'click', ThreadHiding.toggle);
       return a;
@@ -13605,10 +13656,10 @@ svg.icon {
       if (thread.isHidden) { return; }
       const threadRoot = thread.nodes.root;
       thread.isHidden = true;
-      Index$1.updateHideLabel();
-      if (thread.catalogView && !Index$1.showHiddenThreads) {
+      Index.updateHideLabel();
+      if (thread.catalogView && !Index.showHiddenThreads) {
         $.rm(thread.catalogView.nodes.root);
-        $.event('PostsRemoved', null, Index$1.root);
+        $.event('PostsRemoved', null, Index.root);
       }
 
       if (!makeStub) { return threadRoot.hidden = true; }
@@ -13623,22 +13674,22 @@ svg.icon {
       }
       const threadRoot = thread.nodes.root;
       threadRoot.hidden = (thread.isHidden = false);
-      Index$1.updateHideLabel();
-      if (thread.catalogView) {
+      Index.updateHideLabel();
+      if (thread.catalogView && Conf['Index Mode'] === 'catalog') {
         const { root } = thread.catalogView.nodes;
 
-        if (Index$1.showHiddenThreads) {
+        if (Index.showHiddenThreads) {
           $.rm(root);
-          $.event('PostsRemoved', null, Index$1.root);
+          $.event('PostsRemoved', null, Index.root);
         } else {
-          let i = Index$1.sortedThreadIDs.indexOf(thread.ID) - 1;
+          let i = Index.sortedThreadIDs.indexOf(thread.ID) - 1;
 
           while (true) {
             if (i < 0) {
               $('.board').insertAdjacentElement('afterbegin', root);
               break;
             }
-            const rootPrevious = d.getElementById(`t${Index$1.sortedThreadIDs[i]}`);
+            const rootPrevious = d.getElementById(`t${Index.sortedThreadIDs[i]}`);
             if (rootPrevious) {
               rootPrevious.insertAdjacentElement('afterend', root);
               break;
@@ -13646,7 +13697,7 @@ svg.icon {
             --i;
           }
 
-          $.event('PostsInserted', null, Index$1.root);
+          $.event('PostsInserted', null, Index.root);
         }
       }
     }
@@ -13672,7 +13723,7 @@ svg.icon {
           if (Conf[lc]) { this.set(lc, true); }
           $.on(this.nodes[lc], 'change', this.toggle.bind(this, lc));
 
-          Header$1.menu.addEntry({
+          Header.menu.addEntry({
             el,
             order: 97
           });
@@ -13688,7 +13739,7 @@ svg.icon {
             check.checked = !check.checked;
             return $.event('change', null, check);
           });
-          Header$1.addShortcut(lc, indicator, 410);
+          Header.addShortcut(lc, indicator, 410);
         }
       }
 
@@ -13936,7 +13987,7 @@ svg.icon {
 
       $.on(el, 'click', this.cb.toggle);
 
-      Header$1.addShortcut('gallery', el, 530);
+      Header.addShortcut('gallery', el, 530);
 
       return Callbacks.Post.push({
         name: 'Gallery',
@@ -13954,7 +14005,7 @@ svg.icon {
               Gallery.nodes.total.textContent = Gallery.images.length;
             }
 
-            if (!Conf['Image Expansion'] && ((g.SITE.software !== 'tinyboard') || !Main$1.jsEnabled)) {
+            if (!Conf['Image Expansion'] && ((g.SITE.software !== 'tinyboard') || !Main.jsEnabled)) {
               result.push($.on(file.thumbLink, 'click', Gallery.cb.image));
             } else {
               result.push(undefined);
@@ -14005,15 +14056,28 @@ svg.icon {
       $.on(nodes.next,  'click', cb.click);
       $.on(nodes.name,  'click', ImageCommon.download);
 
-      $.on($('.gal-prev',  dialog), 'click', cb.prev);
-      $.on($('.gal-next',  dialog), 'click', cb.next);
-      $.on($('.gal-start', dialog), 'click', cb.start);
-      $.on($('.gal-stop',  dialog), 'click', cb.stop);
-      $.on($('.gal-close', dialog), 'click', cb.close);
+      const prev =  $('.gal-prev',  dialog);
+      const next =  $('.gal-next',  dialog);
+      const start = $('.gal-start', dialog);
+      const stop =  $('.gal-stop',  dialog);
+      const close = $('.gal-close', dialog);
+
+      $.on(prev,  'click', cb.prev);
+      $.on(next,  'click', cb.next);
+      $.on(start, 'click', cb.start);
+      $.on(stop,  'click', cb.stop);
+      $.on(close, 'click', cb.close);
 
       $.on(menuButton, 'click', function(e) {
         return nodes.menu.toggle(e, this, g);
       });
+
+      Icon.set(menuButton, 'caretDown');
+      Icon.set(start, 'play');
+      Icon.set(stop, 'stop');
+      Icon.set(close, 'xmark');
+      Icon.set(prev, 'caretLeft');
+      Icon.set(next, 'caretRight');
 
       for (var entry of Gallery.menu.createSubEntries()) {
         entry.order = 0;
@@ -14034,7 +14098,7 @@ svg.icon {
             // If no image to open is given, pick image we have scrolled to.
             if (!image && Gallery.fileIDs[`${post.fullID}.${file.index}`]) {
               var candidate = file.thumbLink;
-              if ((Header$1.getTopOf(candidate) + candidate.getBoundingClientRect().height) >= 0) {
+              if ((Header.getTopOf(candidate) + candidate.getBoundingClientRect().height) >= 0) {
                 image = candidate;
               }
             }
@@ -14158,7 +14222,7 @@ svg.icon {
 
       // Scroll to post
       if (Conf['Scroll to Post'] && (post = g.posts.get(file.dataset.post))) {
-        Header$1.scrollTo(post.nodes.root);
+        Header.scrollTo(post.nodes.root);
       }
 
       // Preload next image
@@ -14386,7 +14450,7 @@ svg.icon {
         }
         );
 
-        return Header$1.menu.addEntry({
+        return Header.menu.addEntry({
           el,
           order: 105,
           subEntries: Gallery.menu.createSubEntries()
@@ -14418,8 +14482,7 @@ svg.icon {
     }
   };
 
-  var EmbeddingPage = `<div>
-  <div class="move"></div>
+  var EmbeddingPage = `<div class="move">
   <a href="javascript:;" class="jump" title="Jump to post">→</a>
   <a href="javascript:;" class="close" title="Close">×</a>
 </div>
@@ -14691,6 +14754,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       k() { return this.getHours(); },
       l() { return (this.getHours() % 12) || 12; },
       m() { return Time.zeroPad(this.getMonth() + 1); },
+      n() { return this.getMonth() + 1; },
       M() { return Time.zeroPad(this.getMinutes()); },
       p() {
         let formatter = Time.formatterCache.get('p');
@@ -14712,31 +14776,14 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
   function EmbedFxTwitter(a) {
     const el = $.el('div', { innerHTML: '<blockquote class="twitter-tweet">Loading&hellip;</blockquote>' });
     const shouldTranslate = Conf.fxtLang ? `/${Conf.fxtLang}` : '';
-    CrossOrigin$1.cachePromise(`${Conf.fxtUrl}/${a.dataset.uid}${shouldTranslate}`).then(async (req) => {
+    const maxReplies = +Conf.fxtMaxReplies;
+    CrossOrigin.cachePromise(`${Conf.fxtUrl}/${a.dataset.uid}${shouldTranslate}`).then(async (req) => {
       if (req.status === 404) {
         el.textContent = '404: tweet not found';
         return;
       }
       const { tweet } = req.response;
       // console.log(tweet);
-      async function getReplies(tweet) {
-        if (!tweet?.replying_to_status) {
-          return [];
-        }
-        const max_replies = +Conf.fxtMaxReplies;
-        let replies = [];
-        replies.push(tweet);
-        for (let i = 0; i < max_replies; i++) {
-          const replyReq = await CrossOrigin$1.cachePromise(`https://api.fxtwitter.com/${replies[i].replying_to}/status/${replies[i].replying_to_status}${shouldTranslate}`);
-          const replyRes = replyReq.response;
-          replies.push(replyRes.tweet);
-          if (!replyRes.tweet?.replying_to_status) {
-            break;
-          }
-        }
-        return replies;
-      }
-      const replies = (+Conf.fxtMaxReplies) === 0 ? [] : await getReplies(tweet);
       function renderMedia(tweet) {
         return tweet.media?.all?.map(media => {
           switch (media.type) {
@@ -14768,11 +14815,11 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         });
         return h("div", { class: "fxt-poll" },
           ...tweet.poll.choices.map((choice, index) => h("div", { class: `fxt-choice ${index === maxChoiceIndex ? 'highlight' : ''}` },
-            h("span", { class: "choice_label" }, choice.label),
-            h("span", { class: "choice_percentage" },
+            h("span", { class: "fxt-choice_label" }, choice.label),
+            h("span", { class: "fxt-choice_percentage" },
               choice.percentage,
               "%"),
-            h("div", { class: "bar", style: `width: ${choice.percentage}%` }))),
+            h("div", { class: "fxt-bar", style: `width: ${choice.percentage}%` }))),
           h("div", { class: "total-votes" },
             tweet.poll.total_votes.toLocaleString(),
             " votes"));
@@ -14791,7 +14838,8 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       function renderMeta(tweet) {
         return h("div", { class: "fxt-meta" },
           h("a", { class: "fxt-meta_profile", href: tweet.author.url, title: tweet.author.description, target: "_blank", referrerpolicy: "no-referrer" },
-            h("img", { src: tweet.author.avatar_url, referrerpolicy: "no-referrer" }),
+            h("div", { class: "fxt-meta_avatar" },
+              h("img", { src: tweet.author.avatar_url, referrerpolicy: "no-referrer" })),
             h("div", { class: "fxt-meta_author" },
               h("span", { class: "fxt-meta_author_username" }, tweet.author.name),
               h("span", { class: "fxt-meta_author_account" },
@@ -14809,62 +14857,105 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         result.push(inputText.slice(endLast));
         return result;
       }
-      function renderQuote(tweet, renderNested = false) {
-        const quote_nested = (tweet?.quote && renderNested) ? renderQuote(tweet.quote, false) : '';
-        const quote_poll = (tweet?.poll) ? renderPoll(tweet) : '';
-        const quote_translation = renderTranslation(tweet);
-        const media = tweet.media?.all ? renderMedia(tweet) : [];
-        return h("div", { class: "fxt-quote" },
-          renderMeta(tweet),
-          h("div", { class: "fxt-text", lang: tweet.lang },
-            ...renderText(tweet.text),
-            quote_translation),
-          h("div", { class: `fxt-media_container ${tweet.media?.all?.length > 1 ? 'fxt-media-multiple' : ''}` },
-            quote_poll,
-            ...media),
-          quote_nested);
-      }
-      let repliesJsx = [];
-      if (replies.length > 1) {
-        repliesJsx.push({ innerHTML: "<em>Replying To</em><br/>", [isEscaped]: true });
-        for (let i = replies.length - 1; i > 0; i--) {
-          repliesJsx.push(renderQuote(replies[i], true));
+      function renderCommunityNote(note) {
+        const content = [];
+        let i = 0;
+        if (note.entities) {
+          for (const entity of note.entities) {
+            if (entity.ref.url) {
+              if (i < entity.fromIndex)
+                content.push(...renderText(note.text.slice(i, entity.fromIndex)));
+              content.push(h("a", { href: entity.ref.url, target: "_blank", referrerpolicy: "no-referrer" }, note.text.slice(entity.fromIndex, entity.toIndex)));
+              i = entity.toIndex;
+            }
+          }
         }
+        if (i < note.text.length - 1)
+          content.push(...renderText(note.text.slice(i)));
+        return h("div", { class: "fxt-community_note" },
+          h("div", { class: "fxt-community_note-header" }, "Community Note"),
+          h("div", { class: "fxt-community_note-text" }, ...content));
       }
-      const media = renderMedia(tweet);
-      const quote = (tweet?.quote) ? renderQuote(tweet.quote) : '';
-      const poll = (tweet?.poll) ? renderPoll(tweet) : '';
-      const created_at = renderDate(tweet);
-      const translation = (shouldTranslate) ? renderTranslation(tweet) : '';
-      const innerHTML = h("article", { class: "fxt-card" },
-        renderMeta(tweet),
-        h("div", { class: "fxt-text", lang: tweet.lang },
-          ...renderText(tweet.text),
-          translation),
-        h("div", { class: `fxt-media_container ${tweet.media?.all?.length > 1 ? 'fxt-media-multiple' : ''}` },
-          poll,
-          ...media),
-        quote,
-        h("div", { class: "fxt-stats" },
-          h("div", { class: "fxt-stats_time" }, created_at),
-          h("div", { class: "fxt-stats_meta" },
-            h("span", { class: "fxt-likes" },
-              Icon.raw("comment"),
-              tweet.replies.toLocaleString()),
-            h("span", { class: "fxt-reposts" },
-              Icon.raw("shuffle"),
-              tweet.retweets.toLocaleString()),
-            h("span", { class: "fxt-replies" },
-              Icon.raw("heart"),
-              tweet.likes.toLocaleString()))));
-      el.innerHTML = innerHTML.innerHTML;
+      async function renderQuote(quote) {
+        return h("div", { class: "fxt-quote_container" }, await renderTweet(quote, 'quote'));
+      }
+      async function renderReplies(tweet) {
+        const replies = [];
+        let depth = 0;
+        while (tweet.replying_to && tweet.replying_to_status && depth < maxReplies) {
+          const replyUrl = `${Conf.fxtUrl}/${tweet.replying_to}/status/${tweet.replying_to_status}`;
+          try {
+            const replyData = await CrossOrigin.cachePromise(replyUrl);
+            tweet = replyData.response.tweet;
+            const replyHTML = await renderTweet(tweet, 'reply');
+            replies.unshift(replyHTML);
+            depth++;
+          } catch (error) {
+            console.error(`Error fetching/rendering reply tweet: ${error.message}`);
+            console.log(tweet);
+            const url = `${Conf.fxtUrl}/${tweet.replying_to}/status/${tweet.replying_to_status}`;
+            return h("div", { class: "fxt-reply_container" },
+              h("article", { class: "fxt-card fxt-tweet-reply" },
+                h("div", { class: "fxt-content warning" },
+                  "Failed trying to load ",
+                  h("a", { href: url, target: "_blank", referrerpolicy: "no-referrer" }, url),
+                  h("br", null),
+                  "This tweet has probably been deleted or removed.",
+                  h("br", null),
+                  "This also breaks the reply chain, so you may want to view the original tweet.")));
+          }
+        }
+        return h("div", { class: "fxt-reply_container" }, ...replies);
+      }
+      async function renderTweet(tweet, type) {
+        const media = renderMedia(tweet);
+        const quote = (tweet?.quote) ? await renderQuote(tweet.quote) : '';
+        const poll = (tweet?.poll) ? renderPoll(tweet) : '';
+        const created_at = renderDate(tweet);
+        const translation = (shouldTranslate) ? renderTranslation(tweet) : '';
+        const note = tweet.community_note ? renderCommunityNote(tweet.community_note) : '';
+        return h("article", { class: `fxt-card fxt-tweet-${type}` },
+          renderMeta(tweet),
+          h("div", { class: "fxt-content" },
+            h("div", { class: "fxt-text", lang: tweet.lang },
+              ...renderText(tweet.text),
+              translation),
+            (media.length || poll) &&
+              h("div", { class: `fxt-media_container ${tweet.media?.all?.length > 1 ? 'fxt-media-multiple' : ''}` },
+                poll,
+                ...media),
+            note,
+            quote),
+          h("div", { class: "fxt-stats" },
+            h("div", { class: "fxt-stats_time" }, created_at),
+            h("div", { class: "fxt-stats_meta" },
+              h("span", { class: "fxt-likes" },
+                Icon.raw("comment"),
+                tweet.replies.toLocaleString()),
+              h("span", { class: "fxt-reposts" },
+                Icon.raw("shuffle"),
+                tweet.retweets.toLocaleString()),
+              h("span", { class: "fxt-replies" },
+                Icon.raw("heart"),
+                tweet.likes.toLocaleString()))));
+      }
+      async function renderFullTweet(tweet) {
+        const mainTweetHTML = await renderTweet(tweet, 'original');
+        const repliesHTML = tweet.replying_to ? await renderReplies(tweet) : '';
+        return h(hFragment, null,
+          repliesHTML,
+          mainTweetHTML);
+      }
+      const rendered = await renderFullTweet(tweet);
+      el.innerHTML = rendered.innerHTML;
       for (const textEl of el.getElementsByClassName('fxt-text')) {
         Linkify.process(textEl);
       }
       el.style.resize = null;
-      el.style.height = 'fit-content';
-      el.style.width = 'fit-content';
-      el.style.overflow = 'auto';
+      el.classList.add('fxt-card_container');
+      el.style.height = null;
+      el.style.width = null;
+      el.style.overflow = null;
     });
     return el;
   }
@@ -14981,17 +15072,20 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       }
     },
     ready() {
-      if (!Main$1.isThisPageLegit()) {
+      if (!Main.isThisPageLegit()) {
         return;
       }
       $.addClass(Embedding.dialog, 'empty');
-      $.on($('.close', Embedding.dialog), 'click', Embedding.closeFloat);
+      const close = $('.close', Embedding.dialog);
+      const jump = $('.jump', Embedding.dialog);
+      $.on(close, 'click', Embedding.closeFloat);
       $.on($('.move', Embedding.dialog), 'mousedown', Embedding.dragEmbed);
-      $.on($('.jump', Embedding.dialog), 'click', function () {
-        if (doc.contains(Embedding.lastEmbed)) {
-          return Header$1.scrollTo(Embedding.lastEmbed);
-        }
+      $.on(jump, 'click', function () {
+        if (doc.contains(Embedding.lastEmbed))
+          return Header.scrollTo(Embedding.lastEmbed);
       });
+      Icon.set(jump, 'arrowRightLong');
+      Icon.set(close, 'xmark');
       return $.add(d.body, Embedding.dialog);
     },
     closeFloat() {
@@ -15025,7 +15119,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           return Embedding.flushTitles(service);
         }
       } else {
-        return CrossOrigin$1.cache(service.api(uid), (function () { return Embedding.cb.title(this, data); }));
+        return CrossOrigin.cache(service.api(uid), (function () { return Embedding.cb.title(this, data); }));
       }
     },
     flushTitles(service) {
@@ -15040,7 +15134,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           Embedding.cb.title(this, data);
         }
       };
-      return CrossOrigin$1.cache(service.api(queue.map(data => data.uid)), cb);
+      return CrossOrigin.cache(service.api(queue.map(data => data.uid)), cb);
     },
     preview(data) {
       let service;
@@ -15056,7 +15150,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           id: 'ihover'
         });
         el.setAttribute("referrerpolicy", "no-referrer");
-        $.add(Header$1.hover, el);
+        $.add(Header.hover, el);
         return UI.hover({
           root: link,
           el,
@@ -15266,7 +15360,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
               hidden: true,
               id: `gist-embed-${counter++}`
             });
-            CrossOrigin$1.cache(`https://api.github.com/gists/${a.dataset.uid}`, function () {
+            CrossOrigin.cache(`https://api.github.com/gists/${a.dataset.uid}`, function () {
               el.textContent = Object.values(this.response.files)[0].content;
               el.className = 'prettyprint';
               $.global('prettyPrint', { id: el.id });
@@ -15439,7 +15533,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       },
       {
         key: 'Twitter',
-        regExp: /^\w+:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/(\w+\/status\/\d+)/,
+        regExp: /^\w+:\/\/(?:www\.|mobile\.)?(?:(?:(?:fx|vx)?twitter|(?:fixup|fixv)?x|twittpr|xcancel)\.com|nitter\.\w+.\w+)\/(\w+\/status\/\d+)/,
         style: 'border: none; width: 550px; height: 250px; overflow: hidden; resize: both;',
         el(a) {
           if (Conf.XEmbedder === 'tf') {
@@ -15577,7 +15671,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       if (Conf['Updater and Stats in Header']) {
         this.dialog = (sc = $.el('span', { id: 'updater' }));
         $.extend(sc, { innerHTML: '<span id="update-status" class="empty"></span><span id="update-timer" class="empty" title="Update now"></span>' });
-        Header$1.addShortcut('updater', sc, 100);
+        Header.addShortcut('updater', sc, 100);
       } else {
         this.dialog = (sc = UI.dialog('updater', { innerHTML: '<div class="move"></div><span id="update-status" class="empty"></span><span id="update-timer" class="empty" title="Update now"></span>' }));
         $.addClass(doc, 'float');
@@ -15590,7 +15684,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       $.on(this.status, 'click', this.update);
       const updateLink = $.el('span', { className: 'brackets-wrap updatelink' });
       $.extend(updateLink, { innerHTML: '<a href="javascript:;">Update</a>' });
-      Main$1.ready(function () {
+      Main.ready(function () {
         let navLinksBot;
         if (navLinksBot = $('.navLinksBot')) {
           return $.add(navLinksBot, [$.tn(' '), updateLink]);
@@ -15615,7 +15709,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       this.settings = $.el('span', { innerHTML: '<a href="javascript:;">Interval</a>' });
       $.on(this.settings, 'click', this.intervalShortcut);
       subEntries.push({ el: this.settings });
-      Header$1.menu.addEntry(this.entry = {
+      Header.menu.addEntry(this.entry = {
         el: $.el('span', { textContent: 'Updater' }),
         order: 110,
         subEntries
@@ -15918,7 +16012,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         ThreadUpdater.outdateCount = 0;
         const unreadCount = Unread.posts?.size;
         const unreadQYCount = Unread.postsQuotingYou?.size;
-        Main$1.callbackNodes('Post', posts);
+        Main.callbackNodes('Post', posts);
         if (d.hidden || !d.hasFocus()) {
           if (Conf['Beep Quoting You'] && (Unread.postsQuotingYou?.size > unreadQYCount)) {
             ThreadUpdater.playBeep();
@@ -15946,7 +16040,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
             window.scrollTo(0, d.body.clientHeight);
           } else {
             if (firstPost) {
-              Header$1.scrollTo(firstPost);
+              Header.scrollTo(firstPost);
             }
           }
         }
@@ -16004,265 +16098,264 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         threadRoot = Nav.getThread();
         thread = Get.threadFromRoot(threadRoot);
       }
-      switch (key) {
-        // QR & Options
-        case Conf['Toggle board list']:
-          if (!Conf['Custom Board Navigation']) { return; }
-          Header$1.toggleBoardList();
-          break;
-        case Conf['Toggle header']:
-          Header$1.toggleBarVisibility();
-          break;
-        case Conf['Open empty QR']:
-          if (!QR.postingIsEnabled) { return; }
-          Keybinds.qr();
-          break;
-        case Conf['Open QR']:
-          if (!QR.postingIsEnabled || !threadRoot) { return; }
-          Keybinds.qr(threadRoot);
-          break;
-        case Conf['Open settings']:
-          Settings.open();
-          break;
-        case Conf['Close']:
-          if (Settings.dialog) {
-            Settings.close();
-          } else if ((notifications = $$('.notification')).length) {
-            for (var notification of notifications) {
-              $('.close', notification).click();
-            }
-          } else if (QR.nodes?.preview) {
-            QR.closePreview();
-          } else if (QR.nodes && !(QR.nodes.el.hidden || (window.getComputedStyle(QR.nodes.form).display === 'none'))) {
-            if (Conf['Persistent QR']) {
-              QR.hide();
-            } else {
-              QR.close();
-            }
-          } else if (Embedding.lastEmbed) {
-            Embedding.closeFloat();
-          } else {
-            return;
-          }
-          break;
-        case Conf['Spoiler tags']:
-          if (target.nodeName !== 'TEXTAREA') { return; }
-          Keybinds.tags('spoiler', target);
-          break;
-        case Conf['Code tags']:
-          if (target.nodeName !== 'TEXTAREA') { return; }
-          Keybinds.tags('code', target);
-          break;
-        case Conf['Eqn tags']:
-          if (target.nodeName !== 'TEXTAREA') { return; }
-          Keybinds.tags('eqn', target);
-          break;
-        case Conf['Math tags']:
-          if (target.nodeName !== 'TEXTAREA') { return; }
-          Keybinds.tags('math', target);
-          break;
-        case Conf['SJIS tags']:
-          if (target.nodeName !== 'TEXTAREA') { return; }
-          Keybinds.tags('sjis', target);
-          break;
-        case Conf['Toggle sage']:
-          if (!QR.nodes || !!QR.nodes.el.hidden) { return; }
-          Keybinds.sage();
-          break;
-        case Conf['Toggle Cooldown']:
-          if (!QR.nodes || !!QR.nodes.el.hidden || !$.hasClass(QR.nodes.fileSubmit, 'custom-cooldown')) { return; }
-          QR.toggleCustomCooldown();
-          break;
-        case Conf['Post from URL']:
-          if (!QR.postingIsEnabled) { return; }
-          QR.handleUrl('');
-          break;
-        case Conf['Add new post']:
-          if (!QR.postingIsEnabled) { return; }
-          QR.addPost();
-          break;
-        case Conf['Submit QR']:
-          if (!QR.nodes || !!QR.nodes.el.hidden) { return; }
-          if (!QR.status()) { QR.submit(); }
-          break;
-        // Index/Thread related
-        case Conf['Update']:
-          switch (g.VIEW) {
-            case 'thread':
-              if (!ThreadUpdater.enabled) { return; }
-              ThreadUpdater.update();
-              break;
-            case 'index':
-              if (!Index$1.enabled) { return; }
-              Index$1.update();
-              break;
-            default:
-              return;
-          }
-          break;
-        case Conf['Watch']:
-          if (!ThreadWatcher$1.enabled || !thread) { return; }
-          ThreadWatcher$1.toggle(thread);
-          break;
-        case Conf['Update thread watcher']:
-          if (!ThreadWatcher$1.enabled) { return; }
-          ThreadWatcher$1.buttonFetchAll();
-          break;
-        case Conf['Toggle thread watcher']:
-          if (!ThreadWatcher$1.enabled) { return; }
-          ThreadWatcher$1.toggleWatcher();
-          break;
-        case Conf['Toggle threading']:
-          if (!QuoteThreading.ready) { return; }
-          QuoteThreading.toggleThreading();
-          break;
-        case Conf['Mark thread read']:
-          if ((g.VIEW !== 'index') || !thread || !UnreadIndex.enabled) { return; }
-          UnreadIndex.markRead.call(threadRoot);
-          break;
-        // Images
-        case Conf['Expand image']:
-          if (!ImageExpand.enabled || !threadRoot) { return; }
-          var post = Get.postFromNode(Keybinds.post(threadRoot));
-          if (post.file) { ImageExpand.toggle(post); }
-          break;
-        case Conf['Expand images']:
-          if (!ImageExpand.enabled) { return; }
-          ImageExpand.cb.toggleAll();
-          break;
-        case Conf['Open Gallery']:
-          if (!Gallery.enabled) { return; }
-          Gallery.cb.toggle();
-          break;
-        case Conf['fappeTyme']:
-          if (!FappeTyme.nodes?.fappe) { return; }
-          FappeTyme.toggle('fappe');
-          break;
-        case Conf['werkTyme']:
-          if (!FappeTyme.nodes?.werk) { return; }
-          FappeTyme.toggle('werk');
-          break;
-        // Board Navigation
-        case Conf['Front page']:
-          if (Index$1.enabled) {
-            Index$1.userPageNav(1);
-          } else {
-            location.href = `/${g.BOARD}/`;
-          }
-          break;
-        case Conf['Open front page']:
-          $.open(`${location.origin}/${g.BOARD}/`);
-          break;
-        case Conf['Next page']:
-          if ((g.VIEW !== 'index') || !!g.SITE.isOnePage?.(g.BOARD)) { return; }
-          if (Index$1.enabled) {
-            if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
-            $('.next button', Index$1.pagelist).click();
-          } else {
-            $(g.SITE.selectors.nav.next)?.click();
-          }
-          break;
-        case Conf['Previous page']:
-          if ((g.VIEW !== 'index') || !!g.SITE.isOnePage?.(g.BOARD)) { return; }
-          if (Index$1.enabled) {
-            if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
-            $('.prev button', Index$1.pagelist).click();
-          } else {
-            $(g.SITE.selectors.nav.prev)?.click();
-          }
-          break;
-        case Conf['Search form']:
-          if (g.VIEW !== 'index') { return; }
-          var searchInput = Index$1.enabled ?
-            Index$1.searchInput
-          : g.SITE.selectors.searchBox ?
-            $(g.SITE.selectors.searchBox)
-          :
-            undefined;
-          if (!searchInput) { return; }
-          Header$1.scrollToIfNeeded(searchInput);
-          searchInput.focus();
-          break;
-        case Conf['Paged mode']:
-          if (!Index$1.enabledOn(g.BOARD)) { return; }
-          location.href = g.VIEW === 'index' ? '#paged' : `/${g.BOARD}/#paged`;
-          break;
-        case Conf['Infinite scrolling mode']:
-          if (!Index$1.enabledOn(g.BOARD)) { return; }
-          location.href = g.VIEW === 'index' ? '#infinite' : `/${g.BOARD}/#infinite`;
-          break;
-        case Conf['All pages mode']:
-          if (!Index$1.enabledOn(g.BOARD)) { return; }
-          location.href = g.VIEW === 'index' ? '#all-pages' : `/${g.BOARD}/#all-pages`;
-          break;
-        case Conf['Open catalog']:
-          if (!(catalog = CatalogLinks.catalog())) { return; }
-          location.href = catalog;
-          break;
-        case Conf['Cycle sort type']:
-          if (!Index$1.enabled) { return; }
-          Index$1.cycleSortType();
-          break;
-        // Thread Navigation
-        case Conf['Next thread']:
-          if ((g.VIEW !== 'index') || !threadRoot) { return; }
-          Nav.scroll(+1);
-          break;
-        case Conf['Previous thread']:
-          if ((g.VIEW !== 'index') || !threadRoot) { return; }
-          Nav.scroll(-1);
-          break;
-        case Conf['Expand thread']:
-          if ((g.VIEW !== 'index') || !threadRoot) { return; }
-          ExpandThread.toggle(thread);
-          // Keep thread from moving off screen when contracted.
-          Header$1.scrollTo(threadRoot);
-          break;
-        case Conf['Open thread']:
-          if ((g.VIEW !== 'index') || !threadRoot) { return; }
-          Keybinds.open(thread);
-          break;
-        case Conf['Open thread tab']:
-          if ((g.VIEW !== 'index') || !threadRoot) { return; }
-          Keybinds.open(thread, true);
-          break;
-        // Reply Navigation
-        case Conf['Next reply']:
-          if (!threadRoot) { return; }
-          Keybinds.hl(+1, threadRoot);
-          break;
-        case Conf['Previous reply']:
-          if (!threadRoot) { return; }
-          Keybinds.hl(-1, threadRoot);
-          break;
-        case Conf['Deselect reply']:
-          if (!threadRoot) { return; }
-          Keybinds.hl(0, threadRoot);
-          break;
-        case Conf['Hide']:
-          if (!thread || !ThreadHiding.db) { return; }
-          Header$1.scrollTo(threadRoot);
-          ThreadHiding.toggle(thread);
-          break;
-        case Conf['Quick Filter MD5']:
-          if (!threadRoot) { return; }
-          post = Keybinds.post(threadRoot);
-          Keybinds.hl(+1, threadRoot);
-          Filter.quickFilterMD5.call(post, e);
-          break;
-        case Conf['Previous Post Quoting You']:
-          if (!threadRoot || !QuoteYou.db) { return; }
-          QuoteYou.cb.seek('preceding');
-          break;
-        case Conf['Next Post Quoting You']:
-          if (!threadRoot || !QuoteYou.db) { return; }
-          QuoteYou.cb.seek('following');
-          break;
-        default:
-          return;
+      let hasAction = false;
+      // QR & Options
+      if (key === Conf['Toggle board list'] && Conf['Custom Board Navigation']) {
+        Header.toggleBoardList();
+        hasAction = true;
       }
-      e.preventDefault();
-      return e.stopPropagation();
+      if (key === Conf['Toggle header']) {
+        Header.toggleBarVisibility();
+        hasAction = true;
+      }
+      if (key === Conf['Open empty QR'] && QR.postingIsEnabled) {
+        Keybinds.qr();
+        hasAction = true;
+      }
+      if (key === Conf['Open QR'] && QR.postingIsEnabled && threadRoot) {
+        Keybinds.qr(threadRoot);
+        hasAction = true;
+      }
+      if (key === Conf['Open settings']) {
+        Settings.open();
+        hasAction = true;
+      }
+      if (key === Conf['Close']) {
+        if (Settings.dialog) {
+          Settings.close();
+        } else if ((notifications = $$('.notification')).length) {
+          for (var notification of notifications) {
+            $('.close', notification).click();
+          }
+        } else if (QR.nodes?.preview) {
+          QR.closePreview();
+        } else if (QR.nodes && !(QR.nodes.el.hidden || (window.getComputedStyle(QR.nodes.form).display === 'none'))) {
+          if (Conf['Persistent QR']) {
+            QR.hide();
+          } else {
+            QR.close();
+          }
+        } else if (Embedding.lastEmbed) {
+          Embedding.closeFloat();
+        }
+        hasAction = true;
+      }
+      if (key === Conf['Spoiler tags'] && target.nodeName === 'TEXTAREA') {
+        Keybinds.tags('spoiler', target);
+        hasAction = true;
+      }
+      if (key === Conf['Code tags'] && target.nodeName === 'TEXTAREA') {
+        Keybinds.tags('code', target);
+        hasAction = true;
+      }
+      if (key === Conf['Eqn tags'] && target.nodeName === 'TEXTAREA') {
+        Keybinds.tags('eqn', target);
+        hasAction = true;
+      }
+      if (key === Conf['Math tags'] && target.nodeName === 'TEXTAREA') {
+        Keybinds.tags('math', target);
+        hasAction = true;
+      }
+      if (key === Conf['SJIS tags'] && target.nodeName === 'TEXTAREA') {
+        Keybinds.tags('sjis', target);
+        hasAction = true;
+      }
+      if (key === Conf['Toggle sage'] && QR.nodes && !QR.nodes.el.hidden) {
+        Keybinds.sage();
+        hasAction = true;
+      }
+      if (key === Conf['Toggle Cooldown'] && QR.nodes && !QR.nodes.el.hidden
+        && $.hasClass(QR.nodes.fileSubmit, 'custom-cooldown')) {
+        QR.toggleCustomCooldown();
+        hasAction = true;
+      }
+      if (key === Conf['Post from URL'] && QR.postingIsEnabled) {
+        QR.handleUrl('');
+        hasAction = true;
+      }
+      if (key === Conf['Add new post'] && QR.postingIsEnabled) {
+        QR.addPost();
+        hasAction = true;
+      }
+      if (key === Conf['Submit QR'] && QR.nodes && !QR.nodes.el.hidden && !QR.status()) {
+        QR.submit();
+        hasAction = true;
+      }
+      // Index/Thread related
+      if (key === Conf['Update']) {
+        switch (g.VIEW) {
+          case 'thread':
+            if (ThreadUpdater.enabled) ThreadUpdater.update();
+            hasAction = true;
+          break;
+          case 'index':
+            if (Index.enabled) Index.update();
+            hasAction = true;
+        }
+      }
+      if (key === Conf['Watch'] && ThreadWatcher.enabled && thread) {
+        ThreadWatcher.toggle(thread);
+        hasAction = true;
+      }
+      if (key === Conf['Update thread watcher'] && ThreadWatcher.enabled) {
+        ThreadWatcher.buttonFetchAll();
+        hasAction = true;
+      }
+      if (key === Conf['Toggle thread watcher'] && ThreadWatcher.enabled) {
+        ThreadWatcher.toggleWatcher();
+        hasAction = true;
+      }
+      if (key === Conf['Toggle threading'] && QuoteThreading.ready) {
+        QuoteThreading.toggleThreading();
+        hasAction = true;
+      }
+      if (key === Conf['Mark thread read'] && g.VIEW === 'index' && thread && UnreadIndex.enabled) {
+        UnreadIndex.markRead.call(threadRoot);
+        hasAction = true;
+      }
+      // Images
+      if (key === Conf['Expand image'] && ImageExpand.enabled && threadRoot) {
+        var post = Get.postFromNode(Keybinds.post(threadRoot));
+        if (post.file) {
+          ImageExpand.toggle(post);
+          hasAction = true;
+        }
+      }
+      if (key === Conf['Expand images'] && ImageExpand.enabled) {
+        ImageExpand.cb.toggleAll();
+        hasAction = true;
+      }
+      if (key === Conf['Open Gallery'] && Gallery.enabled) {
+        Gallery.cb.toggle();
+        hasAction = true;
+      }
+      if (key === Conf['fappeTyme'] && FappeTyme.nodes?.fappe) {
+        FappeTyme.toggle('fappe');
+        hasAction = true;
+      }
+      if (key === Conf['werkTyme'] && FappeTyme.nodes?.werk) {
+        FappeTyme.toggle('werk');
+        hasAction = true;
+      }
+      // Board Navigation
+      if (key === Conf['Front page']) {
+        if (Index.enabled) {
+          Index.userPageNav(1);
+        } else {
+          location.href = `/${g.BOARD}/`;
+        }
+        hasAction = true;
+      }
+      if (key === Conf['Open front page']) {
+        $.open(`${location.origin}/${g.BOARD}/`);
+        hasAction = true;
+      }
+      if (key === Conf['Next page'] && g.VIEW === 'index' && !g.SITE.isOnePage?.(g.BOARD)) {
+        if (Index.enabled) {
+          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
+          $('.next button', Index.pagelist).click();
+        } else {
+          $(g.SITE.selectors.nav.next)?.click();
+        }
+        hasAction = true;
+      }
+      if (key === Conf['Previous page'] && g.VIEW === 'index' && !g.SITE.isOnePage?.(g.BOARD)) {
+        if (Index.enabled) {
+          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
+          $('.prev button', Index.pagelist).click();
+        } else {
+          $(g.SITE.selectors.nav.prev)?.click();
+        }
+        hasAction = true;
+      }
+      if (key === Conf['Search form'] && g.VIEW === 'index') {
+        var searchInput = Index.enabled ?
+          Index.searchInput
+        : g.SITE.selectors.searchBox ?
+          $(g.SITE.selectors.searchBox)
+        :
+          undefined;
+        if (searchInput) {
+          Header.scrollToIfNeeded(searchInput);
+          searchInput.focus();
+          hasAction = true;
+        }
+      }
+      if (key === Conf['Paged mode'] && Index.enabledOn(g.BOARD)) {
+        location.href = g.VIEW === 'index' ? '#paged' : `/${g.BOARD}/#paged`;
+      }
+      if (key === Conf['Infinite scrolling mode'] && Index.enabledOn(g.BOARD)) {
+        location.href = g.VIEW === 'index' ? '#infinite' : `/${g.BOARD}/#infinite`;
+      }
+      if (key === Conf['All pages mode'] && Index.enabledOn(g.BOARD)) {
+        location.href = g.VIEW === 'index' ? '#all-pages' : `/${g.BOARD}/#all-pages`;
+      }
+      if (key === Conf['Open catalog'] && (catalog = CatalogLinks.catalog())) {
+        location.href = catalog;
+      }
+      if (key === Conf['Cycle sort type'] && Index.enabled) {
+        Index.cycleSortType();
+        hasAction = true;
+      }
+      // Thread Navigation
+      if (key === Conf['Next thread'] && g.VIEW === 'index' && threadRoot) {
+        Nav.scroll(+1);
+        hasAction = true;
+      }
+      if (key === Conf['Previous thread'] && g.VIEW === 'index' && threadRoot) {
+        Nav.scroll(-1);
+        hasAction = true;
+      }
+      if (key === Conf['Expand thread'] && g.VIEW === 'index' && threadRoot) {
+        ExpandThread.toggle(thread);
+        // Keep thread from moving off screen when contracted.
+        Header.scrollTo(threadRoot);
+        hasAction = true;
+      }
+      if (key === Conf['Open thread'] && g.VIEW === 'index' && threadRoot) {
+        Keybinds.open(thread);
+        hasAction = true;
+      }
+      if (key === Conf['Open thread tab'] && g.VIEW === 'index' && threadRoot) {
+        Keybinds.open(thread, true);
+        hasAction = true;
+      }
+      // Reply Navigation
+      if (key === Conf['Next reply'] && threadRoot) {
+        Keybinds.hl(+1, threadRoot);
+        hasAction = true;
+      }
+      if (key === Conf['Previous reply'] && threadRoot) {
+        Keybinds.hl(-1, threadRoot);
+        hasAction = true;
+      }
+      if (key === Conf['Deselect reply'] && threadRoot) {
+        Keybinds.hl(0, threadRoot);
+        hasAction = true;
+      }
+      if (key === Conf['Hide'] && thread && ThreadHiding.db) {
+        Header.scrollTo(threadRoot);
+        ThreadHiding.toggle(thread);
+        hasAction = true;
+      }
+      if (key === Conf['Quick Filter MD5'] && threadRoot) {
+        post = Keybinds.post(threadRoot);
+        Keybinds.hl(+1, threadRoot);
+        Filter.quickFilterMD5.call(post, e);
+        hasAction = true;
+      }
+      if (key === Conf['Previous Post Quoting You'] && threadRoot && QuoteYou.db) {
+        QuoteYou.cb.seek('preceding');
+        hasAction = true;
+      }
+      if (key === Conf['Next Post Quoting You'] && threadRoot && QuoteYou.db) {
+        QuoteYou.cb.seek('following');
+        hasAction = true;
+      }
+      if (hasAction) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     },
 
     keyCode(e) {
@@ -16387,7 +16480,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
 
       if (postEl) {
         const {height} = postEl.getBoundingClientRect();
-        if ((Header$1.getTopOf(postEl) >= -height) && (Header$1.getBottomOf(postEl) >= -height)) { // We're at least partially visible
+        if ((Header.getTopOf(postEl) >= -height) && (Header.getBottomOf(postEl) >= -height)) { // We're at least partially visible
           let next;
           const {root} = Get.postFromNode(postEl).nodes;
           const axis = delta === +1 ?
@@ -16396,7 +16489,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
             'preceding';
           if (!(next = $.x(`${axis}-sibling::${g.SITE.xpath.replyContainer}[not(@hidden) and not(child::div[@class='stub'])][1]`, root))) { return; }
           if (!next.matches(replySelector)) { next = $(replySelector, next); }
-          Header$1.scrollToIfNeeded(next, delta === +1);
+          Header.scrollToIfNeeded(next, delta === +1);
           $.addClass(next, highlight);
           $.rmClass(postEl, highlight);
           return;
@@ -16407,7 +16500,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       const replies = $$(replySelector, thread);
       if (delta === -1) { replies.reverse(); }
       for (var reply of replies) {
-        if (((delta === +1) && (Header$1.getTopOf(reply) > 0)) || ((delta === -1) && (Header$1.getBottomOf(reply) > 0))) {
+        if (((delta === +1) && (Header.getTopOf(reply) > 0)) || ((delta === -1) && (Header.getBottomOf(reply) > 0))) {
           $.addClass(reply, highlight);
           return;
         }
@@ -16550,7 +16643,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         if (d.cookie.indexOf('pass_enabled=1') >= 0) { return; }
         if (!(this.isEnabled = !!$('#g-recaptcha, #captcha-forced-noscript') || !$.id('postForm'))) { return; }
 
-        if (this.noscript = Conf['Force Noscript Captcha'] || !Main$1.jsEnabled) {
+        if (this.noscript = Conf['Force Noscript Captcha'] || !Main.jsEnabled) {
           $.addClass(QR.nodes.el, 'noscript-captcha');
         }
 
@@ -16795,8 +16888,8 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
     hasFocus: false,
     req: undefined,
     selected: undefined,
-    mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/vnd.adobe.flash.movie', 'application/x-shockwave-flash', 'video/webm'],
-    validExtension: /\.(jpe?g|png|gif|pdf|swf|webm)$/i,
+    mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/vnd.adobe.flash.movie', 'application/x-shockwave-flash', 'video/webm', 'video/mp4'],
+    validExtension: /\.(jpe?g|png|gif|pdf|swf|webm|mp4)$/i,
     typeFromExtension: {
       'jpg': 'image/jpeg',
       'jpeg': 'image/jpeg',
@@ -16804,7 +16897,8 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       'gif': 'image/gif',
       'pdf': 'application/pdf',
       'swf': 'application/vnd.adobe.flash.movie',
-      'webm': 'video/webm'
+      'webm': 'video/webm',
+      'mp4': 'video/mp4'
     },
     extensionFromType: {
       'image/jpeg': 'jpg',
@@ -16813,7 +16907,8 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       'application/pdf': 'pdf',
       'application/vnd.adobe.flash.movie': 'swf',
       'application/x-shockwave-flash': 'swf',
-      'video/webm': 'webm'
+      'video/webm': 'webm',
+      'video/mp4': 'mp4'
     },
     init() {
       let sc;
@@ -16843,7 +16938,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           QR.close();
         }
       });
-      Header$1.addShortcut('qr', sc, 540);
+      Header.addShortcut('qr', sc, 540);
       window.addEventListener('message', event => {
         if (event.data?.twister?.error) {
           QR.error($.el('div', { innerHTML: event.data.twister.error }));
@@ -16938,7 +17033,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           QR.dialog();
         } catch (err) {
           delete QR.nodes;
-          Main$1.handleErrors({
+          Main.handleErrors({
             message: 'Quick Reply dialog creation crashed.',
             error: err
           });
@@ -17045,7 +17140,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       }
       const notice = new Notice('warning', el);
       QR.notifications.push(notice);
-      if (!Header$1.areNotificationsEnabled) {
+      if (!Header.areNotificationsEnabled) {
         if (d.hidden && !QR.cooldown.auto) {
           return alert(el.textContent);
         }
@@ -17078,6 +17173,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       }
       return QR.notifications = [];
     },
+    /* Returns true if the QR is disabled. */
     status() {
       let disabled, value;
       if (!QR.nodes) {
@@ -17101,6 +17197,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           :
             value;
       status.disabled = disabled || false;
+      return status.disabled;
     },
     openPost() {
       QR.open();
@@ -17192,9 +17289,46 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
     characterCount() {
       const counter = QR.nodes.charCount;
       const count = QR.nodes.com.value.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length;
-      counter.textContent = count;
+      counter.textContent = count.toString();
       counter.hidden = count < (QR.max_comment / 2);
+      const splitPost = QR.nodes.splitPost;
+      splitPost.hidden = count < QR.max_comment;
       return (count > QR.max_comment ? $.addClass : $.rmClass)(counter, 'warning');
+    },
+    splitPost() {
+      if (QR.selected.isLocked)
+        return;
+      const count = QR.nodes.com.value.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length;
+      if (count < QR.max_comment)
+        return;
+      const text = QR.nodes.com.value;
+      let lastPostLength = 0;
+      let splitCount = 0;
+      const idx = QR.posts.indexOf(QR.selected);
+      QR.selected.setComment("");
+      for (const line of text.split("\n")) {
+        const currentLength = line.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length + 1; // +1 for newline at end
+        if (currentLength + lastPostLength > QR.max_comment) {
+          const post = new QR.post(true);
+          post.setComment(line);
+          lastPostLength = currentLength;
+          splitCount++;
+        } else {
+          const newComment = [QR.selected.com, line].filter(el => el !== null).join('\n');
+          QR.selected.setComment(newComment);
+          lastPostLength += currentLength;
+        }
+      }
+      const newPostIdx = QR.posts.length - splitCount;
+      const newPosts = QR.posts.splice(newPostIdx, splitCount);
+      QR.posts.splice(idx + 1, 0, ...newPosts);
+      const rearrangedDumpList = [...QR.nodes.dumpList.children];
+      const newDumps = rearrangedDumpList.splice(newPostIdx, splitCount);
+      rearrangedDumpList.splice(idx + 1, 0, ...newDumps);
+      for (const e of rearrangedDumpList) {
+        QR.nodes.dumpList.appendChild(e);
+      }
+      QR.nodes.el.classList.add('dump');
     },
     getFile() {
       return $.event('QRFile', QR.selected?.file);
@@ -17241,7 +17375,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
     dragOver(e) {
       e.preventDefault();
       return e.dataTransfer.dropEffect = 'copy';
-    },
+    }, // cursor feedback
     dropFile(e) {
       // Let it only handle files from the desktop.
       if (!e.dataTransfer.files.length) {
@@ -17301,15 +17435,17 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
     },
     handleUrl(urlDefault) {
       QR.open();
-      QR.selected.preventAutoPost();
-      CrossOrigin$1.permission(function () {
+      const { selected } = QR;
+      selected.preventAutoPost();
+      CrossOrigin.permission(function () {
         const url = prompt('Enter a URL:', urlDefault);
         if (!url)
           return;
         QR.nodes.fileButton.focus();
-        CrossOrigin$1.file(url, function (blob) {
+        CrossOrigin.file(url, function (blob) {
           if (blob && !/^text\//.test(blob.type)) {
-            QR.handleFiles([blob]);
+            selected.setFile(blob);
+            $.addClass(QR.nodes.el, 'dump');
           } else {
             QR.error("Can't load file.");
           }
@@ -17421,6 +17557,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       setNode('status', '[type=submit]');
       setNode('flashTag', '[name=filetag]');
       setNode('fileInput', '[type=file]');
+      setNode('splitPost', '#split-post');
       const { config } = g.BOARD;
       const { classList } = QR.nodes.el;
       classList.toggle('forced-anon', QR.forcedAnon);
@@ -17461,6 +17598,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       $.on(nodes.customCooldown, 'click', QR.toggleCustomCooldown);
       $.on(nodes.dumpButton, 'click', () => nodes.el.classList.toggle('dump'));
       $.on(nodes.fileInput, 'change', QR.handleFiles);
+      $.on(nodes.splitPost, 'click', QR.splitPost);
       window.addEventListener('focus', QR.focus, true);
       window.addEventListener('blur', QR.focus, true);
       // We don't receive blur events from captcha iframe.
@@ -17512,6 +17650,11 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       Icon.set(nodes.compress, 'shrink');
       Icon.set(nodes.view, 'eye');
       Icon.set(nodes.restoreNameButton, 'undo');
+      Icon.set(nodes.splitPost, 'scissors');
+      Icon.set(nodes.fileRM, 'xmark');
+      Icon.set(nodes.close, 'xmark');
+      Icon.set(nodes.dumpButton, 'squarePlus');
+      Icon.set(nodes.addPost, 'plus');
     },
     flags() {
       const select = $.el('select', {
@@ -17874,9 +18017,10 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       const mime = 'image/' + type;
       // Fallback to HTMLCanvasElement is for old firefox versions. Once the minimum firefox >= 105, this can be
       // simplified to just the OffscreenCanvas implementation.
+      // Conf['Avoid OffscreenCanvas'] is for https://codeberg.org/librewolf/issues/issues/2174
       let canvas;
       let toBlob;
-      if (window.OffscreenCanvas) {
+      if (window.OffscreenCanvas && !Conf['Avoid OffscreenCanvas']) {
         canvas = new OffscreenCanvas(width, height);
         toBlob = (mime, quality) => canvas.convertToBlob({ type: mime, quality });
       } else {
@@ -17925,7 +18069,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       seconds: 0,
       delays: {
         deletion: 60
-      },
+      }, // cooldown for deleting posts/files
       // set in setup
       maxDelay: 0,
       isSetup: false,
@@ -18189,7 +18333,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           QR.quote.call(post.nodes.post);
           const { isVideo } = post.file;
           const currentTime = post.file.fullImage?.currentTime || 0;
-          return CrossOrigin$1.file(post.file.url, function (blob) {
+          return CrossOrigin.file(post.file.url, function (blob) {
             if (!blob) {
               QR.error("Can't load file.");
             } else if (isVideo) {
@@ -18349,7 +18493,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         href: 'javascript:;'
       });
       $.extend(el, {
-        innerHTML: '<a class="remove" title="Remove">✕</a>' +
+        innerHTML: `<a href="javascript:;" class="remove" title="Remove">${Icon.get('xmark')}</a>` +
           '<label class="qr-preview-spoiler"><input type="checkbox"> Spoiler</label>' +
           '<span id="qr-preview-comment"></span><br /><span id="qr-preview-name"></span>'
       });
@@ -18663,7 +18807,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         this.originalName = file.name;
         this.file = await this.validateFile(file);
         this.originalName = file.name;
-        if (Conf['Randomize Filename'] && (g.BOARD.ID !== 'f') && (!this.file.name.includes('[sound='))) {
+        if (Conf['Randomize Filename'] && (g.BOARD.ID !== 'f') && (!this.file.name.toLowerCase().includes('[sound='))) {
           this.randomizeName(false);
         } else {
           this.filename = this.file.name;
@@ -18951,9 +19095,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
           // In JS Blocker (Safari) content type comes back as 'text/plain; charset=x-user-defined'; guess from filename instead.
           mime = $.getOwn(QR.typeFromExtension, name.match(/[^.]*$/)[0].toLowerCase()) || 'application/octet-stream';
         }
-        const blob = new Blob([data], { type: mime });
-        blob.name = name;
-        return cb(blob);
+        cb(new File([data], name, { type: mime }));
       });
     },
     Request: (function () {
@@ -19036,7 +19178,6 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
         });
     },
   };
-  var CrossOrigin$1 = CrossOrigin;
 
   var ImageCommon = {
     // Pause and mute video in preparation for removing the element from the document.
@@ -19091,12 +19232,12 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       const src = fileObj.url.split('/');
       let url = null;
       if ((g.SITE.software === 'yotsuba') && Conf['404 Redirect']) {
-        url = Redirect$1.to('file', {
+        url = Redirect.to('file', {
           boardID:  post.board.ID,
           filename: src[src.length - 1]
         });
       }
-      if (!url || !Redirect$1.securityCheck(url)) { url = null; }
+      if (!url || !Redirect.securityCheck(url)) { url = null; }
 
       if ((post.isDead || fileObj.isDead) && !ImageCommon.isFromArchive(file)) { return cb(url); }
 
@@ -19148,7 +19289,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       if (this.protocol === 'blob:') { return true; }
       e.preventDefault();
       const {href, download} = this;
-      return CrossOrigin$1.file(href, function(blob) {
+      return CrossOrigin.file(href, function(blob) {
         if (blob) {
           const a = $.el('a', {
             href: URL.createObjectURL(blob),
@@ -19240,7 +19381,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
 
     archive() {
       let match, urls;
-      if (!(urls = Redirect$1.report(g.BOARD.ID)).length) { return; }
+      if (!(urls = Redirect.report(g.BOARD.ID)).length) { return; }
 
       const form    = $('form');
       const types   = $.id('reportTypes');
@@ -19557,7 +19698,7 @@ aero|asia|biz|cat|com|coop|dance|info|int|jobs|mobi|moe|museum|name|net|org|post
       },
       comment: '.postMessage',
       spoiler: 's',
-      quotelink: ':not(pre) > .quotelink',
+      quotelink: ':not(pre) > .quotelink', // XXX https://github.com/4chan/4chan-JS/issues/77: 4chan currently creates quote links inside [code] tags; ignore them
       catalog: {
         board: '#threads',
         thread: '.thread',
@@ -19645,7 +19786,7 @@ $\
             } else if (match = location.search.match(/\bres=(\d+)/)) {
               $.ready(function () {
                 if (Conf['404 Redirect'] && ($.id('errmsg')?.textContent === 'Error: Specified thread does not exist.')) {
-                  return Redirect$1.navigate('thread', {
+                  return Redirect.navigate('thread', {
                     boardID: g.BOARD.ID,
                     postID: +match[1]
                   });
@@ -20191,7 +20332,7 @@ $\
         const s = (this.selectors = Object.create(this.selectors));
         s.boardFor = {index: '.page-container'};
         s.thread = 'div[id^="thread_"]';
-        return Main$1.mounted(cb);
+        return Main.mounted(cb);
       } else {
         return cb();
       }
@@ -20503,7 +20644,10 @@ $\
         return h("a", { href: this.file.url, download: this.file.name, class: "download-button" }, Icon.raw('download'));
       },
       f() {
-        return { innerHTML: "<a href=\"javascript:;\" class=\"quick-filter-md5\">✕</a>", [isEscaped]: true };
+        return {
+          innerHTML: `<a href="javascript:;" class="quick-filter-md5">${Icon.get('xmark')}</a>`,
+          [isEscaped]: true,
+        };
       },
       p() { return { innerHTML: ((this.file.isSpoiler) ? "Spoiler, " : ""), [isEscaped]: true }; },
       s() { return { innerHTML: E(this.file.size), [isEscaped]: true }; },
@@ -20527,7 +20671,7 @@ $\
       });
       Icon.set(link, 'wrench', 'Settings');
       $.on(link, 'click', Settings.open);
-      Header$1.addShortcut('settings', link, 820);
+      Header.addShortcut('settings', link, 820);
       const add = this.addSection;
       add('Main', this.main);
       add('Filter', this.filter);
@@ -20575,6 +20719,7 @@ $\
       if (openSection !== 'none') {
         (sectionToOpen ? sectionToOpen : links[0]).click();
       }
+      Icon.set($('.close', dialog), 'xmark');
       $.on($('.close', dialog), 'click', Settings.close);
       $.on(window, 'beforeunload', Settings.close);
       $.on(dialog, 'click', () => {
@@ -20585,6 +20730,7 @@ $\
       });
       $.on(dialog.firstElementChild, 'click', e => e.stopPropagation());
       $.add(d.body, dialog);
+      links[0].focus();
       $.event('OpenSettings', null, dialog);
     },
     close() {
@@ -20631,7 +20777,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       },
       ads(cb) {
         $.onExists(doc, '.adg-rects > .desktop', ad => $.onExists(ad, 'iframe', function () {
-          const url = Redirect$1.to('thread', { boardID: 'qa', threadID: 362590 });
+          const url = Redirect.to('thread', { boardID: 'qa', threadID: 362590 });
           cb($.el('li', h(hFragment, null,
             "To protect yourself from ",
             h("a", { href: url, target: "_blank" }, "malicious ads"),
@@ -21048,7 +21194,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       }
       $.get(itemsArchive, function (itemsArchive) {
         $.extend(Conf, itemsArchive);
-        Redirect$1.selectArchives();
+        Redirect.selectArchives();
         Settings.addArchiveTable(section);
       });
       const boardSelect = $('#archive-board-select', section);
@@ -21058,7 +21204,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         $('tbody > :not([hidden])', table).hidden = true;
         $(`tbody > .${this.value}`, table).hidden = false;
       });
-      $.on(updateArchives, 'click', () => Redirect$1.update(() => Settings.addArchiveTable(section)));
+      $.on(updateArchives, 'click', () => Redirect.update(() => Settings.addArchiveTable(section)));
       $.on(inputs.beepVolume, 'change', () => { ThreadUpdater.playBeep(false); });
       $.on(inputs.beepSource, 'change', () => { ThreadUpdater.playBeep(false); });
     },
@@ -21170,11 +21316,11 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         (selectedArchives[this.dataset.boardid] || (selectedArchives[this.dataset.boardid] = dict()))[this.dataset.type] = JSON.parse(this.value);
         $.set('selectedArchives', selectedArchives);
         Conf['selectedArchives'] = selectedArchives;
-        Redirect$1.selectArchives();
+        Redirect.selectArchives();
       });
     },
     boardnav() {
-      Header$1.generateBoardList(this.value);
+      Header.generateBoardList(this.value);
     },
     time() {
       this.nextElementSibling.textContent = Time.format(new Date(), this.value);
@@ -21240,13 +21386,14 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         input.reportValidity();
       }
     },
+    keyBindInputs: dict(),
     keybinds(section) {
       let key;
       $.extend(section, { innerHTML: KeybindsPage });
       $('.warning', section).hidden = Conf['Keybinds'];
       const tbody = $('tbody', section);
       const items = dict();
-      const inputs = dict();
+      const inputs = Settings.keyBindInputs;
       for (key in Config.hotkeys) {
         var arr = Config.hotkeys[key];
         var tr = $.el('tr', { innerHTML: `<td>${arr[1]}</td><td><input class="field"></td>` });
@@ -21264,19 +21411,30 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           inputs[key].value = val;
         }
       });
+      $.on($('#reset-keys', section), 'click', Settings.resetKeybinds);
     },
     keybind(e) {
-      let key;
-      if (e.keyCode === 9) {
-        return;
-      } // tab
+      if (e.keyCode === 9)
+        return; // tab
       e.preventDefault();
       e.stopPropagation();
-      if (!(key = Keybinds.keyCode(e)))
-        return;
+      const key = Keybinds.keyCode(e);
+      if (key == null)
+        return; // empty string is backspace
       this.value = key;
       $.cb.value.call(this);
-    }
+    },
+    resetKeybinds() {
+      if (!confirm('Are you sure you want to reset the keybinds?'))
+        return;
+      const defaults = Object.fromEntries(Object.entries(Config.hotkeys).map(([key, value]) => [key, value[0]]));
+      $.set(defaults, () => {
+        Object.assign(Conf, defaults);
+        for (const [key, value] of Object.entries(defaults)) {
+          Settings.keyBindInputs[key].value = value;
+        }
+      });
+    },
   };
 
   var Filter = {
@@ -21730,15 +21888,16 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       if (notice) {
         notice.filters.push(filter);
         notice.posts.push(origin);
-        return $('span', notice.el).textContent = `${notice.filters.length} MD5s filtered.`;
+        $('span', notice.el).textContent = `${notice.filters.length} MD5s filtered.`;
+        notice.resetTimer();
       } else {
         const msg = $.el('div', { innerHTML: "<span>MD5 filtered.</span> [<a href=\"javascript:;\">show</a>] [<a href=\"javascript:;\">undo</a>]" });
-        notice = (Filter.quickFilterMD5.notice = new Notice('info', msg, undefined, () => delete Filter.quickFilterMD5.notice));
+        notice = (Filter.quickFilterMD5.notice = new Notice('info', msg, 10, () => delete Filter.quickFilterMD5.notice));
         notice.filters = [filter];
         notice.posts = [origin];
         const links = $$('a', msg);
         $.on(links[0], 'click', Filter.quickFilterCB.show.bind(notice));
-        return $.on(links[1], 'click', Filter.quickFilterCB.undo.bind(notice));
+        $.on(links[1], 'click', Filter.quickFilterCB.undo.bind(notice));
       }
     },
     quickFilterCB: {
@@ -21849,7 +22008,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         this.set(hostname);
         cb();
       }
-      return $.onExists(doc, 'body', () => {
+      $.onExists(doc, 'body', () => {
         for (var software in SW) {
           var changes;
           if (changes = SW[software].detect?.()) {
@@ -21890,7 +22049,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
     parseURL(url) {
       const siteID = Site.resolve(url);
-      return Main$1.parseURL(g.sites[siteID], url);
+      return Main.parseURL(g.sites[siteID], url);
     },
 
     set(hostname) {
@@ -21954,7 +22113,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         const input = $('input', el);
         $.on(input, 'change', this.toggle);
         $.sync('Header catalog links', CatalogLinks.set);
-        return Header$1.menu.addEntry({
+        return Header.menu.addEntry({
           el,
           order: 95
         });
@@ -21978,8 +22137,8 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
     set(useCatalog) {
       Conf['Header catalog links'] = useCatalog;
-      CatalogLinks.setLinks(Header$1.boardList);
-      CatalogLinks.setLinks(Header$1.bottomBoardList);
+      CatalogLinks.setLinks(Header.boardList);
+      CatalogLinks.setLinks(Header.bottomBoardList);
       CatalogLinks.el.title = `Turn catalog links ${useCatalog ? 'off' : 'on'}.`;
       return $('input', CatalogLinks.el).checked = useCatalog;
     },
@@ -22048,7 +22207,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       let external, nativeCatalog;
       if (Conf['External Catalog'] && (external = CatalogLinks.external(board))) {
         return external;
-      } else if (Index$1.enabledOn(board) && Conf[`Use ${meta.name} Catalog`]) {
+      } else if (Index.enabledOn(board) && Conf[`Use ${meta.name} Catalog`]) {
         return CatalogLinks.jsonIndex(board, '#catalog');
       } else if (nativeCatalog = Get.url('catalog', board)) {
         return nativeCatalog;
@@ -22058,7 +22217,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
     },
 
     index(board=g.BOARD) {
-      if (Index$1.enabledOn(board)) {
+      if (Index.enabledOn(board)) {
         return CatalogLinks.jsonIndex(board, '#index');
       } else {
         return Get.url('index', board);
@@ -22069,7 +22228,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
   var Header = {
     init() {
       $.onExists(doc, 'body', () => {
-        if (!Main$1.isThisPageLegit()) {
+        if (!Main.isThisPageLegit()) {
           return;
         }
         $.add(this.bar, [this.noticesRoot, this.toggle]);
@@ -22079,7 +22238,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       });
       this.menu = new UI.Menu('header');
       const menuButton = $.el('span', { className: 'menu-button' });
-      $.extend(menuButton, { innerHTML: "<i></i>" });
+      Icon.set(menuButton, 'caretDown', 'Menu');
       const box = UI.checkbox;
       const barFixedToggler = box('Fixed Header', 'Fixed Header');
       const headerToggler = box('Header auto-hide', 'Auto-hide header');
@@ -22143,7 +22302,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       $.on(d, 'CreateNotification', this.createNotification);
       this.setBoardList();
       $.onExists(doc, `${g.SITE.selectors.boardList} + *`, Header.generateFullBoardList);
-      Main$1.ready(function () {
+      Main.ready(function () {
         let footer;
         if ((g.SITE.software === 'yotsuba') && !(footer = $.id('boardNavDesktopFoot'))) {
           let absbot;
@@ -22353,7 +22512,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         }
       }
       if (/-archive/.test(t)) {
-        if (href = Redirect$1.to('board', { boardID })) {
+        if (href = Redirect.to('board', { boardID })) {
           a.href = href;
         } else {
           return a.firstChild; // Its text node.
@@ -22524,7 +22683,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       const settings = $.id('fourchanx-settings');
       return $('[name=boardnav]', settings).focus();
     },
-    scrollTo(root, down, needed) {
+    scrollTo(root, down = false, needed = false) {
       let height, x;
       if (!root.offsetParent) {
         return;
@@ -22659,7 +22818,6 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       return notice = new Notice('info', el);
     }
   };
-  var Header$1 = Header;
 
   class Notice {
     constructor(type, content, timeout, onclose) {
@@ -22667,8 +22825,9 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       this.close = this.close.bind(this);
       this.timeout = timeout;
       this.onclose = onclose;
-      this.el = $.el('div',
-        {innerHTML: "<a href=\"javascript:;\" class=\"close\" title=\"Close\">✕</a><div class=\"message\"></div>"});
+      this.el = $.el('div', {
+        innerHTML: `<a href="javascript:;" class="close" title="Close">${Icon.get('xmark')}</a><div class="message"></div>`
+      });
       this.el.style.opacity = 0;
       this.setType(type);
       $.on(this.el.firstElementChild, 'click', this.close);
@@ -22681,27 +22840,35 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
     }
 
     setType(type) {
-      return this.el.className = `notification ${type}`;
+      this.el.className = `notification ${type}`;
     }
 
     add() {
-      if (this.closed) { return; }
+      if (this.closed) return;
       if (d.hidden) {
         $.on(d, 'visibilitychange', this.add);
         return;
       }
       $.off(d, 'visibilitychange', this.add);
-      $.add(Header$1.noticesRoot, this.el);
+      $.add(Header.noticesRoot, this.el);
       this.el.clientHeight; // force reflow
       this.el.style.opacity = 1;
-      if (this.timeout) { return setTimeout(this.close, this.timeout * SECOND); }
+      if (this.timeout) { this.timeoutId = setTimeout(this.close, this.timeout * SECOND); }
     }
 
     close() {
+      if (this.timeoutId) clearTimeout(this.timeoutId);
       this.closed = true;
       $.off(d, 'visibilitychange', this.add);
       $.rm(this.el);
-      return this.onclose?.();
+      this.onclose?.();
+    }
+
+    resetTimer() {
+      if (this.timeout) {
+        clearTimeout(this.timeoutId);
+        this.timeoutId = setTimeout(this.close, this.timeout * SECOND);
+      }
     }
   }
 
@@ -22747,8 +22914,8 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
     "search": ["cm", "co", "ic", "sci", "y"]
   }, {
     "uid": 25,
-    "name": "arch.b4k.co",
-    "domain": "arch.b4k.co",
+    "name": "not arch.b4k.co",
+    "domain": "arch.b4k.dev",
     "http": true,
     "https": true,
     "software": "foolfuuka",
@@ -22908,7 +23075,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
             }
             load(i).call({ status: 200, response });
           } else {
-            CrossOrigin$1.ajax(url, { onloadend: load(i) });
+            CrossOrigin.ajax(url, { onloadend: load(i) });
           }
         }
       } else {
@@ -22990,7 +23157,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           return '';
         }
       }
-      if (archive.name === 'arch.b4k.co') {
+      if (archive.name.endsWith('arch.b4k.co')) {
         const [timeStamp, ext] = filename.split('.');
         if (timeStamp.length > 13) {
           // remove last 3 digits
@@ -23055,7 +23222,6 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       }
     }
   };
-  var Redirect$1 = Redirect;
 
   class CatalogThreadNative {
     toString() { return this.ID; }
@@ -23129,7 +23295,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         ImageCommon.rewind(this);
       }
       el.id = 'ihover';
-      $.add(Header$1.hover, el);
+      $.add(Header.hover, el);
       if (isVideo) {
         el.loop     = true;
         el.controls = false;
@@ -23211,7 +23377,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
       $.on(el, 'click', this.toggle);
 
-      return Header$1.addShortcut('prefetch', el, 525);
+      return Header.addShortcut('prefetch', el, 525);
     },
 
     node() {
@@ -23300,7 +23466,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           for (var file of post.files) {
             if (file.videoThumb) {
               var {thumb} = file;
-              if (Header$1.isNodeVisible(thumb) || (post.nodes.root === qpClone)) { thumb.play(); } else { thumb.pause(); }
+              if (Header.isNodeVisible(thumb) || (post.nodes.root === qpClone)) { thumb.play(); } else { thumb.pause(); }
             }
           }
         }
@@ -23342,7 +23508,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       $.rmClass(this.parentNode, 'error');
       $.addClass(this.parentNode, 'loading');
       const {index} = this.parentNode.dataset;
-      return CrossOrigin$1.binary(Get.postFromNode(this).files[+index].url, data => {
+      return CrossOrigin.binary(Get.postFromNode(this).files[+index].url, data => {
         $.rmClass(this.parentNode, 'loading');
         if (data != null) {
           const title = Metadata.parse(data);
@@ -23432,7 +23598,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         el: div,
         order: 60,
         open({ID, thread, board}) {
-          return !!Redirect$1.to('thread', {postID: ID, threadID: thread.ID, boardID: board.ID});
+          return !!Redirect.to('thread', {postID: ID, threadID: thread.ID, boardID: board.ID});
         },
         subEntries: []
       };
@@ -23463,7 +23629,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
       const open = type === 'post' ?
         function({ID, thread, board}) {
-          el.href = Redirect$1.to('thread', {postID: ID, threadID: thread.ID, boardID: board.ID});
+          el.href = Redirect.to('thread', {postID: ID, threadID: thread.ID, boardID: board.ID});
           return true;
         }
       :
@@ -23478,7 +23644,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
             Filter.values(type, post)[0];
           // We want to parse the exact same stuff as the filter does already.
           if (!value) { return false; }
-          el.href = Redirect$1.to('search', {
+          el.href = Redirect.to('search', {
             boardID:  post.board.ID,
             type:     typeParam,
             value,
@@ -23818,7 +23984,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
       // Let 4chan's JS load the banner if enabled; otherwise, load it ourselves.
       if (g.BOARD.ID !== 'f') {
-        return Main$1.ready(() => $.queueTask(Banner.load));
+        return Main.ready(() => $.queueTask(Banner.load));
       }
     },
 
@@ -23952,7 +24118,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
     init() {
       if ((g.SITE.software !== 'yotsuba') || !['index', 'thread', 'archive'].includes(g.VIEW)) { return; }
       BoardConfig.ready(this.initBoard);
-      return Main$1.ready(this.initReady);
+      return Main.ready(this.initReady);
     },
 
     initBoard() {
@@ -24204,6 +24370,8 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       if (!Conf['Unique ID and Capcode Navigation'] || !['index', 'thread'].includes(g.VIEW)) { return; }
 
       this.buttons = this.makeButtons();
+      Icon.set(this.buttons.firstChild, 'arrowUpLong');
+      Icon.set(this.buttons.lastChild, 'arrowDownLong');
 
       return Callbacks.Post.push({
         name: 'Post Jumper',
@@ -24295,7 +24463,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       if ('samachan.org' in Conf['siteProperties'] && !Conf['PSAseen'].includes('samachan')) {
         el = $.el('span',
           {innerHTML: "<a href=\"https://sushigirl.us/yakuza/res/776.html\" target=\"_blank\" rel=\"noopener\">Looking for a new home?<br>Some former Samachan users are regrouping on SushiChan.</a><br>(a message from 4chan X)"});
-        return Main$1.ready(function() {
+        return Main.ready(function() {
           new Notice('info', el);
           Conf['PSAseen'].push('samachan');
           return $.set('PSAseen', Conf['PSAseen']);});
@@ -24332,7 +24500,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         order: 50,
         open() { return psa.hidden; }
       };
-      Header$1.menu.addEntry(entry);
+      Header.menu.addEntry(entry);
       $.on(entry.el, 'click', PSAHiding.toggle);
 
       PSAHiding.btn = (btn = $.el('a', {
@@ -24342,6 +24510,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         textContent: '➖︎',
       }
       ));
+      Icon.set(btn, 'squareMinus');
       $.on(btn, 'click', PSAHiding.toggle);
       if (psa.firstChild?.tagName === 'HR') {
         $.after(psa.firstChild, btn);
@@ -24449,7 +24618,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
     init() {
       if (g.SITE.software !== 'tinyboard') { return; }
       if (g.VIEW === 'thread') {
-        return Main$1.ready(() => $.global("initTinyBoard", { boardID: g.BOARD.ID, threadID: g.THREADID.toString() }));
+        return Main.ready(() => $.global("initTinyBoard", { boardID: g.BOARD.ID, threadID: g.THREADID.toString() }));
       }
     }
   };
@@ -24544,7 +24713,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         }
         ));
         $.extend(sc, statsHTML);
-        Header$1.addShortcut('stats', sc, 200);
+        Header.addShortcut('stats', sc, 200);
 
       } else {
         this.dialog = (sc = UI.dialog('thread-stats',
@@ -24709,7 +24878,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
   const PassLink = {
     init() {
       if ((g.SITE.software !== 'yotsuba') || !Conf['Pass Link']) { return; }
-      return Main$1.ready(this.ready);
+      return Main.ready(this.ready);
     },
 
     ready() {
@@ -25100,7 +25269,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       const boardID  = m[1];
       const threadID = m[2];
       const postID   = link.hash.match(/^#[pq]?(\d+)$|$/)[1] || threadID;
-      if (Redirect$1.to('post', {boardID, postID})) {
+      if (Redirect.to('post', {boardID, postID})) {
         $.addClass(link, 'quotelink');
         $.extend(link.dataset, {boardID, threadID, postID});
         return this.nodes.archivelinks.push(link);
@@ -25155,8 +25324,8 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         }
 
       } else {
-        const redirect = Redirect$1.to('thread', {boardID, threadID: 0, postID});
-        const fetchable = Redirect$1.to('post', {boardID, postID});
+        const redirect = Redirect.to('thread', {boardID, threadID: 0, postID});
+        const fetchable = Redirect.to('post', {boardID, postID});
         if (redirect || fetchable) {
           // Replace the .deadlink span if we can redirect or fetch the post.
           a = $.el('a', {
@@ -25201,11 +25370,12 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
   var Main = {
     init() {
-      // Return if the url is exactly https://www.4chan.org, this is only the home page which has a cloudflare checking system which breaks this script
-      if (window.location.hostname == 'www.4chan.org') { return; }
+      // Return if the url is exactly https://www.4chan.org, this is only the home page which has a cloudflare checking
+      // system which breaks this script. Keep it in the includes so it can be found on greasy fork.
+      // __cf is also a cloudflare check page
+      if (location.hostname === 'www.4chan.org' || location.search.includes("__cf")) return;
       // XXX dwb userscripts extension reloads scripts run at document-start when replaceState/pushState is called.
       // XXX Firefox reinjects WebExtension content scripts when extension is updated / reloaded.
-      let key;
       try {
         let w = window;
          w = (w.wrappedJSObject || w);
@@ -25222,7 +25392,10 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       if (doc && $.hasClass(doc, 'fourchan-x')) { return; }
       $.asap(docSet, function() {
         $.addClass(doc, 'fourchan-xt', 'fourchan-x', 'seaweedchan');
-        if ($.engine) { return $.addClass(doc, `ua-${$.engine}`); }
+        if ($.engine) $.addClass(doc, `ua-${$.engine}`);
+        BoardConfig.ready(() => {
+          if (g.BOARD?.config.ws_board != null) $.addClass(doc, g.BOARD.config.ws_board ? 'ws' : 'nws');
+        });
       });
       try {
         $.global(
@@ -25258,8 +25431,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           Conf[parent] = dict.clone(obj[0]);
         } else if (typeof obj === 'object') {
           for (var key in obj) {
-            var val = obj[key];
-            flatten(key, val);
+            flatten(key, obj[key]);
           }
         } else { // string or number
           Conf[parent] = obj;
@@ -25278,7 +25450,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       }
       Conf['customTitles'] = dict.clone({'4chan.org': {boards: {'qa': {'boardTitle': {orig: '/qa/ - Question & Answer', title: '/qa/ - 2D/Random'}}}}});
       Conf['boardConfig'] = {boards: dict()};
-      Conf['archives'] = Redirect$1.archives;
+      Conf['archives'] = Redirect.archives;
       Conf['selectedArchives'] = dict();
       Conf['cooldowns'] = dict();
       Conf['Index Sort'] = dict();
@@ -25306,15 +25478,18 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         !SW.yotsuba.regexp.captcha.test(location.href) &&
         !$$('script:not([src])', d).filter(s => /this\[/.test(s.textContent)).length
       ) {
-        ($.getSync || $.get)({'jsWhitelist': Conf['jsWhitelist']}, ({jsWhitelist}) => $.addCSP(`script-src ${jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim()}`));
+        ($.getSync || $.get)({'jsWhitelist': Conf['jsWhitelist']}, ({jsWhitelist}) => {
+          const parsedList = jsWhitelist.replace(/^#.*$/mg, '').replace(/[\s;]+/g, ' ').trim();
+          if (/\S/.test(parsedList)) $.addCSP(`script-src ${parsedList}`);
+        });
       }
 
       // Get saved values as items
       const items = dict();
-      for (key in Conf) { items[key] = undefined; }
+      for (const key in Conf) items[key] = undefined;
       items['previousversion'] = undefined;
-      return ($.getSync || $.get)(items, function(items) {
-        return $.asap(docSet, function() {
+      ($.getSync || $.get)(items, function(items) {
+        $.asap(docSet, function() {
 
           // Don't hide the local storage warning behind a settings panel.
           if ($.cantSet) ; else if ((items.previousversion == null)) {
@@ -25330,12 +25505,11 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           }
 
           // Combine default values with saved values
-          for (key in Conf) {
-            var val = Conf[key];
-            Conf[key] = items[key] ?? val;
+          for (const key in Conf) {
+            Conf[key] = items[key] ?? Conf[key];
           }
 
-          return Site.init(Main.initFeatures);
+          Site.init(Main.initFeatures);
         });
       });
     },
@@ -25397,7 +25571,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           let video;
           if ((g.SITE.software === 'yotsuba') && Conf['404 Redirect'] && g.SITE.is404?.()) {
             const pathname = location.pathname.split(/\/+/);
-            return Redirect$1.navigate('file', {
+            return Redirect.navigate('file', {
               boardID:  g.BOARD.ID,
               filename: pathname[pathname.length - 1]
             });
@@ -25462,11 +25636,6 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       });
       $.addStyle(CSS.sub(CSS.boards), 'fourchanx-css');
       Main.bgColorStyle = $.el('style', {id: 'fourchanx-bgcolor-css'});
-
-      let keyboard = false;
-      $.on(d, 'mousedown', () => keyboard = false);
-      $.on(d, 'keydown', function(e) { if (e.keyCode === 9) { return keyboard = true; } }); // tab
-      window.addEventListener('focus', (() => doc.classList.toggle('keyboard-focus', keyboard)), true);
 
       return Main.setClass();
     },
@@ -25558,9 +25727,9 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
     initReady() {
       if (g.SITE.is404?.()) {
         if (g.VIEW === 'thread') {
-          ThreadWatcher$1.set404(g.BOARD.ID, g.THREADID, function() {
+          ThreadWatcher.set404(g.BOARD.ID, g.THREADID, function() {
             if (Conf['404 Redirect']) {
-              return Redirect$1.navigate('thread', {
+              return Redirect.navigate('thread', {
                 boardID:  g.BOARD.ID,
                 threadID: g.THREADID,
                 postID:   +location.hash.match(/\d+/)
@@ -25582,16 +25751,16 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
 
       // Parse HTML or skip it and start building from JSON.
       if (g.VIEW === 'catalog') {
-        return Main.initCatalog();
-      } else if (!Index$1.enabled) {
+        Main.initCatalog();
+      } else if (!Index.enabled) {
         if (g.SITE.awaitBoard) {
-          return g.SITE.awaitBoard(Main.initThread);
+          g.SITE.awaitBoard(Main.initThread);
         } else {
-          return Main.initThread();
+          Main.initThread();
         }
       } else {
         Main.expectInitFinished = true;
-        return $.event('4chanXInitFinished');
+        $.event('4chanXInitFinished');
       }
     },
 
@@ -25622,16 +25791,18 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           g.SITE.parseThreadMetadata?.(threads[0]);
         }
 
-        Main.callbackNodes('Thread', threads);
-        return Main.callbackNodesDB('Post', posts, function() {
-          for (var post of posts) { QuoteThreading.insert(post); }
-          Main.expectInitFinished = true;
-          return $.event('4chanXInitFinished');
-        });
+        setTimeout(() => {
+          Main.callbackNodes('Thread', threads);
+          Main.callbackNodesDB('Post', posts, function() {
+            for (var post of posts) QuoteThreading.insert(post);
+            Main.expectInitFinished = true;
+            $.event('4chanXInitFinished');
+          });
+        }, 0);
 
       } else {
         Main.expectInitFinished = true;
-        return $.event('4chanXInitFinished');
+        $.event('4chanXInitFinished');
       }
     },
 
@@ -25691,7 +25862,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
       Main.parseThreads(threadRoots, threads, posts, errors);
       if (errors.length) { Main.handleErrors(errors); }
       Main.callbackNodes('Thread', threads);
-      return Main.callbackNodesDB('Post', posts, () => $.event('PostsInserted', null, records[0].target));
+      Main.callbackNodesDB('Post', posts, () => $.event('PostsInserted', null, records[0].target));
     },
 
     addPosts(records) {
@@ -25727,7 +25898,7 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         }
       }
       if (errors.length) { Main.handleErrors(errors); }
-      return Main.callbackNodesDB('Post', posts, function() {
+      Main.callbackNodesDB('Post', posts, function() {
         for (thread of threads) {
           $.event('PostsInserted', null, thread.nodes.root);
         }
@@ -25820,10 +25991,10 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
           if (cb) { cb(); }
           return;
         }
-        return setTimeout(softTask, 0);
+        setTimeout(softTask, 0);
       };
 
-      return softTask();
+      softTask();
     },
 
     handleErrors(errors) {
@@ -25954,11 +26125,11 @@ User agent: ${navigator.userAgent}\
       ['Delay Redirect on Post',    PostRedirect],
       ['Captcha Configuration',     CaptchaReplace],
       ['Image Host Rewriting',      ImageHost],
-      ['Redirect',                  Redirect$1],
-      ['Header',                    Header$1],
+      ['Redirect',                  Redirect],
+      ['Header',                    Header],
       ['Catalog Links',             CatalogLinks],
       ['Settings',                  Settings],
-      ['Index Generator',           Index$1],
+      ['Index Generator',           Index],
       ['Disable Autoplay',          AntiAutoplay],
       ['Announcement Hiding',       PSAHiding],
       ['Fourchan thingies',         Fourchan],
@@ -25982,7 +26153,7 @@ User agent: ${navigator.userAgent}\
       ['Post Jumper',               PostJumper],
       ['Pass Link',                 PassLink],
       ['Menu',                      Menu],
-      ['Index Generator (Menu)',    Index$1.menu],
+      ['Index Generator (Menu)',    Index.menu],
       ['Report Link',               ReportLink],
       ['Copy Text Link',            CopyTextLink],
       ['Thread Hiding (Menu)',      ThreadHiding.menu],
@@ -26021,8 +26192,8 @@ User agent: ${navigator.userAgent}\
       ['Quote Threading',           QuoteThreading],
       ['Thread Stats',              ThreadStats],
       ['Thread Updater',            ThreadUpdater],
-      ['Thread Watcher',            ThreadWatcher$1],
-      ['Thread Watcher (Menu)',     ThreadWatcher$1.menu],
+      ['Thread Watcher',            ThreadWatcher],
+      ['Thread Watcher (Menu)',     ThreadWatcher.menu],
       ['Mark New IPs',              MarkNewIPs],
       ['Index Navigation',          Nav],
       ['Keybinds',                  Keybinds],
@@ -26032,11 +26203,11 @@ User agent: ${navigator.userAgent}\
       ['Reply Pruning',             ReplyPruning],
       ['Mod Contact Links',         ModContact],
       ['Restore deleted posts from archive', RestoreDeletedFromArchive],
+      ['Mark posts on scroll bar',  ScrollMarkers],
     ]
   };
-  var Main$1 = Main;
   $.ready(() => Main.init());
 
-  return Main$1;
+  return Main;
 
 })();

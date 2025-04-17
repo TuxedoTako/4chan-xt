@@ -26,7 +26,7 @@ var Site = {
       this.set(hostname);
       cb();
     }
-    return $.onExists(doc, 'body', () => {
+    $.onExists(doc, 'body', () => {
       for (var software in SW) {
         var changes;
         if (changes = SW[software].detect?.()) {

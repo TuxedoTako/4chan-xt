@@ -41,25 +41,7 @@
   border-color: rgb(254, 150, 0) !important;
   background-color: rgb(30,32,36);
 }
-:root.spooky .persona button {
-  background: linear-gradient(to bottom, #2E3035, #222427) no-repeat;
-  color: rgb(197,200,198);
-  border-color: rgb(40, 41, 42);
-  outline: none;
-}
-:root.spooky .persona button::-moz-focus-inner {
-  border: none;
-}
-:root.spooky .persona button:focus {
-  border-color: rgb(254, 150, 0);
-}
-:root.spooky #qr.sjis-preview #sjis-toggle,
-:root.spooky #qr.tex-preview #tex-preview-button {
-  background: rgb(26, 27, 29);
-}
-:root.spooky #qr select,
-:root.spooky #file-n-submit > input,
-:root.spooky #qr-draw-button {
+:root.spooky #qr select {
   border-color: rgb(40, 41, 42);
   background: unset;
 }

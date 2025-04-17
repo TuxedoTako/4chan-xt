@@ -9,6 +9,8 @@ import { Conf } from '../../globals/globals';
 export default function EmbedFxTwitter(a: HTMLAnchorElement): HTMLElement {
   const el = $.el('div', { innerHTML: '<blockquote class="twitter-tweet">Loading&hellip;</blockquote>' });
   const shouldTranslate = Conf.fxtLang ? `/${Conf.fxtLang}` : '';
+  const maxReplies = +Conf.fxtMaxReplies;
+
   CrossOrigin.cachePromise(`${Conf.fxtUrl}/${a.dataset.uid}${shouldTranslate}`).then(async req => {
     if (req.status === 404) {
       el.textContent = '404: tweet not found';
@@ -18,28 +20,6 @@ export default function EmbedFxTwitter(a: HTMLAnchorElement): HTMLElement {
     const { tweet } = req.response;
 
     // console.log(tweet);
-
-    async function getReplies(tweet) {
-      if (!tweet?.replying_to_status) {
-        return [];
-      }
-      const max_replies = +Conf.fxtMaxReplies;
-      let replies = [];
-      replies.push(tweet);
-      for (let i = 0; i < max_replies; i++) {
-        const replyReq = await CrossOrigin.cachePromise(
-          `https://api.fxtwitter.com/${replies[i].replying_to}/status/${replies[i].replying_to_status}${shouldTranslate}`
-        );
-        const replyRes = replyReq.response;
-        replies.push(replyRes.tweet);
-        if (!replyRes.tweet?.replying_to_status) {
-          break;
-        }
-      }
-      return replies;
-    }
-
-    const replies = (+Conf.fxtMaxReplies) === 0 ? [] : await getReplies(tweet);
 
     function renderMedia(tweet): EscapedHtml[] {
       return tweet.media?.all?.map(media => {
@@ -81,9 +61,9 @@ export default function EmbedFxTwitter(a: HTMLAnchorElement): HTMLElement {
       return <div class="fxt-poll">
         {...tweet.poll.choices.map((choice, index) =>
           <div class={`fxt-choice ${index === maxChoiceIndex ? 'highlight' : ''}`}>
-            <span class="choice_label">{choice.label}</span>
-            <span class="choice_percentage">{choice.percentage}%</span>
-            <div class="bar" style={`width: ${choice.percentage}%`} />
+            <span class="fxt-choice_label">{choice.label}</span>
+            <span class="fxt-choice_percentage">{choice.percentage}%</span>
+            <div class="fxt-bar" style={`width: ${choice.percentage}%`} />
           </div>
         )}
         <div class="total-votes">{tweet.poll.total_votes.toLocaleString()} votes</div>
@@ -105,7 +85,9 @@ export default function EmbedFxTwitter(a: HTMLAnchorElement): HTMLElement {
       return <div class="fxt-meta">
         <a class="fxt-meta_profile" href={tweet.author.url} title={tweet.author.description} target="_blank"
           referrerpolicy="no-referrer">
-          <img src={tweet.author.avatar_url} referrerpolicy="no-referrer" />
+          <div class="fxt-meta_avatar">
+            <img src={tweet.author.avatar_url} referrerpolicy="no-referrer" />
+          </div>
           <div class="fxt-meta_author">
             <span class="fxt-meta_author_username">{tweet.author.name}</span>
             <span class="fxt-meta_author_account">@{tweet.author.screen_name}</span>
@@ -135,81 +117,127 @@ export default function EmbedFxTwitter(a: HTMLAnchorElement): HTMLElement {
       return result;
     }
 
-    function renderQuote(tweet, renderNested = false): EscapedHtml {
-      const quote_nested = (tweet?.quote && renderNested) ? renderQuote(tweet.quote, false) : '';
-      const quote_poll = (tweet?.poll) ? renderPoll(tweet) : ''
-      const quote_translation = renderTranslation(tweet);
-      const media = tweet.media?.all ? renderMedia(tweet) : [];
+    function renderCommunityNote(note) {
+      const content: (string | EscapedHtml)[] = [];
+      let i = 0;
+      if (note.entities) {
+        for (const entity of note.entities) {
+          if (entity.ref.url) {
+            if (i < entity.fromIndex) content.push(...renderText(note.text.slice(i, entity.fromIndex)));
+            content.push(<a href={entity.ref.url} target="_blank" referrerpolicy="no-referrer">
+              {note.text.slice(entity.fromIndex, entity.toIndex)}
+            </a>)
+            i = entity.toIndex;
+          }
+        }
+      }
+      if (i < note.text.length - 1) content.push(...renderText(note.text.slice(i)));
 
-      return <div class="fxt-quote">
-        {renderMeta(tweet)}
-        <div class="fxt-text" lang={tweet.lang}>
-          {...renderText(tweet.text)}
-          {quote_translation}
-        </div>
-        <div class={`fxt-media_container ${tweet.media?.all?.length > 1 ? 'fxt-media-multiple' : ''}`}>
-          {quote_poll}
-          {...media}
-        </div>
-        {quote_nested}
+      return <div class="fxt-community_note">
+        <div class="fxt-community_note-header">Community Note</div>
+        <div class="fxt-community_note-text">{...content}</div>
       </div>;
     }
 
-    let repliesJsx: EscapedHtml[] = [];
-    if (replies.length > 1) {
-      repliesJsx.push({ innerHTML: "<em>Replying To</em><br/>", [isEscaped]: true });
-      for (let i = replies.length - 1; i > 0; i--) {
-        repliesJsx.push(renderQuote(replies[i], true));
-      }
+    async function renderQuote(quote): Promise<EscapedHtml> {
+      return <div class="fxt-quote_container">
+        {await renderTweet(quote, 'quote')}
+      </div>
     }
 
-    const media = renderMedia(tweet);
-    const quote = (tweet?.quote) ? renderQuote(tweet.quote) : ''
+    async function renderReplies(tweet) {
+      const replies = [];
+      let depth = 0;
+      while (tweet.replying_to && tweet.replying_to_status && depth < maxReplies) {
+        const replyUrl = `${Conf.fxtUrl}/${tweet.replying_to}/status/${tweet.replying_to_status}`;
+        try {
+          const replyData = await CrossOrigin.cachePromise(replyUrl);
+          tweet = replyData.response.tweet;
+          const replyHTML = await renderTweet(tweet, 'reply');
+          replies.unshift(replyHTML);
+          depth++;
+        } catch (error) {
+          console.error(`Error fetching/rendering reply tweet: ${error.message}`);
+          console.log(tweet);
+          const url = `${Conf.fxtUrl}/${tweet.replying_to}/status/${tweet.replying_to_status}`
+          return <div class="fxt-reply_container">
+            <article class="fxt-card fxt-tweet-reply">
+              <div class="fxt-content warning">
+                Failed trying to load <a href={url} target="_blank" referrerpolicy="no-referrer">{url}</a>
+                <br />This tweet has probably been deleted or removed.
+                <br />This also breaks the reply chain, so you may want to view the original tweet.
+              </div>
+            </article>
+          </div>;
+        }
+      }
 
-    const poll = (tweet?.poll) ? renderPoll(tweet) : '';
-    const created_at = renderDate(tweet);
+      return <div class="fxt-reply_container">{...replies}</div>;
+    }
 
-    const translation = (shouldTranslate) ? renderTranslation(tweet) : '';
+    async function renderTweet(tweet, type: 'quote' | 'reply' | 'original'): Promise<EscapedHtml> {
+      const media = renderMedia(tweet);
+      const quote = (tweet?.quote) ? await renderQuote(tweet.quote) : ''
 
-    const innerHTML: EscapedHtml = <article class="fxt-card">
-      {renderMeta(tweet)}
-      <div class="fxt-text" lang={tweet.lang}>
-        {...renderText(tweet.text)}
-        {translation}
-      </div>
-      <div class={`fxt-media_container ${tweet.media?.all?.length > 1 ? 'fxt-media-multiple' : ''}`}>
-        {poll}
-        {...media}
-      </div>
-      {quote}
-      <div class="fxt-stats">
-        <div class="fxt-stats_time">{created_at}</div>
-        <div class="fxt-stats_meta">
-          <span class="fxt-likes">
-            {Icon.raw("comment")}
-            {tweet.replies.toLocaleString()}
-          </span>
-          <span class="fxt-reposts">
-            {Icon.raw("shuffle")}
-            {tweet.retweets.toLocaleString()}
-          </span>
-          <span class="fxt-replies">
-            {Icon.raw("heart")}
-            {tweet.likes.toLocaleString()}
-          </span>
+      const poll = (tweet?.poll) ? renderPoll(tweet) : '';
+      const created_at = renderDate(tweet);
+
+      const translation = (shouldTranslate) ? renderTranslation(tweet) : '';
+      const note = tweet.community_note ? renderCommunityNote(tweet.community_note) : ''
+
+      return <article class={`fxt-card fxt-tweet-${type}`}>
+        {renderMeta(tweet)}
+        <div class="fxt-content">
+          <div class="fxt-text" lang={tweet.lang}>
+            {...renderText(tweet.text)}
+            {translation}
+          </div>
+          {(media.length || poll) &&
+            <div class={`fxt-media_container ${tweet.media?.all?.length > 1 ? 'fxt-media-multiple' : ''}`}>
+              {poll}
+              {...media}
+            </div>
+          }
+          {note}
+          {quote}
         </div>
-      </div>
-    </article>;
+        <div class="fxt-stats">
+          <div class="fxt-stats_time">{created_at}</div>
+          <div class="fxt-stats_meta">
+            <span class="fxt-likes">
+              {Icon.raw("comment")}
+              {tweet.replies.toLocaleString()}
+            </span>
+            <span class="fxt-reposts">
+              {Icon.raw("shuffle")}
+              {tweet.retweets.toLocaleString()}
+            </span>
+            <span class="fxt-replies">
+              {Icon.raw("heart")}
+              {tweet.likes.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      </article>;
+    }
 
-    el.innerHTML = innerHTML.innerHTML;
+    async function renderFullTweet(tweet) {
+      const mainTweetHTML = await renderTweet(tweet, 'original');
+      const repliesHTML = tweet.replying_to ? await renderReplies(tweet) : '';
+      return <>{repliesHTML}{mainTweetHTML}</>;
+    }
+
+    const rendered = await renderFullTweet(tweet);
+    el.innerHTML = rendered.innerHTML;
     for (const textEl of el.getElementsByClassName('fxt-text')) {
       Linkify.process(textEl);
     }
 
     el.style.resize = null;
-    el.style.height = 'fit-content';
-    el.style.width = 'fit-content';
-    el.style.overflow = 'auto';
+    el.classList.add('fxt-card_container');
+    el.style.height = null;
+    el.style.width = null;
+    el.style.overflow = null;
   });
   return el;
 }

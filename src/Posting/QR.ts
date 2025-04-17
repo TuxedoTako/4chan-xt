@@ -87,6 +87,7 @@ var QR = {
     fileInput: HTMLInputElement,
     flag?: HTMLSelectElement,
     preview?: HTMLDivElement;
+    splitPost?: HTMLAnchorElement;
   },
   shortcut: undefined as HTMLAnchorElement,
   hasFocus: false,
@@ -94,9 +95,9 @@ var QR = {
   req: undefined as (XMLHttpRequest & { isUploadFinished: boolean, progress: string }) | undefined,
   selected: undefined as post,
 
-  mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/vnd.adobe.flash.movie', 'application/x-shockwave-flash', 'video/webm'],
+  mimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'application/vnd.adobe.flash.movie', 'application/x-shockwave-flash', 'video/webm', 'video/mp4'],
 
-  validExtension: /\.(jpe?g|png|gif|pdf|swf|webm)$/i,
+  validExtension: /\.(jpe?g|png|gif|pdf|swf|webm|mp4)$/i,
 
   typeFromExtension: {
     'jpg':  'image/jpeg',
@@ -105,7 +106,8 @@ var QR = {
     'gif':  'image/gif',
     'pdf':  'application/pdf',
     'swf':  'application/vnd.adobe.flash.movie',
-    'webm': 'video/webm'
+    'webm': 'video/webm',
+    'mp4': 'video/mp4'
   },
 
   extensionFromType: {
@@ -115,7 +117,8 @@ var QR = {
     'application/pdf': 'pdf',
     'application/vnd.adobe.flash.movie': 'swf',
     'application/x-shockwave-flash': 'swf',
-    'video/webm': 'webm'
+    'video/webm': 'webm',
+    'video/mp4': 'mp4'
   },
 
   init() {
@@ -410,6 +413,7 @@ var QR = {
     return QR.notifications = [];
   },
 
+  /* Returns true if the QR is disabled. */
   status() {
     let disabled, value;
     if (!QR.nodes) { return; }
@@ -433,6 +437,7 @@ var QR = {
     :
       value;
     status.disabled = disabled || false;
+    return status.disabled;
   },
 
   openPost() {
@@ -522,9 +527,50 @@ var QR = {
   characterCount() {
     const counter = QR.nodes.charCount;
     const count   = QR.nodes.com.value.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length;
-    counter.textContent = count;
+    counter.textContent = count.toString();
     counter.hidden      = count < (QR.max_comment/2);
+
+    const splitPost = QR.nodes.splitPost;
+    splitPost.hidden = count < QR.max_comment;
+
     return (count > QR.max_comment ? $.addClass : $.rmClass)(counter, 'warning');
+  },
+
+  splitPost() {
+    if (QR.selected.isLocked) return;
+    const count = QR.nodes.com.value.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length;
+    if (count < QR.max_comment) return;
+    const text = QR.nodes.com.value;
+    let lastPostLength = 0;
+    let splitCount = 0;
+    const idx = QR.posts.indexOf(QR.selected);
+    QR.selected.setComment("");
+
+    for (const line of text.split("\n")) {
+      const currentLength = line.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '_').length + 1 // +1 for newline at end
+      if (currentLength + lastPostLength > QR.max_comment) {
+        const post = new QR.post(true);
+        post.setComment(line);
+        lastPostLength = currentLength;
+        splitCount++;
+      } else {
+        const newComment = [QR.selected.com, line].filter(el => el !== null).join('\n');
+        QR.selected.setComment(newComment);
+        lastPostLength += currentLength;
+      }
+    }
+    const newPostIdx = QR.posts.length - splitCount;
+    const newPosts = QR.posts.splice(newPostIdx, splitCount)
+    QR.posts.splice(idx + 1, 0, ...newPosts);
+    const rearrangedDumpList = [...QR.nodes.dumpList.children];
+    const newDumps = rearrangedDumpList.splice(newPostIdx, splitCount);
+    rearrangedDumpList.splice(idx + 1, 0, ...newDumps);
+
+    for (const e of rearrangedDumpList) {
+      QR.nodes.dumpList.appendChild(e);
+    }
+
+    QR.nodes.el.classList.add('dump');
   },
 
   getFile() {
@@ -630,14 +676,16 @@ var QR = {
 
   handleUrl(urlDefault) {
     QR.open();
-    QR.selected.preventAutoPost();
+    const { selected } = QR;
+    selected.preventAutoPost();
     CrossOrigin.permission(function() {
       const url = prompt('Enter a URL:', urlDefault);
       if (!url) return;
       QR.nodes.fileButton.focus();
       CrossOrigin.file(url, function(blob) {
         if (blob && !/^text\//.test(blob.type)) {
-          QR.handleFiles([blob]);
+          selected.setFile(blob);
+          $.addClass(QR.nodes.el, 'dump');
         } else {
           QR.error("Can't load file.");
         }
@@ -751,6 +799,7 @@ var QR = {
     setNode('status',         '[type=submit]');
     setNode('flashTag',       '[name=filetag]');
     setNode('fileInput',      '[type=file]');
+    setNode('splitPost',      '#split-post')
 
     const {config} = g.BOARD;
     const {classList} = QR.nodes.el;
@@ -795,6 +844,7 @@ var QR = {
     $.on(nodes.customCooldown, 'click',     QR.toggleCustomCooldown);
     $.on(nodes.dumpButton,     'click',     () => nodes.el.classList.toggle('dump'));
     $.on(nodes.fileInput,      'change',    QR.handleFiles);
+    $.on(nodes.splitPost,      'click',     QR.splitPost);
 
     window.addEventListener('focus', QR.focus, true);
     window.addEventListener('blur',  QR.focus, true);
@@ -850,6 +900,11 @@ var QR = {
     Icon.set(nodes.compress, 'shrink');
     Icon.set(nodes.view, 'eye');
     Icon.set(nodes.restoreNameButton, 'undo');
+    Icon.set(nodes.splitPost, 'scissors');
+    Icon.set(nodes.fileRM, 'xmark');
+    Icon.set(nodes.close, 'xmark');
+    Icon.set(nodes.dumpButton, 'squarePlus');
+    Icon.set(nodes.addPost, 'plus');
   },
 
   flags() {
@@ -1235,9 +1290,10 @@ var QR = {
 
     // Fallback to HTMLCanvasElement is for old firefox versions. Once the minimum firefox >= 105, this can be
     // simplified to just the OffscreenCanvas implementation.
+    // Conf['Avoid OffscreenCanvas'] is for https://codeberg.org/librewolf/issues/issues/2174
     let canvas: HTMLCanvasElement | OffscreenCanvas;
     let toBlob: (mime: string, quality: number) => Promise<Blob>;
-    if (window.OffscreenCanvas) {
+    if (window.OffscreenCanvas && !Conf['Avoid OffscreenCanvas']) {
       canvas = new OffscreenCanvas(width, height);
       toBlob = (mime, quality) => (canvas as OffscreenCanvas).convertToBlob({ type: mime, quality });
     } else {
@@ -1763,7 +1819,7 @@ class post {
       href: 'javascript:;'
     }) as HTMLAnchorElement;
     $.extend(el, {
-      innerHTML: '<a class="remove" title="Remove">✕</a>' +
+      innerHTML: `<a href="javascript:;" class="remove" title="Remove">${Icon.get('xmark')}</a>` +
       '<label class="qr-preview-spoiler"><input type="checkbox"> Spoiler</label>' +
       '<span id="qr-preview-comment"></span><br /><span id="qr-preview-name"></span>'
     });
@@ -2094,7 +2150,7 @@ class post {
 
       this.file = await this.validateFile(file);
       this.originalName = file.name;
-      if (Conf['Randomize Filename'] && (g.BOARD.ID !== 'f') && (!this.file.name.includes('[sound='))) {
+      if (Conf['Randomize Filename'] && (g.BOARD.ID !== 'f') && (!this.file.name.toLowerCase().includes('[sound='))) {
         this.randomizeName(false);
       } else {
         this.filename = this.file.name;

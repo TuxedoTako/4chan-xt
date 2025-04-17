@@ -86,7 +86,7 @@ var CrossOrigin = {
     }
   },
 
-  file(url, cb) {
+  file(url: string, cb: (result: File) => void) {
     return CrossOrigin.binary(url, function(data, headers) {
       if (data == null) { return cb(null); }
       let name = url.match(/([^\/?#]+)\/*(?:$|[?#])/)?.[1];
@@ -103,9 +103,7 @@ var CrossOrigin = {
         // In JS Blocker (Safari) content type comes back as 'text/plain; charset=x-user-defined'; guess from filename instead.
         mime = $.getOwn(QR.typeFromExtension, name.match(/[^.]*$/)[0].toLowerCase()) || 'application/octet-stream';
       }
-      const blob = new Blob([data], {type: mime});
-      blob.name = name;
-      return cb(blob);
+      cb(new File([data], name, { type: mime }));
     });
   },
 
@@ -236,7 +234,7 @@ var CrossOrigin = {
     })
   },
 
-  permission(cb, cbFail, origins) {
+  permission(cb: () => void, cbFail?: () => void, origins?: string[]) {
     if (platform === 'crx') {
       return $.eventPageRequest({type: 'permission', origins}).then((result) => {
         if (result) {

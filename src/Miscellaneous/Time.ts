@@ -75,6 +75,7 @@ var Time = {
     k() { return this.getHours(); },
     l() { return (this.getHours() % 12) || 12; },
     m() { return Time.zeroPad(this.getMonth() + 1); },
+    n() { return this.getMonth() + 1; },
     M() { return Time.zeroPad(this.getMinutes()); },
     p() {
       let formatter = Time.formatterCache.get('p');

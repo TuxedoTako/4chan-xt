@@ -533,16 +533,17 @@ var Filter = {
     if (notice) {
       notice.filters.push(filter);
       notice.posts.push(origin);
-      return $('span', notice.el).textContent = `${notice.filters.length} MD5s filtered.`;
+      $('span', notice.el).textContent = `${notice.filters.length} MD5s filtered.`;
+      notice.resetTimer();
     } else {
       const msg = $.el('div',
         {innerHTML: "<span>MD5 filtered.</span> [<a href=\"javascript:;\">show</a>] [<a href=\"javascript:;\">undo</a>]"});
-      notice = (Filter.quickFilterMD5.notice = new Notice('info', msg, undefined, () => delete Filter.quickFilterMD5.notice));
+      notice = (Filter.quickFilterMD5.notice = new Notice('info', msg, 10, () => delete Filter.quickFilterMD5.notice));
       notice.filters = [filter];
       notice.posts = [origin];
       const links = $$('a', msg);
       $.on(links[0], 'click', Filter.quickFilterCB.show.bind(notice));
-      return $.on(links[1], 'click', Filter.quickFilterCB.undo.bind(notice));
+      $.on(links[1], 'click', Filter.quickFilterCB.undo.bind(notice));
     }
   },
 

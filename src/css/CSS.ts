@@ -31,7 +31,6 @@ import photon from './photon.css';
 import report from './report.css';
 import spooky from './spooky.css';
 import style from './style.css';
-import supports from './supports.css';
 import tomorrow from './tomorrow.css';
 import www from './www.css';
 import yotsubaB from './yotsuba-b.css';
@@ -69,7 +68,7 @@ const faIcons: { name: string, data: string }[] = [
 
 const CSS = {
 
-  boards: mainCSS + icons(faIcons) + supports,
+  boards: mainCSS + icons(faIcons),
 
   report,
 

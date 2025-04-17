@@ -104,15 +104,28 @@ var Gallery = {
     $.on(nodes.next,  'click', cb.click);
     $.on(nodes.name,  'click', ImageCommon.download);
 
-    $.on($('.gal-prev',  dialog), 'click', cb.prev);
-    $.on($('.gal-next',  dialog), 'click', cb.next);
-    $.on($('.gal-start', dialog), 'click', cb.start);
-    $.on($('.gal-stop',  dialog), 'click', cb.stop);
-    $.on($('.gal-close', dialog), 'click', cb.close);
+    const prev =  $('.gal-prev',  dialog);
+    const next =  $('.gal-next',  dialog);
+    const start = $('.gal-start', dialog);
+    const stop =  $('.gal-stop',  dialog);
+    const close = $('.gal-close', dialog);
+
+    $.on(prev,  'click', cb.prev);
+    $.on(next,  'click', cb.next);
+    $.on(start, 'click', cb.start);
+    $.on(stop,  'click', cb.stop);
+    $.on(close, 'click', cb.close);
 
     $.on(menuButton, 'click', function(e) {
       return nodes.menu.toggle(e, this, g);
     });
+
+    Icon.set(menuButton, 'caretDown');
+    Icon.set(start, 'play');
+    Icon.set(stop, 'stop');
+    Icon.set(close, 'xmark');
+    Icon.set(prev, 'caretLeft');
+    Icon.set(next, 'caretRight');
 
     for (var entry of Gallery.menu.createSubEntries()) {
       entry.order = 0;

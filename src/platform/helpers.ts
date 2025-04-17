@@ -1,7 +1,12 @@
 // This file was created because these functions on $ were sometimes not initialized yet because of circular
 // dependencies, so try to keep this file without dependencies, so these functions don't have to wait for something else
 
-export const debounce = (wait: number, fn: Function) => {
+/**
+ * @param wait Time to wait in milliseconds.
+ * @param fn The function to execute
+ * @param leading Wether to run immediately, otherwise it waits for timeout even if there is no older call.
+ */
+export const debounce = (wait: number, fn: Function, leading = true) => {
   let lastCall = 0;
   let timeout = null;
   let that = null;
@@ -13,13 +18,14 @@ export const debounce = (wait: number, fn: Function) => {
   return function () {
     args = arguments;
     that = this;
-    if (lastCall < (Date.now() - wait)) {
-      return exec();
+    if (leading && lastCall < (Date.now() - wait)) {
+      exec();
+      return;
     }
     // stop current reset
-    clearTimeout(timeout);
+    if (timeout !== null) clearTimeout(timeout);
     // after wait, let next invocation execute immediately
-    return timeout = setTimeout(exec, wait);
+    timeout = setTimeout(exec, wait);
   };
 };
 

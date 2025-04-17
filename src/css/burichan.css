@@ -2,7 +2,7 @@
   --xt-background: #D6DAF0;
   --xt-border: #B7C5D9;
   --xt-border-field-focus: #98E;
-  --xt-border-highlight: 3px dashed rgba(221, 0, 0, .8);
+  --xt-border-highlight: rgba(221, 0, 0, .8);
   --xt-header-dialog-bg: rgba(214, 218, 240, 0.98);
   --xt-notification-size: 11pt;
   --xt-header-dialog-fg: #89A;

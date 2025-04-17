@@ -3,6 +3,7 @@ import Header from "../General/Header";
 import { g, Conf, d, doc } from "../globals/globals";
 import $ from "../platform/$";
 import $$ from "../platform/$$";
+import Icon from "../Icons/icon";
 
 /*
  * decaffeinate suggestions:
@@ -26,14 +27,19 @@ var Nav = {
       {id: 'navlinks'});
     const prev = $.el('a', {
       textContent: '▲',
+      className: 'navlinks-navlink navlink-prev',
       href: 'javascript:;'
     }
     );
     const next = $.el('a', {
       textContent: '▼',
+      className: 'navlinks-navlink navlink-next',
       href: 'javascript:;'
     }
     );
+
+    Icon.set(prev, 'arrowUpLong');
+    Icon.set(next, 'arrowDownLong');
 
     $.on(prev, 'click', this.prev);
     $.on(next, 'click', this.next);

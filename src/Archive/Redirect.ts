@@ -191,7 +191,7 @@ var Redirect = {
     } else {
       if (/[sm]\.jpg$/.test(filename)) { return ''; }
     }
-    if (archive.name === 'arch.b4k.co') {
+    if (archive.name.endsWith('arch.b4k.co')) {
       const [timeStamp, ext] = filename.split('.');
       if (timeStamp.length > 13) {
         // remove last 3 digits

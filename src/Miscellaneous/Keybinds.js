@@ -65,265 +65,264 @@ var Keybinds = {
       threadRoot = Nav.getThread();
       thread = Get.threadFromRoot(threadRoot);
     }
-    switch (key) {
-      // QR & Options
-      case Conf['Toggle board list']:
-        if (!Conf['Custom Board Navigation']) { return; }
-        Header.toggleBoardList();
-        break;
-      case Conf['Toggle header']:
-        Header.toggleBarVisibility();
-        break;
-      case Conf['Open empty QR']:
-        if (!QR.postingIsEnabled) { return; }
-        Keybinds.qr();
-        break;
-      case Conf['Open QR']:
-        if (!QR.postingIsEnabled || !threadRoot) { return; }
-        Keybinds.qr(threadRoot);
-        break;
-      case Conf['Open settings']:
-        Settings.open();
-        break;
-      case Conf['Close']:
-        if (Settings.dialog) {
-          Settings.close();
-        } else if ((notifications = $$('.notification')).length) {
-          for (var notification of notifications) {
-            $('.close', notification).click();
-          }
-        } else if (QR.nodes?.preview) {
-          QR.closePreview();
-        } else if (QR.nodes && !(QR.nodes.el.hidden || (window.getComputedStyle(QR.nodes.form).display === 'none'))) {
-          if (Conf['Persistent QR']) {
-            QR.hide();
-          } else {
-            QR.close();
-          }
-        } else if (Embedding.lastEmbed) {
-          Embedding.closeFloat();
+    let hasAction = false;
+    // QR & Options
+    if (key === Conf['Toggle board list'] && Conf['Custom Board Navigation']) {
+      Header.toggleBoardList();
+      hasAction = true;
+    }
+    if (key === Conf['Toggle header']) {
+      Header.toggleBarVisibility();
+      hasAction = true;
+    }
+    if (key === Conf['Open empty QR'] && QR.postingIsEnabled) {
+      Keybinds.qr();
+      hasAction = true;
+    }
+    if (key === Conf['Open QR'] && QR.postingIsEnabled && threadRoot) {
+      Keybinds.qr(threadRoot);
+      hasAction = true;
+    }
+    if (key === Conf['Open settings']) {
+      Settings.open();
+      hasAction = true;
+    }
+    if (key === Conf['Close']) {
+      if (Settings.dialog) {
+        Settings.close();
+      } else if ((notifications = $$('.notification')).length) {
+        for (var notification of notifications) {
+          $('.close', notification).click();
+        }
+      } else if (QR.nodes?.preview) {
+        QR.closePreview();
+      } else if (QR.nodes && !(QR.nodes.el.hidden || (window.getComputedStyle(QR.nodes.form).display === 'none'))) {
+        if (Conf['Persistent QR']) {
+          QR.hide();
         } else {
-          return;
+          QR.close();
         }
+      } else if (Embedding.lastEmbed) {
+        Embedding.closeFloat();
+      }
+      hasAction = true;
+    }
+    if (key === Conf['Spoiler tags'] && target.nodeName === 'TEXTAREA') {
+      Keybinds.tags('spoiler', target);
+      hasAction = true;
+    }
+    if (key === Conf['Code tags'] && target.nodeName === 'TEXTAREA') {
+      Keybinds.tags('code', target);
+      hasAction = true;
+    }
+    if (key === Conf['Eqn tags'] && target.nodeName === 'TEXTAREA') {
+      Keybinds.tags('eqn', target);
+      hasAction = true;
+    }
+    if (key === Conf['Math tags'] && target.nodeName === 'TEXTAREA') {
+      Keybinds.tags('math', target);
+      hasAction = true;
+    }
+    if (key === Conf['SJIS tags'] && target.nodeName === 'TEXTAREA') {
+      Keybinds.tags('sjis', target);
+      hasAction = true;
+    }
+    if (key === Conf['Toggle sage'] && QR.nodes && !QR.nodes.el.hidden) {
+      Keybinds.sage();
+      hasAction = true;
+    }
+    if (key === Conf['Toggle Cooldown'] && QR.nodes && !QR.nodes.el.hidden
+      && $.hasClass(QR.nodes.fileSubmit, 'custom-cooldown')) {
+      QR.toggleCustomCooldown();
+      hasAction = true;
+    }
+    if (key === Conf['Post from URL'] && QR.postingIsEnabled) {
+      QR.handleUrl('');
+      hasAction = true;
+    }
+    if (key === Conf['Add new post'] && QR.postingIsEnabled) {
+      QR.addPost();
+      hasAction = true;
+    }
+    if (key === Conf['Submit QR'] && QR.nodes && !QR.nodes.el.hidden && !QR.status()) {
+      QR.submit();
+      hasAction = true;
+    }
+    // Index/Thread related
+    if (key === Conf['Update']) {
+      switch (g.VIEW) {
+        case 'thread':
+          if (ThreadUpdater.enabled) ThreadUpdater.update();
+          hasAction = true;
         break;
-      case Conf['Spoiler tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
-        Keybinds.tags('spoiler', target);
-        break;
-      case Conf['Code tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
-        Keybinds.tags('code', target);
-        break;
-      case Conf['Eqn tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
-        Keybinds.tags('eqn', target);
-        break;
-      case Conf['Math tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
-        Keybinds.tags('math', target);
-        break;
-      case Conf['SJIS tags']:
-        if (target.nodeName !== 'TEXTAREA') { return; }
-        Keybinds.tags('sjis', target);
-        break;
-      case Conf['Toggle sage']:
-        if (!QR.nodes || !!QR.nodes.el.hidden) { return; }
-        Keybinds.sage();
-        break;
-      case Conf['Toggle Cooldown']:
-        if (!QR.nodes || !!QR.nodes.el.hidden || !$.hasClass(QR.nodes.fileSubmit, 'custom-cooldown')) { return; }
-        QR.toggleCustomCooldown();
-        break;
-      case Conf['Post from URL']:
-        if (!QR.postingIsEnabled) { return; }
-        QR.handleUrl('');
-        break;
-      case Conf['Add new post']:
-        if (!QR.postingIsEnabled) { return; }
-        QR.addPost();
-        break;
-      case Conf['Submit QR']:
-        if (!QR.nodes || !!QR.nodes.el.hidden) { return; }
-        if (!QR.status()) { QR.submit(); }
-        break;
-      // Index/Thread related
-      case Conf['Update']:
-        switch (g.VIEW) {
-          case 'thread':
-            if (!ThreadUpdater.enabled) { return; }
-            ThreadUpdater.update();
-            break;
-          case 'index':
-            if (!Index.enabled) { return; }
-            Index.update();
-            break;
-          default:
-            return;
-        }
-        break;
-      case Conf['Watch']:
-        if (!ThreadWatcher.enabled || !thread) { return; }
-        ThreadWatcher.toggle(thread);
-        break;
-      case Conf['Update thread watcher']:
-        if (!ThreadWatcher.enabled) { return; }
-        ThreadWatcher.buttonFetchAll();
-        break;
-      case Conf['Toggle thread watcher']:
-        if (!ThreadWatcher.enabled) { return; }
-        ThreadWatcher.toggleWatcher();
-        break;
-      case Conf['Toggle threading']:
-        if (!QuoteThreading.ready) { return; }
-        QuoteThreading.toggleThreading();
-        break;
-      case Conf['Mark thread read']:
-        if ((g.VIEW !== 'index') || !thread || !UnreadIndex.enabled) { return; }
-        UnreadIndex.markRead.call(threadRoot);
-        break;
-      // Images
-      case Conf['Expand image']:
-        if (!ImageExpand.enabled || !threadRoot) { return; }
-        var post = Get.postFromNode(Keybinds.post(threadRoot));
-        if (post.file) { ImageExpand.toggle(post); }
-        break;
-      case Conf['Expand images']:
-        if (!ImageExpand.enabled) { return; }
-        ImageExpand.cb.toggleAll();
-        break;
-      case Conf['Open Gallery']:
-        if (!Gallery.enabled) { return; }
-        Gallery.cb.toggle();
-        break;
-      case Conf['fappeTyme']:
-        if (!FappeTyme.nodes?.fappe) { return; }
-        FappeTyme.toggle('fappe');
-        break;
-      case Conf['werkTyme']:
-        if (!FappeTyme.nodes?.werk) { return; }
-        FappeTyme.toggle('werk');
-        break;
-      // Board Navigation
-      case Conf['Front page']:
-        if (Index.enabled) {
-          Index.userPageNav(1);
-        } else {
-          location.href = `/${g.BOARD}/`;
-        }
-        break;
-      case Conf['Open front page']:
-        $.open(`${location.origin}/${g.BOARD}/`);
-        break;
-      case Conf['Next page']:
-        if ((g.VIEW !== 'index') || !!g.SITE.isOnePage?.(g.BOARD)) { return; }
-        if (Index.enabled) {
-          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
-          $('.next button', Index.pagelist).click();
-        } else {
-          $(g.SITE.selectors.nav.next)?.click();
-        }
-        break;
-      case Conf['Previous page']:
-        if ((g.VIEW !== 'index') || !!g.SITE.isOnePage?.(g.BOARD)) { return; }
-        if (Index.enabled) {
-          if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
-          $('.prev button', Index.pagelist).click();
-        } else {
-          $(g.SITE.selectors.nav.prev)?.click();
-        }
-        break;
-      case Conf['Search form']:
-        if (g.VIEW !== 'index') { return; }
-        var searchInput = Index.enabled ?
-          Index.searchInput
-        : g.SITE.selectors.searchBox ?
-          $(g.SITE.selectors.searchBox)
-        :
-          undefined;
-        if (!searchInput) { return; }
+        case 'index':
+          if (Index.enabled) Index.update();
+          hasAction = true;
+      }
+    }
+    if (key === Conf['Watch'] && ThreadWatcher.enabled && thread) {
+      ThreadWatcher.toggle(thread);
+      hasAction = true;
+    }
+    if (key === Conf['Update thread watcher'] && ThreadWatcher.enabled) {
+      ThreadWatcher.buttonFetchAll();
+      hasAction = true;
+    }
+    if (key === Conf['Toggle thread watcher'] && ThreadWatcher.enabled) {
+      ThreadWatcher.toggleWatcher();
+      hasAction = true;
+    }
+    if (key === Conf['Toggle threading'] && QuoteThreading.ready) {
+      QuoteThreading.toggleThreading();
+      hasAction = true;
+    }
+    if (key === Conf['Mark thread read'] && g.VIEW === 'index' && thread && UnreadIndex.enabled) {
+      UnreadIndex.markRead.call(threadRoot);
+      hasAction = true;
+    }
+    // Images
+    if (key === Conf['Expand image'] && ImageExpand.enabled && threadRoot) {
+      var post = Get.postFromNode(Keybinds.post(threadRoot));
+      if (post.file) {
+        ImageExpand.toggle(post);
+        hasAction = true;
+      }
+    }
+    if (key === Conf['Expand images'] && ImageExpand.enabled) {
+      ImageExpand.cb.toggleAll();
+      hasAction = true;
+    }
+    if (key === Conf['Open Gallery'] && Gallery.enabled) {
+      Gallery.cb.toggle();
+      hasAction = true;
+    }
+    if (key === Conf['fappeTyme'] && FappeTyme.nodes?.fappe) {
+      FappeTyme.toggle('fappe');
+      hasAction = true;
+    }
+    if (key === Conf['werkTyme'] && FappeTyme.nodes?.werk) {
+      FappeTyme.toggle('werk');
+      hasAction = true;
+    }
+    // Board Navigation
+    if (key === Conf['Front page']) {
+      if (Index.enabled) {
+        Index.userPageNav(1);
+      } else {
+        location.href = `/${g.BOARD}/`;
+      }
+      hasAction = true;
+    }
+    if (key === Conf['Open front page']) {
+      $.open(`${location.origin}/${g.BOARD}/`);
+      hasAction = true;
+    }
+    if (key === Conf['Next page'] && g.VIEW === 'index' && !g.SITE.isOnePage?.(g.BOARD)) {
+      if (Index.enabled) {
+        if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
+        $('.next button', Index.pagelist).click();
+      } else {
+        $(g.SITE.selectors.nav.next)?.click();
+      }
+      hasAction = true;
+    }
+    if (key === Conf['Previous page'] && g.VIEW === 'index' && !g.SITE.isOnePage?.(g.BOARD)) {
+      if (Index.enabled) {
+        if (!['paged', 'infinite'].includes(Conf['Index Mode'])) { return; }
+        $('.prev button', Index.pagelist).click();
+      } else {
+        $(g.SITE.selectors.nav.prev)?.click();
+      }
+      hasAction = true;
+    }
+    if (key === Conf['Search form'] && g.VIEW === 'index') {
+      var searchInput = Index.enabled ?
+        Index.searchInput
+      : g.SITE.selectors.searchBox ?
+        $(g.SITE.selectors.searchBox)
+      :
+        undefined;
+      if (searchInput) {
         Header.scrollToIfNeeded(searchInput);
         searchInput.focus();
-        break;
-      case Conf['Paged mode']:
-        if (!Index.enabledOn(g.BOARD)) { return; }
-        location.href = g.VIEW === 'index' ? '#paged' : `/${g.BOARD}/#paged`;
-        break;
-      case Conf['Infinite scrolling mode']:
-        if (!Index.enabledOn(g.BOARD)) { return; }
-        location.href = g.VIEW === 'index' ? '#infinite' : `/${g.BOARD}/#infinite`;
-        break;
-      case Conf['All pages mode']:
-        if (!Index.enabledOn(g.BOARD)) { return; }
-        location.href = g.VIEW === 'index' ? '#all-pages' : `/${g.BOARD}/#all-pages`;
-        break;
-      case Conf['Open catalog']:
-        if (!(catalog = CatalogLinks.catalog())) { return; }
-        location.href = catalog;
-        break;
-      case Conf['Cycle sort type']:
-        if (!Index.enabled) { return; }
-        Index.cycleSortType();
-        break;
-      // Thread Navigation
-      case Conf['Next thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
-        Nav.scroll(+1);
-        break;
-      case Conf['Previous thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
-        Nav.scroll(-1);
-        break;
-      case Conf['Expand thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
-        ExpandThread.toggle(thread);
-        // Keep thread from moving off screen when contracted.
-        Header.scrollTo(threadRoot);
-        break;
-      case Conf['Open thread']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
-        Keybinds.open(thread);
-        break;
-      case Conf['Open thread tab']:
-        if ((g.VIEW !== 'index') || !threadRoot) { return; }
-        Keybinds.open(thread, true);
-        break;
-      // Reply Navigation
-      case Conf['Next reply']:
-        if (!threadRoot) { return; }
-        Keybinds.hl(+1, threadRoot);
-        break;
-      case Conf['Previous reply']:
-        if (!threadRoot) { return; }
-        Keybinds.hl(-1, threadRoot);
-        break;
-      case Conf['Deselect reply']:
-        if (!threadRoot) { return; }
-        Keybinds.hl(0, threadRoot);
-        break;
-      case Conf['Hide']:
-        if (!thread || !ThreadHiding.db) { return; }
-        Header.scrollTo(threadRoot);
-        ThreadHiding.toggle(thread);
-        break;
-      case Conf['Quick Filter MD5']:
-        if (!threadRoot) { return; }
-        post = Keybinds.post(threadRoot);
-        Keybinds.hl(+1, threadRoot);
-        Filter.quickFilterMD5.call(post, e);
-        break;
-      case Conf['Previous Post Quoting You']:
-        if (!threadRoot || !QuoteYou.db) { return; }
-        QuoteYou.cb.seek('preceding');
-        break;
-      case Conf['Next Post Quoting You']:
-        if (!threadRoot || !QuoteYou.db) { return; }
-        QuoteYou.cb.seek('following');
-        break;
-      default:
-        return;
+        hasAction = true;
+      }
     }
-    e.preventDefault();
-    return e.stopPropagation();
+    if (key === Conf['Paged mode'] && Index.enabledOn(g.BOARD)) {
+      location.href = g.VIEW === 'index' ? '#paged' : `/${g.BOARD}/#paged`;
+    }
+    if (key === Conf['Infinite scrolling mode'] && Index.enabledOn(g.BOARD)) {
+      location.href = g.VIEW === 'index' ? '#infinite' : `/${g.BOARD}/#infinite`;
+    }
+    if (key === Conf['All pages mode'] && Index.enabledOn(g.BOARD)) {
+      location.href = g.VIEW === 'index' ? '#all-pages' : `/${g.BOARD}/#all-pages`;
+    }
+    if (key === Conf['Open catalog'] && (catalog = CatalogLinks.catalog())) {
+      location.href = catalog;
+    }
+    if (key === Conf['Cycle sort type'] && Index.enabled) {
+      Index.cycleSortType();
+      hasAction = true;
+    }
+    // Thread Navigation
+    if (key === Conf['Next thread'] && g.VIEW === 'index' && threadRoot) {
+      Nav.scroll(+1);
+      hasAction = true;
+    }
+    if (key === Conf['Previous thread'] && g.VIEW === 'index' && threadRoot) {
+      Nav.scroll(-1);
+      hasAction = true;
+    }
+    if (key === Conf['Expand thread'] && g.VIEW === 'index' && threadRoot) {
+      ExpandThread.toggle(thread);
+      // Keep thread from moving off screen when contracted.
+      Header.scrollTo(threadRoot);
+      hasAction = true;
+    }
+    if (key === Conf['Open thread'] && g.VIEW === 'index' && threadRoot) {
+      Keybinds.open(thread);
+      hasAction = true;
+    }
+    if (key === Conf['Open thread tab'] && g.VIEW === 'index' && threadRoot) {
+      Keybinds.open(thread, true);
+      hasAction = true;
+    }
+    // Reply Navigation
+    if (key === Conf['Next reply'] && threadRoot) {
+      Keybinds.hl(+1, threadRoot);
+      hasAction = true;
+    }
+    if (key === Conf['Previous reply'] && threadRoot) {
+      Keybinds.hl(-1, threadRoot);
+      hasAction = true;
+    }
+    if (key === Conf['Deselect reply'] && threadRoot) {
+      Keybinds.hl(0, threadRoot);
+      hasAction = true;
+    }
+    if (key === Conf['Hide'] && thread && ThreadHiding.db) {
+      Header.scrollTo(threadRoot);
+      ThreadHiding.toggle(thread);
+      hasAction = true;
+    }
+    if (key === Conf['Quick Filter MD5'] && threadRoot) {
+      post = Keybinds.post(threadRoot);
+      Keybinds.hl(+1, threadRoot);
+      Filter.quickFilterMD5.call(post, e);
+      hasAction = true;
+    }
+    if (key === Conf['Previous Post Quoting You'] && threadRoot && QuoteYou.db) {
+      QuoteYou.cb.seek('preceding');
+      hasAction = true;
+    }
+    if (key === Conf['Next Post Quoting You'] && threadRoot && QuoteYou.db) {
+      QuoteYou.cb.seek('following');
+      hasAction = true;
+    }
+    if (hasAction) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   },
 
   keyCode(e) {

@@ -147,16 +147,14 @@
   color-scheme: dark;
 }
 
-:root.tomorrow #file-n-submit>input,
-:root.tomorrow #qr-draw-buton,
-:root.spooky #file-n-submit>input,
-:root.spooky #qr-draw-buton {
-  background-image: none;
-}
-
 :root.tomorrow .field,
-:root.spooly .field {
+:root.spooky .field {
   background-color: unset;
   color: unset;
   border-color: unset;
+}
+
+:root.tomorrow input[type="button"],
+:root.spooky input[type="button"] {
+  filter: brightness(80%);
 }

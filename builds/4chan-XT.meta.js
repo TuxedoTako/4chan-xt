@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         4chan XT
-// @version      2.15.4
+// @version      2.24.0
 // @minGMVer     1.14
-// @minFFVer     74
+// @minFFVer     78
 // @namespace    4chan-XT
 // @description  4chan XT is a script that adds various features to anonymous imageboards.
 // @license      MIT; https://github.com/TuxedoTako/4chan-xt/blob/project-XT/LICENSE
@@ -49,7 +49,7 @@
 // @connect      warosu.org
 // @connect      desuarchive.org
 // @connect      boards.fireden.net
-// @connect      arch.b4k.co
+// @connect      arch.b4k.dev
 // @connect      archived.moe
 // @connect      thebarchive.com
 // @connect      archiveofsins.com

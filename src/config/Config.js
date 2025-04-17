@@ -140,6 +140,11 @@ const Config = {
         true,
         'Ask if history should be exported when settings are exported.'
       ],
+      'Scroll Markers': [
+        true,
+        'Mark your posts and replies to them on the scroll bar. Relies on the "Highlight Posts Quoting You" and ' +
+          '"Highlight Own Posts" settings'
+      ],
     },
 
     'Linkification': {
@@ -551,6 +556,12 @@ const Config = {
         'Submit the post immediately when the captcha is completed.',
         1
       ],
+      'Avoid OffscreenCanvas': [
+        false,
+        'Do not use OffscreenCanvas when converting images, workaround for ' +
+          '<a href="https://github.com/TuxedoTako/4chan-xt/issues/132">this LibreWolf bug</a>',
+        1
+      ],
       'Force Noscript Captcha': [
         false,
         'Use the non-Javascript fallback captcha even if Javascript is enabled.'
@@ -892,21 +903,7 @@ current-archive-text:"Archive"]
     sjisPreview: false
   },
 
-  jsWhitelist: `\
-http://s.4cdn.org
-https://s.4cdn.org
-http://www.google.com
-https://www.google.com
-https://www.gstatic.com
-http://cdn.mathjax.org
-https://cdn.mathjax.org
-https://cdnjs.cloudflare.com
-https://hcaptcha.com
-https://*.hcaptcha.com
-'self'
-'unsafe-inline'
-'unsafe-eval'\
-`,
+  jsWhitelist: '',
 
   captchaLanguage: '',
 

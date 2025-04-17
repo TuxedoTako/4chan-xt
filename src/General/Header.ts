@@ -31,8 +31,9 @@ var Header = {
     this.menu = new UI.Menu('header');
 
     const menuButton = $.el('span',
-      {className: 'menu-button'});
-    $.extend(menuButton, {innerHTML: "<i></i>"});
+      {className: 'menu-button'}
+    );
+    Icon.set(menuButton, 'caretDown', 'Menu');
 
     const box = UI.checkbox;
 
@@ -551,7 +552,7 @@ var Header = {
     return $('[name=boardnav]', settings).focus();
   },
 
-  scrollTo(root, down, needed) {
+  scrollTo(root: HTMLElement, down = false, needed = false) {
     let height, x;
     if (!root.offsetParent) { return; } // hidden or fixed
     if (down) {

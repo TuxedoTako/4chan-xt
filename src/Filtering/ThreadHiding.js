@@ -9,6 +9,7 @@ import Menu from "../Menu/Menu";
 import $ from "../platform/$";
 import $$ from "../platform/$$";
 import { dict } from "../platform/helpers";
+import Icon from '../Icons/icon';
 
 /*
  * decaffeinate suggestions:
@@ -195,11 +196,15 @@ var ThreadHiding = {
   },
 
   makeButton(thread, type) {
+    const span = $.el('span', {
+      className: 'stub-icon',
+    });
     const a = $.el('a', {
-      className: `${type}-thread-button`,
+      className: `${type}-post-button ${type}-thread-button`,
       href:      'javascript:;'
     });
-    $.add(a, $.el('span', { className: 'stub-icon', textContent: type === 'hide' ? '➖︎' : '➕︎' }));
+    Icon.set(span, type === 'hide' ? 'squareMinus' : 'squarePlus');
+    $.add(a, span);
     a.dataset.fullID = thread.fullID;
     $.on(a, 'click', ThreadHiding.toggle);
     return a;
@@ -212,7 +217,7 @@ var ThreadHiding = {
 
     const a = ThreadHiding.makeButton(thread, 'show');
     const { nameBlock, subject } = thread.OP.info;
-    
+
     if (subject) {
       $.add(a, $.el('span', {
         className: 'stub-subject',
@@ -227,7 +232,7 @@ var ThreadHiding = {
       className: 'stub-replies',
       textContent: `(${numReplies} repl${numReplies === 1 ? 'y' : 'ies'})`
     }))
-    
+
     let reasons = thread.OP.filterResults?.reasons || [];
     if (reason) reasons = [...reasons, reason];
 
@@ -303,7 +308,7 @@ var ThreadHiding = {
     const threadRoot = thread.nodes.root;
     threadRoot.hidden = (thread.isHidden = false);
     Index.updateHideLabel();
-    if (thread.catalogView) {
+    if (thread.catalogView && Conf['Index Mode'] === 'catalog') {
       const { root } = thread.catalogView.nodes;
 
       if (Index.showHiddenThreads) {

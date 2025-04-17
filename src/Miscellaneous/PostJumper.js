@@ -2,6 +2,7 @@ import Callbacks from "../classes/Callbacks";
 import { Conf, g, E } from "../globals/globals";
 import $ from "../platform/$";
 import $$ from "../platform/$$";
+import Icon from "../Icons/icon";
 
 /*
  * decaffeinate suggestions:
@@ -13,6 +14,8 @@ var PostJumper = {
     if (!Conf['Unique ID and Capcode Navigation'] || !['index', 'thread'].includes(g.VIEW)) { return; }
 
     this.buttons = this.makeButtons();
+    Icon.set(this.buttons.firstChild, 'arrowUpLong');
+    Icon.set(this.buttons.lastChild, 'arrowDownLong');
 
     return Callbacks.Post.push({
       name: 'Post Jumper',

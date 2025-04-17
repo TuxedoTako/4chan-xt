@@ -7,11 +7,13 @@ export default {
 
   transform(code, id) {
     if (id.includes('@fortawesome')) {
+      const name = id.match(/[\\\/]fa([^\.]+)\.js$/)[1];
+
       return {
-        code: `// ${id.match(/[\\\/]fa([^\.]+)\.js$/)[1]}\n` +
-          `export var svgPathData = '${code.match(/svgPathData = '([^']+)';/)[1]}';\n` +
-          `export var width = ${code.match(/width = (\d+);/)[1]};` +
-          `export var height = ${code.match(/height = (\d+);/)[1]};`,
+        code: // `// ${name}\n` +
+          `const ${name}Svg = '${code.match(/svgPathData = '([^']+)';/)[1]}';\n` +
+          `const ${name}W = ${code.match(/width = (\d+);/)[1]}, ${name}H = ${code.match(/height = (\d+);/)[1]};`+
+          `export { ${name}Svg as svgPathData, ${name}W as width, ${name}H as height };`,
         map: { mappings: '' },
       };
     }
