@@ -13,6 +13,8 @@ import { svgPathData as clockSvg, width as clockW, height as clockH } from "@fa/
 import { svgPathData as linkSvg, width as linkW, height as linkH } from "@fas/faLink";
 import { svgPathData as shuffleSvg, width as shuffleW, height as shuffleH } from "@fas/faShuffle";
 import { svgPathData as undoSvg, width as undoW, height as undoH } from "@fas/faRotateLeft";
+import { svgPathData as rotateLeftSvg, width as rotateLeftW, height as rotateLeftH } from "@fas/faRotateLeft";
+import { svgPathData as rotateRightSvg, width as rotateRightW, height as rotateRightH } from "@fas/faRotateRight";
 import { svgPathData as downloadSvg, width as downloadW, height as downloadH } from "@fas/faDownload";
 import { svgPathData as bookOpenSvg, width as bookOpenW, height as bookOpenH } from "@fas/faBookOpen";
 import { svgPathData as shrinkSvg, width as shrinkW, height as shrinkH } from "@fas/faDownLeftAndUpRightToCenter";
@@ -50,6 +52,8 @@ const icons = {
    clock:           toSvg(clockSvg, clockW, clockH),
    shuffle:         toSvg(shuffleSvg, shuffleW, shuffleH),
    undo:            toSvg(undoSvg, undoW, undoH),
+   rotateLeft:      toSvg(rotateLeftSvg, rotateLeftW, rotateLeftH),
+   rotateRight:     toSvg(rotateRightSvg, rotateRightW, rotateRightH),
    download:        toSvg(downloadSvg, downloadW, downloadH),
    bookOpen:        toSvg(bookOpenSvg, bookOpenW, bookOpenH),
    shrink:          toSvg(shrinkSvg, shrinkW, shrinkH),
