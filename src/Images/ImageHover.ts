@@ -8,6 +8,7 @@ import ImageCommon from "./ImageCommon";
 import Volume from "./Volume";
 import Post, { File } from "../classes/Post";
 import CatalogThread from "../classes/CatalogThread";
+import Sound from "./Sound";
 
 /*
  * decaffeinate suggestions:
@@ -51,30 +52,30 @@ var ImageHover = {
       if (file.isExpanding || file.isExpanded || g.SITE.isThumbExpanded?.(file)) return;
 
       let el: HTMLImageElement | HTMLVideoElement;
-    const error = ImageHover.error(post, file);
-    if (ImageCommon.cache?.dataset.fileID === `${post.fullID}.${file.index}`) {
-      el = ImageCommon.popCache();
-      $.on(el, 'error', error);
-    } else {
+      const error = ImageHover.error(post, file);
+      if (ImageCommon.cache?.dataset.fileID === `${post.fullID}.${file.index}`) {
+        el = ImageCommon.popCache();
+        $.on(el, 'error', error);
+      } else {
         el = $.el(file.isVideo ? 'video' : 'img');
-      el.dataset.fileID = `${post.fullID}.${file.index}`;
-      $.on(el, 'error', error);
-      el.src = file.url;
-    }
+        el.dataset.fileID = `${post.fullID}.${file.index}`;
+        $.on(el, 'error', error);
+        el.src = file.url;
+      }
 
-    if (Conf['Restart when Opened']) {
-      ImageCommon.rewind(el);
-      ImageCommon.rewind(this);
-    }
+      if (Conf['Restart when Opened']) {
+        ImageCommon.rewind(el);
+        ImageCommon.rewind(this);
+      }
 
-    el.id = 'ihover';
-    $.add(Header.hover, el);
+      el.id = 'ihover';
+      $.add(Header.hover, el);
       if (el instanceof HTMLVideoElement) {
         el.loop = true;
-      el.controls = false;
-      Volume.setup(el);
-      if (Conf['Autoplay']) {
-        el.play();
+        el.controls = false;
+        Volume.setup(el);
+        if (Conf['Autoplay']) {
+          el.play();
           if (this.nodeName === 'VIDEO') {
             this.currentTime = el.currentTime;
           }
@@ -82,33 +83,45 @@ var ImageHover = {
       }
 
       let width: number, height: number;
-    if (file.dimensions) {
-      [width, height] = file.dimensions.split('x').map((x) => +x);
-      const maxWidth = doc.clientWidth;
-      const maxHeight = doc.clientHeight - UI.hover.padding;
-      const scale = Math.min(1, maxWidth / width, maxHeight / height);
-      width *= scale;
-      height *= scale;
+      if (file.dimensions) {
+        [width, height] = file.dimensions.split('x').map((x) => +x);
+        const maxWidth = doc.clientWidth;
+        const maxHeight = doc.clientHeight - UI.hover.padding;
+        const scale = Math.min(1, maxWidth / width, maxHeight / height);
+        width *= scale;
+        height *= scale;
         el.style.maxWidth = `${width}px`;
-      el.style.maxHeight = `${height}px`;
-    }
-
-    return UI.hover({
-      root: this,
-      el,
-      latestEvent: e,
-      endEvents: 'mouseout click',
-      height,
-      width,
-      noRemove: true,
-      cb() {
-        $.off(el, 'error', error);
-        ImageCommon.pushCache(el);
-        ImageCommon.pause(el);
-        $.rm(el);
-        return el.removeAttribute('style');
+        el.style.maxHeight = `${height}px`;
       }
-    });
+
+      if (Conf['Enable sound posts'] && Conf['Allow Sound']) {
+        Sound.setupSoundpost(el, file);
+      }
+
+      return UI.hover({
+        root: this,
+        el,
+        latestEvent: e,
+        endEvents: 'mouseout click',
+        height,
+        width,
+        noRemove: true,
+        cb() {
+          $.off(el, 'error', error);
+          ImageCommon.pushCache(el);
+          ImageCommon.pause(el);
+          $.rm(el);
+          if (file.audio) {
+            file.audio.remove();
+            delete file.audio;
+            if (file.audioSlider) {
+              file.audioSlider.remove();
+              delete file.audioSlider;
+            }
+          }
+          return el.removeAttribute('style');
+        }
+      });
     };
   },
 
@@ -116,13 +129,13 @@ var ImageHover = {
     return function () {
       if (ImageCommon.decodeError(this, file)) return;
 
-    return ImageCommon.error(this, post, file, 3 * SECOND, URL => {
-      if (URL) {
-        return this.src = URL + (this.src === URL ? '?' + Date.now() : '');
-      } else {
-        return $.rm(this);
-      }
-    });
+      return ImageCommon.error(this, post, file, 3 * SECOND, URL => {
+        if (URL) {
+          return this.src = URL + (this.src === URL ? '?' + Date.now() : '');
+        } else {
+          return $.rm(this);
+        }
+      });
     };
   }
 };

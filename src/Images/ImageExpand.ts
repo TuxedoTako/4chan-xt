@@ -9,7 +9,7 @@ import $ from "../platform/$";
 import { SECOND } from "../platform/helpers";
 import ImageCommon from "./ImageCommon";
 import Volume from "./Volume";
-import Audio from "./Audio";
+import Sound from "./Sound";
 import type { default as Post, PostClone } from "../classes/Post";
 import Icon from "../Icons/icon";
 
@@ -275,23 +275,7 @@ var ImageExpand = {
     }
 
     if (Conf['Enable sound posts'] && Conf['Allow Sound']) {
-      const soundUrlMatch = file.name.match(/\[sound=([^\]]+)]/i);
-      if (soundUrlMatch) {
-        let src = decodeURIComponent(soundUrlMatch[1]);
-        if (!src.startsWith('http')) src = `https://${src}`;
-        const audioEl = $.el('audio', { src }) as HTMLAudioElement;
-        Volume.setup(audioEl);
-        if (isVideo) {
-          Audio.setupSync(el as HTMLVideoElement, audioEl);
-          (el as HTMLVideoElement).controls = false;
-        }
-        audioEl.loop = true;
-        audioEl.controls = Conf['Show Controls'];
-        audioEl.autoplay = Conf['Autoplay'];
-
-        $.after(el, audioEl);
-        file.audio = audioEl;
-      }
+        Sound.setupSoundpost(el, file);
     }
   },
 

@@ -22,6 +22,7 @@ export interface File {
   url:         string,
   thumbURL?:   string,
   name:        string,
+  index:       number,
   isImage:     boolean,
   isVideo:     boolean,
   isExpanding: boolean,
