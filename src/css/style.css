@@ -1253,7 +1253,7 @@ textarea.copy-text-element {
   display: none;
   cursor: pointer;
 }
-.expanded-image > .post > .file > .fileThumb > .full-image {
+.expanded-image > .post > .file > .fileThumb .full-image {
   display: inline;
 }
 .expanded-image > .post > .file > .fileThumb > audio {
@@ -2262,4 +2262,83 @@ div.post {
 
 .scroll-marker-container {
   display: contents;
+}
+
+/* Media Controls */
+.media-controls-container {
+  position: relative;
+}
+
+.media-controls-wrapper {
+  display: table;
+}
+
+.media-controls-wrapper[rotation] {
+  transform-origin: top left;
+}
+
+.media-controls-wrapper[rotation="0"] {
+	transform: initial;
+}
+
+.media-controls-wrapper[rotation="1"] {
+	transform: rotate(90deg) translateY(-100%);
+}
+
+.media-controls-wrapper[rotation="2"] {
+	transform: rotate(180deg) translate(-100%, -100%);
+}
+
+.media-controls-wrapper[rotation="3"] {
+	transform: rotate(270deg) translateX(-100%);
+}
+
+.fileThumb:hover > .media-controls-container > .media-controls {
+  opacity: 1;
+}
+
+.media-controls {
+  position: absolute;
+  opacity: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.media-controls-top {
+  top: 10px;
+}
+
+.media-controls-left {
+  left: 10px;
+}
+
+.media-controls-bottom {
+  bottom: 10px;
+}
+
+.media-controls-right {
+  right: 10px;
+}
+
+.media-controls > button {
+  background: transparent;
+  margin: 0;
+  border-style: none;
+  border-color: initial;
+  line-height: 0;
+  filter: saturate(0);
+  cursor: pointer;
+  padding: 6px;
+}
+
+.media-controls > button > svg {
+  color: rgb(238, 238, 238);
+}
+
+.media-controls > button:hover > svg {
+  color: rgb(185, 185, 185);
+}
+
+.expanded-image > .post > .file > .fileThumb .media-controls-wrapper > .full-image {
+  width: inherit;
 }

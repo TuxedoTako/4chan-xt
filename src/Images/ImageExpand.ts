@@ -8,6 +8,7 @@ import Nav from "../Miscellaneous/Nav";
 import $ from "../platform/$";
 import { SECOND } from "../platform/helpers";
 import ImageCommon from "./ImageCommon";
+import MediaControls from "./ImageMediaControls/MediaControls"
 import Volume from "./Volume";
 import Audio from "./Audio";
 import type { default as Post, PostClone } from "../classes/Post";
@@ -220,6 +221,11 @@ var ImageExpand = {
         delete file.audioSlider;
       }
     }
+
+    if (file.imageMediaControls) {
+      $.rm(file.imageMediaControls);
+      delete file.imageMediaControls;
+    }
   },
 
   expand(post: Post, src?: string) {
@@ -292,6 +298,74 @@ var ImageExpand = {
         $.after(el, audioEl);
         file.audio = audioEl;
       }
+    }
+
+    if (Conf['Image Media Controls']) {
+      const controls = $.el('div', MediaControls());
+      const [y, x] = Conf['imageMediaControlsPosition'].split('-');
+      [...controls.childNodes][0].classList.add(`media-controls-${x}`, `media-controls-${y}`);
+      const container = $.el('div', {className: 'media-controls-container'});
+      const wrapper = $.el('div', {className: 'media-controls-wrapper'});
+      file.imageMediaControls = container;
+      $.add(container, [...controls.childNodes]);
+      $.add(wrapper, el);
+      $.add(container, wrapper);
+      $.prepend(thumbLink, container);
+
+      const totalRotationStates = 4;
+      let currentRotationState = 0;
+
+
+      const { width } = el.getBoundingClientRect();
+      const initialImageContentWidth = width;
+
+      el.style.maxWidth = `${initialImageContentWidth}px`;
+      el.style.maxHeight = '';
+
+      function positiveModulo(a: number, n: number): number {
+        return ((a % n) + n) % n;
+      }
+
+
+      const compensateTransformedSize = () => {
+        const rotationState = positiveModulo(currentRotationState, totalRotationStates);
+        const { width, height } = wrapper.getBoundingClientRect();
+
+        if (rotationState === 1 || rotationState === 3) {
+          el.style.maxHeight = `${initialImageContentWidth}px`;
+        } else {
+          el.style.maxHeight = ''; 
+        }
+
+        Object.assign(container.style, { width: `${width}px`, height: `${height}px` });
+      };
+
+      const compensateTransformedSizeObserver = new ResizeObserver(
+        compensateTransformedSize,
+      );
+
+      function updateRotation() {
+        compensateTransformedSizeObserver.observe(wrapper);
+        wrapper.setAttribute('rotation', String(positiveModulo(currentRotationState, totalRotationStates)));
+        compensateTransformedSize(); 
+      }
+
+      const leftBtn = thumbLink.querySelector('[data-action="rotateLeft"]');
+      const rightBtn = thumbLink.querySelector('[data-action="rotateRight"]');
+
+      $.on(leftBtn, 'click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        currentRotationState--;
+        updateRotation();
+      });
+
+      $.on(rightBtn, 'click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        currentRotationState++;
+        updateRotation();
+      });
     }
   },
 
