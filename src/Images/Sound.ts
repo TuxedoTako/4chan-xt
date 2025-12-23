@@ -1,4 +1,8 @@
-const Audio = {
+import { Conf } from "../globals/globals";
+import { File } from "../classes/Post";
+import Volume from "./Volume";
+
+const Sound = {
   /** Add event listeners for videos with audio from a third party */
   setupSync(video: HTMLVideoElement, audio: HTMLAudioElement) {
     audio.addEventListener('playing', () => {
@@ -33,5 +37,29 @@ const Audio = {
       if (audio.currentTime < .1) video.currentTime = 0;
     }, { once: true });
   },
+
+  setupSoundpost(el: HTMLElement, file: File) {
+    const soundUrlMatch = file.name.match(/\[sound=([^\]]+)]/i);
+    if (!soundUrlMatch) return;
+
+    let src = decodeURIComponent(soundUrlMatch[1]);
+    if (!src.startsWith('http')) {
+      src = `https://${src}`;
+    }
+
+    const audioEl = new Audio(src);
+    Volume.setup(audioEl);
+    if (el instanceof HTMLVideoElement) {
+      Sound.setupSync(el, audioEl);
+      el.controls = false;
+    }
+    audioEl.loop = true;
+    audioEl.controls = Conf['Show Controls'];
+    audioEl.autoplay = Conf['Autoplay'];
+
+    el.after(audioEl);
+    file.audio = audioEl;
+  }
 };
-export default Audio;
+
+export default Sound;
