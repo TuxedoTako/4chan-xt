@@ -788,7 +788,8 @@ Enable it on boards.${location.hostname.split('.')[1]}.org in your browser's pri
         isImage: true,
         isVideo: false,
         isSpoiler: true,
-        tag: 'Loop'
+        tag: 'Loop',
+        aspectRatio: '16x9 (Landscape)'
       }
     };
     FileInfo.format(this.value, data, this.nextElementSibling);

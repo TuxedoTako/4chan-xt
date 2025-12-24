@@ -50,7 +50,7 @@ export interface FilterResults {
 };
 
 type FilterType = "postID" | "name" | "uniqueID" | "tripcode" | "capcode" | "pass" | "email" | "subject" | "comment"
-  | "flag" | "filename" | "dimensions" | "filesize" | "MD5";
+  | "flag" | "filename" | "dimensions" | "filesize" | "MD5" | "aspectratio";
 
 var Filter = {
   /**
@@ -448,7 +448,8 @@ var Filter = {
     filename(post) { return post.files.map(f => f.name); },
     dimensions(post) { return post.files.map(f => f.dimensions); },
     filesize(post) { return post.files.map(f => f.size); },
-    MD5(post) { return post.files.map(f => f.MD5); }
+    MD5(post) { return post.files.map(f => f.MD5); },
+    aspectratio(post) { return post.files.map(f => f.aspectRatio); }
   } satisfies Record<FilterType, (post: Post) => string[]>,
 
   values(key: FilterType, post: Post): string[] {
@@ -601,7 +602,8 @@ var Filter = {
         ['Filename',         'filename'],
         ['Image dimensions', 'dimensions'],
         ['Filesize',         'filesize'],
-        ['Image MD5',        'MD5']
+        ['Image MD5',        'MD5'],
+        ['Aspect Ratio',     'aspectratio']
       ] satisfies [string, FilterType][]) {
         // Add a sub entry for each filter type.
         entry.subEntries.push(Filter.menu.createSubEntry(type[0], type[1]));

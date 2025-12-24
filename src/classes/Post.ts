@@ -37,6 +37,7 @@ export interface File {
   twidth:      string,
   MD5?:        string,
   isSpoiler?:  boolean,
+  aspectRatio?:string,
 };
 
 export default class Post {
@@ -333,7 +334,6 @@ export default class Post {
 
   parseFile(fileRoot: HTMLElement) {
 
-
     const file: Partial<File> = { isDead: false };
     for (var key in g.SITE.selectors.file) {
       var selector = g.SITE.selectors.file[key];
@@ -354,7 +354,49 @@ export default class Post {
     let unit  = ['B', 'KB', 'MB', 'GB'].indexOf(file.size.match(/\w+$/)[0]);
     while (unit-- > 0) { size *= 1024; }
     file.sizeInBytes = size;
-
+    (function determineAspectRatio() {
+      // If a file has no dimensions (e.g. PDF)
+      if (!file.dimensions) {
+        file.aspectRatio = '?';
+        return;
+      }
+      const popularRatios = {
+        '1:1':   1 / 1, // Square
+        '4:3':   4 / 3, // 1024x768, 1600x1200
+        '5:4':   5 / 4, // 1280x1024
+        '3:2':   3 / 2, // 2160x1440, Surface devices
+        '8:5':   8 / 5, // 1280x800, 1920x1200, 2560x1600, 3840x2400
+        '16:9':  16 / 9, // ~1366x768, 1920x1080, 2560x1440, 3840x2160 (4K)
+        '21:9':  21 / 9, // Ultrawide-ish
+      };
+      let tolerance = 0.01;
+      let [fileWidth, fileHeight] = file.dimensions.split('x').map(Number);
+      let orientation: 'Landscape' | 'Portrait' | 'Square';
+      let aspectRatio: number;
+      if (fileWidth > fileHeight) {
+        orientation = 'Landscape';
+        aspectRatio = fileWidth / fileHeight;
+      } else if (fileWidth < fileHeight) {
+        orientation = 'Portrait';
+        aspectRatio = fileHeight / fileWidth;
+      } else {
+        orientation = 'Square';
+        aspectRatio = 1;
+      }
+      let closestMatch = '';
+      let smallestDifference = Infinity;
+      for (const [label, ratio] of Object.entries(popularRatios)) {
+        const difference = Math.abs(aspectRatio - ratio);
+        if (difference <= tolerance) {
+          return file.aspectRatio = `${label} (${orientation})`;
+        }
+        if (difference < smallestDifference) {
+          closestMatch = label;
+          smallestDifference = difference;
+        }
+      }
+      return file.aspectRatio = `~${closestMatch} (${orientation})`;
+    })();
     return file as File;
   }
 

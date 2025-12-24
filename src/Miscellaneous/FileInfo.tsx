@@ -99,6 +99,7 @@ var FileInfo = {
     M() { return { innerHTML: (Math.round(this.file.sizeInBytes / 1048576 * 100) / 100) + " MB", [isEscaped]: true }; },
     r() { return { innerHTML: E(this.file.dimensions || "PDF"), [isEscaped]: true }; },
     g() { return { innerHTML: ((this.file.tag) ? ", " + E(this.file.tag) : ""), [isEscaped]: true }; },
+    a() { return { innerHTML: (this.file.aspectRatio), [isEscaped]: true }; },
     '%'() { return { innerHTML: "%", [isEscaped]: true }; }
   }
 };
